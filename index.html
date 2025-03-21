@@ -487,9 +487,19 @@
             <p style="text-align: center; margin-top: 1rem;">
                 <a href="#" id="forgot-password-link" style="color: var(--primary); text-decoration: none;">Forgot Password?</a>
             </p>
+            <!-- Password Reset Form -->
+            <div id="reset-password-form" class="hidden" style="margin-top: 1rem;">
+                <div class="form-group">
+                    <label for="reset-email">Enter your email to reset password</label>
+                    <input type="email" id="reset-email" placeholder="e.g., user@intersmart.in" required>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button id="reset-password-submit" class="btn-primary">Send Reset Email</button>
+                    <button id="reset-password-cancel" class="p-2 bg-[var(--dark-hover)] text-white rounded">Cancel</button>
+                </div>
+            </div>
         </div>
     </div>
-
     <!-- Main Dashboard -->
     <div id="dashboard" class="container hidden">
         <header>
@@ -894,7 +904,14 @@
         };
 
         // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
+        try {
+            firebase.initializeApp(firebaseConfig);
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization failed:', error);
+            showNotification('Failed to initialize Firebase. Please check your configuration.');
+        }
+
         const auth = firebase.auth();
         const db = firebase.firestore();
 
@@ -915,9 +932,14 @@
         // Login Handler with Enhanced Debugging
         document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            const username = document.getElementById('username').value;
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             console.log('Attempting login with:', { username, password });
+
+            if (!username || !password) {
+                showNotification('Please enter both email and password.');
+                return;
+            }
 
             auth.signInWithEmailAndPassword(username, password)
                 .then(async (userCredential) => {
@@ -925,27 +947,33 @@
                     const userId = username.split('@')[0];
                     console.log('Fetching user data from Firestore for ID:', userId);
 
-                    const userDoc = await db.collection('users').doc(userId).get();
-                    if (!userDoc.exists) {
-                        console.error('User data not found in Firestore for ID:', userId);
-                        showNotification('User data not found in database. Please contact your admin to add your user profile.');
-                        auth.signOut();
-                        return;
+                    try {
+                        const userDoc = await db.collection('users').doc(userId).get();
+                        if (!userDoc.exists) {
+                            console.error('User data not found in Firestore for ID:', userId);
+                            showNotification('User data not found in database. Please contact your admin to add your user profile.');
+                            await auth.signOut();
+                            return;
+                        }
+
+                        console.log('User data found in Firestore:', userDoc.data());
+                        currentUser = { username, ...userDoc.data() };
+                        console.log('Current user set:', currentUser);
+
+                        document.getElementById('login-page').classList.add('hidden');
+                        document.getElementById('dashboard').classList.remove('hidden');
+                        document.getElementById('user-name').textContent = currentUser.name;
+
+                        if (currentUser.role === 'Team Lead') {
+                            document.querySelectorAll('.team-lead-only').forEach(el => el.classList.remove('hidden'));
+                        }
+
+                        loadDashboardData();
+                    } catch (error) {
+                        console.error('Firestore error during login:', error.code, error.message);
+                        showNotification('Failed to fetch user data: ' + error.message);
+                        await auth.signOut();
                     }
-
-                    console.log('User data found in Firestore:', userDoc.data());
-                    currentUser = { username, ...userDoc.data() };
-                    console.log('Current user set:', currentUser);
-
-                    document.getElementById('login-page').classList.add('hidden');
-                    document.getElementById('dashboard').classList.remove('hidden');
-                    document.getElementById('user-name').textContent = currentUser.name;
-
-                    if (currentUser.role === 'Team Lead') {
-                        document.querySelectorAll('.team-lead-only').forEach(el => el.classList.remove('hidden'));
-                    }
-
-                    loadDashboardData();
                 })
                 .catch((error) => {
                     console.error('Login error:', error.code, error.message);
@@ -955,6 +983,8 @@
                         showNotification('User not found. Please check your email or contact your admin.');
                     } else if (error.code === 'auth/invalid-email') {
                         showNotification('Invalid email format. Please enter a valid email address.');
+                    } else if (error.code === 'auth/too-many-requests') {
+                        showNotification('Too many login attempts. Please try again later.');
                     } else {
                         showNotification('Login failed: ' + error.message);
                     }
@@ -962,25 +992,64 @@
         });
 
         // Forgot Password Handler
-        document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+        const forgotPasswordLink = document.getElementById('forgot-password-link');
+        const resetPasswordForm = document.getElementById('reset-password-form');
+        const resetPasswordSubmit = document.getElementById('reset-password-submit');
+        const resetPasswordCancel = document.getElementById('reset-password-cancel');
+        const resetEmailInput = document.getElementById('reset-email');
+
+        forgotPasswordLink.addEventListener('click', (e) => {
             e.preventDefault();
-            const email = prompt('Please enter your email address to reset your password:');
-            if (email) {
-                auth.sendPasswordResetEmail(email)
-                    .then(() => {
-                        showNotification('Password reset email sent! Check your inbox (and spam/junk folder).');
-                    })
-                    .catch((error) => {
-                        console.error('Password reset error:', error.code, error.message);
-                        if (error.code === 'auth/user-not-found') {
-                            showNotification('No user found with this email. Please check your email or contact your admin.');
-                        } else if (error.code === 'auth/invalid-email') {
-                            showNotification('Invalid email format. Please enter a valid email address.');
-                        } else {
-                            showNotification('Error sending password reset email: ' + error.message);
-                        }
-                    });
+            console.log('Forgot Password link clicked');
+            resetPasswordForm.classList.toggle('hidden');
+            if (!resetPasswordForm.classList.contains('hidden')) {
+                resetEmailInput.focus();
             }
+        });
+
+        resetPasswordCancel.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('Cancel button clicked');
+            resetPasswordForm.classList.add('hidden');
+            resetEmailInput.value = '';
+        });
+
+        resetPasswordSubmit.addEventListener('click', (e) => {
+            e.preventDefault();
+            const email = resetEmailInput.value.trim();
+            console.log('Attempting to send password reset email to:', email);
+
+            // Client-side email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email) {
+                showNotification('Please enter your email address.');
+                return;
+            }
+            if (!emailRegex.test(email)) {
+                showNotification('Invalid email format. Please enter a valid email address.');
+                return;
+            }
+
+            // Send password reset email
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    console.log('Password reset email sent successfully to:', email);
+                    showNotification('Password reset email sent! Check your inbox (and spam/junk folder).');
+                    resetPasswordForm.classList.add('hidden');
+                    resetEmailInput.value = '';
+                })
+                .catch((error) => {
+                    console.error('Password reset error:', error.code, error.message);
+                    if (error.code === 'auth/user-not-found') {
+                        showNotification('No user found with this email. Please check your email or contact your admin.');
+                    } else if (error.code === 'auth/invalid-email') {
+                        showNotification('Invalid email format. Please enter a valid email address.');
+                    } else if (error.code === 'auth/too-many-requests') {
+                        showNotification('Too many requests. Please try again later.');
+                    } else {
+                        showNotification('Error sending password reset email: ' + error.message);
+                    }
+                });
         });
 
         // Logout Handler
@@ -1642,145 +1711,118 @@
             }
         }
 
+        javascript
+
+Collapse
+
+Wrap
+
+Copy
+        // Profile Form Submission
         document.getElementById('profile-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const email = document.getElementById('profile-email').value;
             const newPassword = document.getElementById('change-password').value;
-            const newEmail = document.getElementById('profile-email').value;
             const userId = currentUser.username.split('@')[0];
 
             try {
+                // Update Firestore user profile
+                await db.collection('users').doc(userId).update({
+                    email: email
+                });
+
+                // Update password if provided
                 if (newPassword) {
-                    await auth.currentUser.updatePassword(newPassword);
+                    const user = auth.currentUser;
+                    await user.updatePassword(newPassword);
                     showNotification('Password updated successfully');
                 }
-                if (newEmail && newEmail !== currentUser.username) {
-                    await auth.currentUser.updateEmail(newEmail);
-                    await db.collection('users').doc(userId).update({ email: newEmail });
-                    currentUser.username = newEmail;
-                    showNotification('Email updated successfully');
-                }
+
+                showNotification('Profile updated successfully');
                 loadDashboardData();
             } catch (error) {
                 showNotification('Failed to update profile: ' + error.message);
             }
         });
 
-        // Theme Toggle
-        document.getElementById('theme-toggle').addEventListener('change', (e) => {
-            const theme = e.target.value;
-            document.body.classList.toggle('light-theme', theme === 'light');
-            localStorage.setItem('theme', theme);
-        });
-
         // Export Report
         async function exportReport() {
-            const reportType = document.getElementById('report-type').value;
-            const month = document.getElementById('report-month').value;
-            const qa = document.getElementById('report-qa').value;
-            const projectFilter = document.getElementById('report-project').value.toLowerCase();
-
             try {
-                let reportData;
-                const usersSnap = await db.collection('users').get();
-                const users = Object.fromEntries(usersSnap.docs.map(doc => [doc.id, doc.data()]));
+                const reportType = document.getElementById('report-type').value;
+                const reportMonth = document.getElementById('report-month').value;
+                const reportQA = document.getElementById('report-qa').value;
+                const reportProject = document.getElementById('report-project').value.toLowerCase();
 
+                let data = [];
                 if (reportType === 'monthly') {
                     const projectsSnap = await db.collection('projects').get();
                     const projects = projectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     const approvedSnap = await db.collection('approvedProjects').get();
-                    const approvedProjects = approvedSnap.docs.map(doc => doc.data());
-                    reportData = projects
-                        .filter(p => !projectFilter || p.name.toLowerCase().includes(projectFilter))
-                        .filter(p => !qa || p.assignedQA === qa)
-                        .filter(p => !month || p.start.startsWith(month))
+                    const approvedProjects = approvedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const rejectedSnap = await db.collection('rejectedProjects').get();
+                    const rejectedProjects = rejectedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                    data = [...projects, ...approvedProjects, ...rejectedProjects]
+                        .filter(p => {
+                            const date = p.date || p.start;
+                            return (!reportMonth || date.startsWith(reportMonth)) &&
+                                   (!reportQA || p.assignedQA === reportQA || p.qa === reportQA) &&
+                                   (!reportProject || p.name.toLowerCase().includes(reportProject));
+                        })
                         .map(p => ({
-                            'Project Name': p.name,
-                            'Category': p.category,
-                            'QA': users[p.assignedQA]?.name || 'N/A',
-                            'HTML Bugs': p.htmlBugs,
-                            'Functional Bugs': p.funcBugs,
-                            'Total Bugs': p.bugs,
-                            'Phase': p.phase,
-                            'Live Approved': approvedProjects.some(a => a.projectId === p.id) ? 'Yes' : 'No',
-                            'Testing Days': Math.ceil((new Date(p.end) - new Date(p.start)) / (1000 * 60 * 60 * 24))
+                            Project: p.name,
+                            QA: p.assignedQA || p.qa || 'Not Assigned',
+                            Status: p.status || (approvedProjects.includes(p) ? 'Approved' : 'Rejected'),
+                            Bugs: p.bugs || 0,
+                            HTML_Bugs: p.htmlBugs || 0,
+                            Functional_Bugs: p.funcBugs || 0,
+                            Date: p.date || p.start
                         }));
                 } else if (reportType === 'rejected') {
                     const rejectedSnap = await db.collection('rejectedProjects').get();
-                    const rejectedProjects = rejectedSnap.docs.map(doc => doc.data());
-                    reportData = rejectedProjects
-                        .filter(r => !projectFilter || r.name.toLowerCase().includes(projectFilter))
-                        .filter(r => !qa || r.qa === qa)
-                        .filter(r => !month || r.date.startsWith(month))
-                        .map(r => ({
-                            'Project Name': r.name,
-                            'QA': users[r.qa]?.name || 'N/A',
-                            'Rejected Date': r.date,
-                            'Phase': r.phase,
-                            'PC': r.pc,
-                            'Reason': r.reason
+                    const rejectedProjects = rejectedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    data = rejectedProjects
+                        .filter(p => (!reportMonth || p.date.startsWith(reportMonth)) &&
+                                     (!reportQA || p.qa === reportQA) &&
+                                     (!reportProject || p.name.toLowerCase().includes(reportProject)))
+                        .map(p => ({
+                            Project: p.name,
+                            QA: p.qa || 'Not Assigned',
+                            Date: p.date,
+                            Phase: p.phase,
+                            PC: p.pc,
+                            Reason: p.reason
                         }));
-                } else if (reportType ==='qa-wise') {
+                } else if (reportType === 'qa-wise') {
                     const projectsSnap = await db.collection('projects').get();
                     const projects = projectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     const approvedSnap = await db.collection('approvedProjects').get();
-                    const approvedProjects = approvedSnap.docs.map(doc => doc.data());
+                    const approvedProjects = approvedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     const rejectedSnap = await db.collection('rejectedProjects').get();
-                    const rejectedProjects = rejectedSnap.docs.map(doc => doc.data());
+                    const rejectedProjects = rejectedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                    // Group projects by QA
-                    const qaReport = {};
-                    projects.forEach(p => {
-                        if (!qa || p.assignedQA === qa) {
-                            if (!qaReport[p.assignedQA]) {
-                                qaReport[p.assignedQA] = {
-                                    totalProjects: 0,
-                                    totalBugs: 0,
-                                    htmlBugs: 0,
-                                    funcBugs: 0,
-                                    approved: 0,
-                                    rejected: 0
-                                };
-                            }
-                            qaReport[p.assignedQA].totalProjects += 1;
-                            qaReport[p.assignedQA].totalBugs += p.bugs || 0;
-                            qaReport[p.assignedQA].htmlBugs += p.htmlBugs || 0;
-                            qaReport[p.assignedQA].funcBugs += p.funcBugs || 0;
-                            if (approvedProjects.some(a => a.projectId === p.id)) {
-                                qaReport[p.assignedQA].approved += 1;
-                            }
-                            if (rejectedProjects.some(r => r.projectId === p.id)) {
-                                qaReport[p.assignedQA].rejected += 1;
-                            }
-                        }
-                    });
-
-                    reportData = Object.keys(qaReport).map(qaId => ({
-                        'QA': users[qaId]?.name || 'Unknown',
-                        'Total Projects': qaReport[qaId].totalProjects,
-                        'Total Bugs': qaReport[qaId].totalBugs,
-                        'HTML Bugs': qaReport[qaId].htmlBugs,
-                        'Functional Bugs': qaReport[qaId].funcBugs,
-                        'Approved Projects': qaReport[qaId].approved,
-                        'Rejected Projects': qaReport[qaId].rejected
-                    }));
+                    data = [...projects, ...approvedProjects, ...rejectedProjects]
+                        .filter(p => (!reportQA || p.assignedQA === reportQA || p.qa === reportQA) &&
+                                     (!reportProject || p.name.toLowerCase().includes(reportProject)))
+                        .map(p => ({
+                            Project: p.name,
+                            QA: p.assignedQA || p.qa || 'Not Assigned',
+                            Status: p.status || (approvedProjects.includes(p) ? 'Approved' : 'Rejected'),
+                            Bugs: p.bugs || 0,
+                            HTML_Bugs: p.htmlBugs || 0,
+                            Functional_Bugs: p.funcBugs || 0,
+                            Date: p.date || p.start
+                        }));
                 }
 
-                // Export to CSV using Papa Parse
-                if (reportData.length > 0) {
-                    const csv = Papa.unparse(reportData);
-                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                    const link = document.createElement('a');
-                    const url = URL.createObjectURL(blob);
-                    link.setAttribute('href', url);
-                    link.setAttribute('download', `${reportType}-report-${new Date().toISOString().split('T')[0]}.csv`);
-                    link.style.visibility = 'hidden';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    showNotification('Report exported successfully');
-                } else {
-                    showNotification('No data available for the selected filters');
-                }
+                // Export to CSV
+                const csv = Papa.unparse(data);
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${reportType}-report-${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+                showNotification('Report exported successfully');
             } catch (error) {
                 showNotification('Failed to export report: ' + error.message);
             }
@@ -1790,24 +1832,16 @@
         function sortTable(tableId, colIndex) {
             const table = document.getElementById(tableId);
             let rows = Array.from(table.rows);
-            const isNumeric = rows.every(row => !isNaN(parseFloat(row.cells[colIndex].textContent)) || row.cells[colIndex].textContent === 'N/A');
-            const direction = table.dataset.sortDirection === 'asc' ? 'desc' : 'asc';
-            table.dataset.sortDirection = direction;
-
+            const isNumeric = rows.every(row => !isNaN(parseFloat(row.cells[colIndex].textContent)) && isFinite(row.cells[colIndex].textContent));
+            
             rows.sort((a, b) => {
-                let aValue = a.cells[colIndex].textContent.trim();
-                let bValue = b.cells[colIndex].textContent.trim();
-
-                // Handle 'N/A' values
-                if (aValue === 'N/A') return 1;
-                if (bValue === 'N/A') return -1;
-
+                let aValue = a.cells[colIndex].textContent;
+                let bValue = b.cells[colIndex].textContent;
+                
                 if (isNumeric) {
-                    aValue = parseFloat(aValue) || 0;
-                    bValue = parseFloat(bValue) || 0;
-                    return direction === 'asc' ? aValue - bValue : bValue - aValue;
+                    return parseFloat(aValue) - parseFloat(bValue);
                 } else {
-                    return direction === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+                    return aValue.localeCompare(bValue);
                 }
             });
 
@@ -1815,7 +1849,14 @@
             rows.forEach(row => table.appendChild(row));
         }
 
-        // Check for Due Tasks and Send Alerts (Simulated)
+        // Theme Toggle
+        document.getElementById('theme-toggle').addEventListener('change', (e) => {
+            const theme = e.target.value;
+            document.body.classList.toggle('light-theme', theme === 'light');
+            localStorage.setItem('theme', theme);
+        });
+
+        // Check for Due Tasks and Send Alerts
         async function checkDueTasks() {
             try {
                 const tasksSnap = await db.collection('tasks').where('status', '==', 'inprogress').get();
@@ -1823,11 +1864,9 @@
                 const today = new Date();
                 tasks.forEach(async task => {
                     const dueDate = new Date(task.dueDate);
-                    const timeDiff = dueDate - today;
-                    if (timeDiff <= 24 * 60 * 60 * 1000 && timeDiff > 0 && !task.alertSent) {
-                        // Simulate sending an alert (e.g., email or notification)
-                        console.log(`Alert: Task "${task.name}" for ${task.assignee} is due soon on ${task.dueDate}`);
+                    if (dueDate - today < 24 * 60 * 60 * 1000 && dueDate > today && !task.alertSent) {
                         await db.collection('tasks').doc(task.id).update({ alertSent: true });
+                        showNotification(`Task "${task.name}" is due soon! Due date: ${task.dueDate}`);
                     }
                 });
             } catch (error) {
@@ -1835,55 +1874,9 @@
             }
         }
 
-        // Run due task check on load
-        document.addEventListener('DOMContentLoaded', () => {
-            checkDueTasks();
-        });
-
-        // Accessibility: Close modals with Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.modal').forEach(modal => {
-                    modal.style.display = 'none';
-                });
-            }
-        });
-
-        // Ensure Firestore Security Rules Compatibility
-        // Note: The Firestore security rules should be set as follows in the Firebase Console:
-        /*
-        rules_version = '2';
-        service cloud.firestore {
-            match /databases/{database}/documents {
-                match /users/{userId} {
-                    allow read: if request.auth != null;
-                    allow write: if request.auth != null && request.auth.uid == userId || request.auth.token.role == 'Team Lead';
-                }
-                match /projects/{projectId} {
-                    allow read: if request.auth != null;
-                    allow write: if request.auth != null && request.auth.token.role == 'Team Lead';
-                }
-                match /tasks/{taskId} {
-                    allow read: if request.auth != null;
-                    allow write: if request.auth != null && (request.auth.token.role == 'Team Lead' || resource.data.assignee == request.auth.uid);
-                }
-                match /approvedProjects/{projectId} {
-                    allow read: if request.auth != null;
-                    allow write: if request.auth != null && request.auth.token.role == 'Team Lead';
-                }
-                match /rejectedProjects/{projectId} {
-                    allow read: if request.auth != null;
-                    allow write: if request.auth != null && request.auth.token.role == 'Team Lead';
-                }
-                match /activityLog/{logId} {
-                    allow read: if request.auth != null;
-                    allow write: if request.auth != null;
-                }
-            }
-        }
-        */
-        // Ensure these rules are applied in the Firebase Console to match the app's functionality.
-
+        // Run checkDueTasks every minute
+        setInterval(checkDueTasks, 60 * 1000);
+        checkDueTasks(); // Initial check on load
     </script>
 </body>
 </html>
