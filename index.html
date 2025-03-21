@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QA Team Dashboard</title>
-    <link rel="icon" href="images/fav.png">
-    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700;900&family=Work+Sans:wght@400;500;700;900&display=swap">
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="https://unpkg.com/papaparse@5.3.2/papaparse.min.js"></script> <!-- For CSV export -->
+    <link rel="icon" type="image/png" href="images/fav.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700;900&family=Work+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #fbd003; /* Yellow */
@@ -16,114 +15,312 @@
             --dark-bg: #1a1a1a;
             --dark-card: #2a2a2a;
             --dark-hover: #3a3a3a;
+            --text: #ffffff;
             --light-bg: #f4f4f4;
             --light-card: #ffffff;
             --light-hover: #e0e0e0;
+            --light-text: #333333;
+            --border-color: #444;
+            --light-border: #ddd;
         }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: "Work Sans", "Noto Sans", sans-serif;
-            background-color: var(--dark-bg);
-            color: #ffffff;
+            background: var(--dark-bg);
+            color: var(--text);
             transition: all 0.3s ease;
+            line-height: 1.6;
         }
+
         body.light-theme {
-            background-color: var(--light-bg);
-            color: #333333;
+            background: var(--light-bg);
+            color: var(--light-text);
         }
-        .sidebar {
-            height: 100vh;
-            position: fixed;
-            width: 280px;
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Login Page Styles */
+        #login-page {
+            display: flex;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #login-page .login-container {
             background-color: var(--dark-card);
-            transition: all 0.3s ease;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
         }
-        body.light-theme .sidebar {
+
+        body.light-theme #login-page .login-container {
             background-color: var(--light-card);
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-        .sidebar a, .sidebar button {
-            transition: all 0.3s ease;
+
+        #login-page h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            text-align: center;
         }
-        .sidebar a:hover, .sidebar button:hover {
+
+        #login-page .form-group {
+            margin-bottom: 1rem;
+        }
+
+        #login-page label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: medium;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        body.light-theme #login-page label {
+            color: var(--light-text);
+        }
+
+        #login-page input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--dark-hover);
+            color: var(--text);
+            font-size: 0.875rem;
+        }
+
+        body.light-theme #login-page input {
+            background-color: var(--light-card);
+            color: var(--light-text);
+            border-color: var(--light-border);
+        }
+
+        #login-page input::placeholder {
+            color: var(--secondary);
+        }
+
+        #login-page button {
+            width: 100%;
+            padding: 0.5rem;
             background-color: var(--primary);
             color: #000000;
-            transform: translateX(5px);
+            border: none;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: medium;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
         }
-        .content {
-            margin-left: 280px;
-            padding: 20px;
-            transition: margin-left 0.3s ease;
+
+        #login-page button:hover {
+            background-color: #e5bd00;
+            transform: scale(1.02);
         }
-        .table-container {
-            overflow-x: auto;
-            background-color: var(--dark-card);
+
+        /* Header Styles */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--dark-card);
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        body.light-theme .table-container {
-            background-color: var(--light-card);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+        body.light-theme header {
+            background: var(--light-card);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        .table-container th, .table-container td {
+
+        .logo img {
+            height: 40px;
+            vertical-align: middle;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info select, .user-info button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--primary);
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .nav-link {
+            padding: 10px 20px;
+            background: var(--dark-card);
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s;
+            white-space: nowrap;
+            font-size: 16px;
+        }
+
+        body.light-theme .nav-link {
+            background: var(--light-card);
+        }
+
+        .nav-link:hover {
+            background: var(--dark-hover);
+            color: var(--primary);
+        }
+
+        body.light-theme .nav-link:hover {
+            background: var(--light-hover);
+            color: var(--primary);
+        }
+
+        .nav-link.active {
+            background: var(--primary);
+            color: #000000;
+        }
+
+        /* Tab Panes */
+        .tab-pane {
+            display: none;
+            background: var(--dark-card);
+            padding: 20px;
+            border-radius: 8px;
+            transition: opacity 0.3s ease;
+        }
+
+        body.light-theme .tab-pane {
+            background: var(--light-card);
+        }
+
+        .tab-pane.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: var(--dark-card);
+        }
+
+        body.light-theme table {
+            background: var(--light-card);
+        }
+
+        th, td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid var(--dark-hover);
+            border-bottom: 1px solid var(--border-color);
         }
-        body.light-theme .table-container th, body.light-theme .table-container td {
-            border-bottom: 1px solid var(--light-hover);
+
+        body.light-theme th, body.light-theme td {
+            border-bottom: 1px solid var(--light-border);
         }
-        .table-container th {
-            background-color: var(--dark-hover);
+
+        th {
+            background: var(--dark-hover);
             color: var(--primary);
+            cursor: pointer;
             font-weight: bold;
+        }
+
+        body.light-theme th {
+            background: var(--light-hover);
+            color: var(--primary);
+        }
+
+        th:hover {
+            background: var(--primary);
+            color: #000000;
+        }
+
+        .editable:hover {
+            background: var(--dark-hover);
             cursor: pointer;
         }
-        body.light-theme .table-container th {
-            background-color: var(--light-hover);
+
+        body.light-theme .editable:hover {
+            background: var(--light-hover);
         }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--dark-hover);
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        body.light-theme input, body.light-theme select, body.light-theme textarea {
+            background: var(--light-card);
+            color: var(--light-text);
+            border-color: var(--light-border);
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s, transform 0.3s;
+        }
+
         .btn-primary {
-            background-color: var(--primary);
+            background: var(--primary);
             color: #000000;
-            transition: all 0.3s ease;
         }
+
         .btn-primary:hover {
-            background-color: #e5bd00;
-            transform: scale(1.05);
+            background: #e5bd00;
+            transform: scale(1.02);
         }
-        .btn-danger {
-            background-color: #e24a4a;
-            transition: all 0.3s ease;
-        }
-        .btn-danger:hover {
-            background-color: #bd3535;
-            transform: scale(1.05);
-        }
-        .btn-approved {
-            background-color: #4a90e2;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-        }
-        .btn-rejected {
-            background-color: #e24a4a;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-        }
-        .card {
-            background-color: var(--dark-card);
-            border-radius: 8px;
-            padding: 16px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
-        }
-        body.light-theme .card {
-            background-color: var(--light-card);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
+
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -131,13 +328,14 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.5);
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
+
         .modal-content {
-            background-color: var(--dark-card);
+            background: var(--dark-card);
             padding: 20px;
             border-radius: 8px;
             border: 1px solid var(--secondary);
@@ -145,44 +343,76 @@
             max-width: 500px;
             max-height: 80vh;
             overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         body.light-theme .modal-content {
-            background-color: var(--light-card);
+            background: var(--light-card);
         }
+
+        .modal-content h2 {
+            margin-bottom: 15px;
+            font-size: 20px;
+            color: var(--primary);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* Notification */
         .notification {
+            display: none;
             position: fixed;
             top: 20px;
             right: 20px;
-            background-color: var(--primary);
+            background: var(--primary);
             color: #000000;
             padding: 10px 20px;
-            border-radius: 4px;
-            z-index: 2000;
+            border-radius: 5px;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .team-lead-only {
             display: none;
-            cursor: pointer;
         }
-        .editable:hover {
-            background-color: var(--dark-hover);
-            cursor: pointer;
-        }
-        body.light-theme .editable:hover {
-            background-color: var(--light-hover);
-        }
+
         .alert-due {
-            background-color: #e24a4a;
+            background: #e24a4a;
+            color: white;
             padding: 4px 8px;
             border-radius: 4px;
             font-size: 12px;
             display: inline-block;
         }
+
+        .btn-approved {
+            background: #4a90e2;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
         .tooltip {
             position: relative;
             display: inline-block;
         }
+
         .tooltip .tooltiptext {
             visibility: hidden;
             width: 120px;
-            background-color: #555;
+            background: #555;
             color: #fff;
             text-align: center;
             border-radius: 6px;
@@ -195,495 +425,581 @@
             opacity: 0;
             transition: opacity 0.3s;
         }
+
         .tooltip:hover .tooltiptext {
             visibility: visible;
             opacity: 1;
         }
-        .tab-pane {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .tab-pane.active {
-            display: block;
-            opacity: 1;
-        }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
+            header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
             }
-            .content {
-                margin-left: 0;
+
+            .user-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .nav-tabs {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .nav-link {
+                width: 100%;
+                text-align: left;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+
+            .modal-content {
+                width: 95%;
             }
         }
     </style>
 </head>
 <body>
     <!-- Login Page -->
-    <div id="login-page" class="flex min-h-screen items-center justify-center">
-        <div class="bg-[var(--dark-card)] p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 class="text-2xl font-bold text-[var(--primary)] mb-6">QA Team Dashboard</h2>
+    <div id="login-page">
+        <div class="login-container">
+            <h2>QA Team Dashboard</h2>
             <form id="login-form">
-                <div class="mb-4">
-                    <label for="username" class="block text-sm font-medium mb-2">Employee Code</label>
-                    <input type="text" id="username" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="Employee Code" required>
+                <div class="form-group">
+                    <label for="username">Email</label>
+                    <input type="email" id="username" placeholder="Enter your email" required>
                 </div>
-                <div class="mb-6">
-                    <label for="password" class="block text-sm font-medium mb-2">Password</label>
-                    <input type="password" id="password" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="Password" required>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Password" required>
                 </div>
-                <button type="submit" class="btn-primary w-full py-2 rounded">Login</button>
+                <button type="submit">Login</button>
             </form>
+            <p style="text-align: center; margin-top: 1rem;">
+                <a href="#" id="forgot-password-link" style="color: var(--primary); text-decoration: none;">Forgot Password?</a>
+            </p>
         </div>
     </div>
 
     <!-- Main Dashboard -->
-    <div id="dashboard" class="hidden">
-        <div class="sidebar text-white p-4">
-            <div class="flex items-center gap-3 mb-6">
-                <img src="images/logo.png" alt="Logo" class="h-10">
-                <h3 class="text-xl font-bold text-[var(--primary)]">QA Dashboard</h3>
+    <div id="dashboard" class="container hidden">
+        <header>
+            <div class="logo">
+                <img src="images/logo.png" alt="Logo">
             </div>
-            <ul class="space-y-2">
-                <li><a href="#dashboard-tab" class="nav-link block p-2 rounded">Dashboard</a></li>
-                <li><a href="#projects-tab" class="nav-link block p-2 rounded">Projects Overview</a></li>
-                <li><a href="#approved-tab" class="nav-link block p-2 rounded">Approved Projects</a></li>
-                <li><a href="#rejected-tab" class="nav-link block p-2 rounded">Rejected Projects</a></li>
-                <li><a href="#activity-tab" class="nav-link block p-2 rounded">Activity Log</a></li>
-                <li class="team-lead-only hidden"><a href="#manage-tab" class="nav-link block p-2 rounded">Project Management</a></li>
-                <li class="team-lead-only hidden"><a href="#users-tab" class="nav-link block p-2 rounded">User Management</a></li>
-                <li><a href="#help-tab" class="nav-link block p-2 rounded">Help</a></li>
-                <li><a href="#profile-tab" class="nav-link block p-2 rounded">Profile</a></li>
-                <li><button onclick="logout()" class="btn-danger w-full p-2 rounded mt-4">Logout</button></li>
-            </ul>
+            <div class="user-info">
+                <span id="user-name"></span>
+                <select id="theme-toggle">
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                </select>
+                <button class="btn-primary py-1 px-3" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <div class="nav-tabs">
+            <div class="nav-link active" href="#daily-standup">Daily Standup</div>
+            <div class="nav-link" href="#project-management">Project Management</div>
+            <div class="nav-link" href="#approved-projects">Approved Projects</div>
+            <div class="nav-link" href="#rejected-projects">Rejected Projects</div>
+            <div class="nav-link" href="#activity-log">Activity Log</div>
+            <div class="nav-link" href="#profile">Profile</div>
+            <div class="nav-link team-lead-only" href="#user-management">User Management</div>
         </div>
 
-        <div class="content">
-            <div id="notification" class="notification" onclick="this.style.display='none'" role="alert"></div>
-            <div class="tab-content">
-                <!-- Dashboard Tab -->
-                <div id="dashboard-tab" class="tab-pane active">
-                    <h1 class="text-3xl font-bold mb-4 text-[var(--primary)]">Welcome <span id="user-name"></span></h1>
-                    <div class="card mb-6">
-                        <h3 class="text-lg font-bold mb-4">Daily Standup Form</h3>
-                        <div class="table-container">
-                            <table role="grid">
-                                <thead>
-                                    <tr>
-                                        <th onclick="sortTable('standup-tasks-table', 0)">Task Name</th>
-                                        <th onclick="sortTable('standup-tasks-table', 1)">Project Name</th>
-                                        <th onclick="sortTable('standup-tasks-table', 2)">Assigned Date</th>
-                                        <th onclick="sortTable('standup-tasks-table', 3)">Due Date</th>
-                                        <th onclick="sortTable('standup-tasks-table', 4)">Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="standup-tasks-table"></tbody>
-                            </table>
-                        </div>
+        <div id="daily-standup" class="tab-pane active">
+            <h2 class="text-2xl font-bold mb-4">Daily Standup</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Task Name</th>
+                        <th>Project</th>
+                        <th>Assigned Date</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="standup-tasks-table"></tbody>
+            </table>
+            <div class="team-lead-only">
+                <h3 class="text-xl font-semibold mb-4">Assign Task</h3>
+                <form id="assign-task-form" class="space-y-4">
+                    <div class="form-group">
+                        <label for="assign-project" class="block text-sm font-medium mb-2">Project</label>
+                        <select id="assign-project" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required></select>
                     </div>
-                </div>
-
-                <!-- Projects Overview Tab -->
-                <div id="projects-tab" class="tab-pane">
-                    <h1 class="text-3xl font-bold mb-6 text-[var(--primary)]">Projects Overview</h1>
-                    <div class="card mb-4">
-                        <input type="text" id="project-search" class="p-2 border rounded bg-[var(--dark-hover)] text-white w-full" placeholder="Search projects..." aria-label="Search projects">
+                    <div class="form-group">
+                        <label for="assign-qa" class="block text-sm font-medium mb-2">QA</label>
+                        <select id="assign-qa" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required></select>
                     </div>
-                    <div class="table-container">
-                        <table role="grid">
-                            <thead>
-                                <tr>
-                                    <th onclick="sortTable('projects-table', 0)">Project Name</th>
-                                    <th onclick="sortTable('projects-table', 1)">Category</th>
-                                    <th onclick="sortTable('projects-table', 2)">Type</th>
-                                    <th onclick="sortTable('projects-table', 3)">Phase</th>
-                                    <th onclick="sortTable('projects-table', 4)">KT Received</th>
-                                    <th onclick="sortTable('projects-table', 5)">Start</th>
-                                    <th onclick="sortTable('projects-table', 6)">End</th>
-                                    <th onclick="sortTable('projects-table', 7)">Status</th>
-                                    <th onclick="sortTable('projects-table', 8)">Total Bugs</th>
-                                    <th onclick="sortTable('projects-table', 9)">HTML Bugs</th>
-                                    <th onclick="sortTable('projects-table', 10)">Func Bugs</th>
-                                    <th onclick="sortTable('projects-table', 11)">QA</th>
-                                    <th>Bug Tracker</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="projects-table"></tbody>
-                        </table>
+                    <div class="form-group">
+                        <label for="project-phase" class="block text-sm font-medium mb-2">Phase</label>
+                        <select id="project-phase" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                            <option value="Unit Testing">Unit Testing</option>
+                            <option value="Integration Testing">Integration Testing</option>
+                            <option value="System Testing">System Testing</option>
+                            <option value="Regression Testing">Regression Testing</option>
+                        </select>
                     </div>
-                </div>
-
-                <!-- Approved Projects Tab -->
-                <div id="approved-tab" class="tab-pane">
-                    <h1 class="text-3xl font-bold mb-6 text-[var(--primary)]">Approved Projects</h1>
-                    <div class="card mb-4">
-                        <input type="text" id="approved-search" class="p-2 border rounded bg-[var(--dark-hover)] text-white w-full" placeholder="Search approved projects..." aria-label="Search approved projects">
+                    <div class="form-group">
+                        <label for="task-name" class="block text-sm font-medium mb-2">Task Name</label>
+                        <input type="text" id="task-name" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
                     </div>
-                    <div class="table-container">
-                        <table role="grid">
-                            <thead>
-                                <tr>
-                                    <th onclick="sortTable('approved-table', 0)">Project Name</th>
-                                    <th onclick="sortTable('approved-table', 1)">QA</th>
-                                    <th onclick="sortTable('approved-table', 2)">Approved Date</th>
-                                    <th onclick="sortTable('approved-table', 3)">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="approved-table"></tbody>
-                        </table>
+                    <div class="form-group">
+                        <label for="due-date" class="block text-sm font-medium mb-2">Due Date</label>
+                        <input type="date" id="due-date" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
                     </div>
-                </div>
-
-                <!-- Rejected Projects Tab -->
-                <div id="rejected-tab" class="tab-pane">
-                    <h1 class="text-3xl font-bold mb-6 text-[var(--primary)]">Rejected Projects</h1>
-                    <div class="card mb-4">
-                        <input type="text" id="rejected-search" class="p-2 border rounded bg-[var(--dark-hover)] text-white w-full" placeholder="Search rejected projects..." aria-label="Search rejected projects">
-                    </div>
-                    <div class="table-container">
-                        <table role="grid">
-                            <thead>
-                                <tr>
-                                    <th onclick="sortTable('rejected-table', 0)">Project Name</th>
-                                    <th onclick="sortTable('rejected-table', 1)">QA</th>
-                                    <th onclick="sortTable('rejected-table', 2)">Rejected Date</th>
-                                    <th onclick="sortTable('rejected-table', 3)">Phase</th>
-                                    <th onclick="sortTable('rejected-table', 4)">PC</th>
-                                    <th onclick="sortTable('rejected-table', 5)">Reason</th>
-                                </tr>
-                            </thead>
-                            <tbody id="rejected-table"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Activity Log Tab -->
-                <div id="activity-tab" class="tab-pane">
-                    <h1 class="text-3xl font-bold mb-6 text-[var(--primary)]">Activity Log</h1>
-                    <div class="card mb-4">
-                        <input type="text" id="activity-search" class="p-2 border rounded bg-[var(--dark-hover)] text-white w-full" placeholder="Search activity..." aria-label="Search activity log">
-                    </div>
-                    <div class="table-container">
-                        <table role="grid">
-                            <thead>
-                                <tr>
-                                    <th onclick="sortTable('activity-table', 0)">Project Name</th>
-                                    <th onclick="sortTable('activity-table', 1)">QA</th>
-                                    <th onclick="sortTable('activity-table', 2)">Activity Type</th>
-                                    <th onclick="sortTable('activity-table', 3)">Details</th>
-                                    <th onclick="sortTable('activity-table', 4)">Timestamp</th>
-                                </tr>
-                            </thead>
-                            <tbody id="activity-table"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Project Management Tab (Team Lead Only) -->
-                <div id="manage-tab" class="tab-pane">
-                    <h1 class="text-3xl font-bold mb-6 text-[var(--primary)]">Project Management</h1>
-                    <div class="card mb-6">
-                        <h3 class="text-lg font-bold mb-4">Create Project</h3>
-                        <form id="create-project-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input type="text" id="project-name" class="p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="Project Name" required aria-label="Project Name">
-                            <select id="project-category" class="p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Project Category">
-                                <option value="">Select Category</option>
-                                <option value="Web">Web</option>
-                                <option value="Mobile">Mobile</option>
-                                <option value="Hybrid">Hybrid</option>
-                            </select>
-                            <select id="project-type" class="p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Project Type">
-                                <option value="">Select Type</option>
-                                <option value="WordPress">WordPress</option>
-                                <option value="PHP">PHP</option>
-                                <option value="iOS">iOS</option>
-                                <option value="Android">Android</option>
-                            </select>
-                            <select id="project-phase" class="p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Project Phase">
-                                <option value="">Select Phase</option>
-                                <option value="HTML">HTML</option>
-                                <option value="Development">Development</option>
-                                <option value="Live">Live</option>
-                            </select>
-                            <input type="url" id="bug-tracker" class="p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="Bug Tracker Link" required aria-label="Bug Tracker Link">
-                            <input type="date" id="start-date" class="p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Start Date">
-                            <input type="date" id="end-date" class="p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="End Date">
-                            <button type="submit" class="btn-primary py-2 px-4 rounded col-span-full md:col-span-1" aria-label="Create Project">Create Project</button>
-                        </form>
-                    </div>
-                    <div class="card mb-6">
-                        <h3 class="text-lg font-bold mb-4">Assign Task to QA</h3>
-                        <form id="assign-task-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <select id="assign-project" class="p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Select Project">
-                                <option value="">Select Project</option>
-                            </select>
-                            <select id="assign-qa" class="p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Select QA">
-                                <option value="">Select QA</option>
-                            </select>
-                            <select id="project-phase" class="p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Select Phase">
-                                <option value="">Select Phase</option>
-                                <option value="HTML">HTML</option>
-                                <option value="Development">Development</option>
-                                <option value="Live">Live</option>
-                            </select>
-                            <input type="text" id="task-name" class="p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="Task Name" required aria-label="Task Name">
-                            <input type="date" id="due-date" class="p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Due Date">
-                            <button type="submit" class="btn-primary py-2 px-4 rounded col-span-full md:col-span-1" aria-label="Assign Task">Assign Task</button>
-                        </form>
-                    </div>
-                    <div class="card">
-                        <h3 class="text-lg font-bold mb-4">Generate Reports</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                            <select class="p-2 border rounded bg-[var(--dark-hover)] text-white" id="report-type" aria-label="Report Type">
-                                <option value="monthly">Monthly QA Report</option>
-                                <option value="rejected">Rejected Report</option>
-                                <option value="qa-wise">QA-Wise Report</option>
-                            </select>
-                            <input type="month" id="report-month" class="p-2 border rounded bg-[var(--dark-hover)] text-white" aria-label="Report Month">
-                            <select id="report-qa" class="p-2 border rounded bg-[var(--dark-hover)] text-white" aria-label="Select QA for Report">
-                                <option value="">All QA</option>
-                            </select>
-                            <input type="text" id="report-project" class="p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="Project (Optional)" aria-label="Project Name for Report">
-                        </div>
-                        <button class="btn-primary py-2 px-4 rounded" onclick="exportReport()" aria-label="Export Report">Export Report</button>
-                    </div>
-                </div>
-
-                <!-- User Management Tab (Team Lead Only) -->
-                <div id="users-tab" class="tab-pane">
-                    <h1 class="text-3xl font-bold mb-6 text-[var(--primary)]">User Management</h1>
-                    <div class="card mb-6">
-                        <h3 class="text-lg font-bold mb-4">Add User</h3>
-                        <form id="add-user-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input type="text" id="new-username" class="p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="Employee Code" required aria-label="Employee Code">
-                            <input type="password" id="new-password" class="p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="Password" required aria-label="Password">
-                            <input type="text" id="new-name" class="p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="Full Name" required aria-label="Full Name">
-                            <select id="new-role" class="p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Role">
-                                <option value="QA Member">QA Member</option>
-                                <option value="Team Lead">Team Lead</option>
-                            </select>
-                            <button type="submit" class="btn-primary py-2 px-4 rounded col-span-full md:col-span-1" aria-label="Add User">Add User</button>
-                        </form>
-                    </div>
-                    <div class="card">
-                        <h3 class="text-lg font-bold mb-4">Existing Users</h3>
-                        <div class="table-container">
-                            <table role="grid">
-                                <thead>
-                                    <tr>
-                                        <th>Employee Code</th>
-                                        <th>Name</th>
-                                        <th>Role</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="users-table"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Help Tab -->
-                <div id="help-tab" class="tab-pane">
-                    <h1 class="text-3xl font-bold mb-6 text-[var(--primary)]">Help & Guidelines</h1>
-                    <div class="card">
-                        <h3 class="text-lg font-bold mb-4">QA Guidelines</h3>
-                        <p class="text-[var(--secondary)] mb-4">Follow these guidelines to ensure quality testing:</p>
-                        <ul class="list-disc list-inside text-[var(--secondary)]">
-                            <li>Always perform HTML-to-UI comparison during the HTML phase.</li>
-                            <li>Log all bugs in the GitLab tracker with detailed descriptions.</li>
-                            <li>Reject projects with 3+ reopened bugs and notify the QA Lead.</li>
-                            <li>Conduct a smoke test before final approval for go-live.</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Profile Tab -->
-                <div id="profile-tab" class="tab-pane">
-                    <h1 class="text-3xl font-bold mb-6 text-[var(--primary)]">User Profile</h1>
-                    <div class="card">
-                        <h3 class="text-lg font-bold mb-4">Profile Details</h3>
-                        <form id="profile-form">
-                            <div class="mb-4">
-                                <label for="profile-username" class="block text-sm font-medium mb-2">Employee Code</label>
-                                <input type="text" id="profile-username" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" readonly aria-label="Employee Code">
-                            </div>
-                            <div class="mb-4">
-                                <label for="profile-role" class="block text-sm font-medium mb-2">Role</label>
-                                <input type="text" id="profile-role" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" readonly aria-label="Role">
-                            </div>
-                            <div class="mb-4">
-                                <label for="profile-email" class="block text-sm font-medium mb-2">Email</label>
-                                <input type="email" id="profile-email" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="Enter your email" aria-label="Email">
-                            </div>
-                            <div class="mb-4">
-                                <label for="change-password" class="block text-sm font-medium mb-2">Change Password</label>
-                                <input type="password" id="change-password" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="New Password" aria-label="New Password">
-                            </div>
-                            <div class="mb-4">
-                                <label for="theme-toggle" class="block text-sm font-medium mb-2">Theme</label>
-                                <select id="theme-toggle" class="p-2 border rounded bg-[var(--dark-hover)] text-white" aria-label="Select Theme">
-                                    <option value="dark">Dark Theme</option>
-                                    <option value="light">Light Theme</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="btn-primary py-2 px-4 rounded" aria-label="Save Profile">Save Profile</button>
-                        </form>
-                    </div>
-                </div>
+                    <button type="submit" class="btn-primary py-2 px-4 rounded">Assign Task</button>
+                </form>
             </div>
         </div>
-    </div>
 
-    <!-- Modals -->
-    <div id="edit-project-modal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-lg font-bold mb-4 text-[var(--primary)]">Edit Project</h3>
-            <form id="edit-project-form">
-                <input type="hidden" id="edit-project-id">
-                <div class="mb-4">
-                    <label for="edit-project-name" class="block text-sm font-medium mb-2">Project Name</label>
-                    <input type="text" id="edit-project-name" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Project Name">
+        <div id="project-management" class="tab-pane">
+            <h2 class="text-2xl font-bold mb-4">Project Management</h2>
+            <div class="team-lead-only mb-4">
+                <button class="btn-primary py-2 px-4 rounded" onclick="openModal('create-project-modal')">Create Project</button>
+            </div>
+            <input type="text" id="project-search" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white mb-4" placeholder="Search projects...">
+            <table>
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('projects-table', 0)">Project Name</th>
+                        <th onclick="sortTable('projects-table', 1)">Category</th>
+                        <th onclick="sortTable('projects-table', 2)">Type</th>
+                        <th onclick="sortTable('projects-table', 3)">Phase</th>
+                        <th onclick="sortTable('projects-table', 4)">KT</th>
+                        <th onclick="sortTable('projects-table', 5)">Start Date</th>
+                        <th onclick="sortTable('projects-table', 6)">End Date</th>
+                        <th onclick="sortTable('projects-table', 7)">Status</th>
+                        <th onclick="sortTable('projects-table', 8)">Total Bugs</th>
+                        <th onclick="sortTable('projects-table', 9)">HTML Bugs</th>
+                        <th onclick="sortTable('projects-table', 10)">Functional Bugs</th>
+                        <th onclick="sortTable('projects-table', 11)">Assigned QA</th>
+                        <th>Bug Tracker</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="projects-table"></tbody>
+            </table>
+            <div class="team-lead-only">
+                <h3 class="text-xl font-semibold mb-4">Export Report</h3>
+                <form class="space-y-4">
+                    <div class="form-group">
+                        <label for="report-type" class="block text-sm font-medium mb-2">Report Type</label>
+                        <select id="report-type" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white">
+                            <option value="monthly">Monthly Report</option>
+                            <option value="rejected">Rejected Projects</option>
+                            <option value="qa-wise">QA-wise Report</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="report-month" class="block text-sm font-medium mb-2">Month</label>
+                        <input type="month" id="report-month" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white">
+                    </div>
+                    <div class="form-group">
+                        <label for="report-qa" class="block text-sm font-medium mb-2">QA</label>
+                        <select id="report-qa" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="report-project" class="block text-sm font-medium mb-2">Project Filter</label>
+                        <input type="text" id="report-project" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="Filter by project name">
+                    </div>
+                    <button type="button" class="btn-primary py-2 px-4 rounded" onclick="exportReport()">Export Report</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="approved-projects" class="tab-pane">
+            <h2 class="text-2xl font-bold mb-4">Approved Projects</h2>
+            <input type="text" id="approved-search" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white mb-4" placeholder="Search approved projects...">
+            <table>
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('approved-table', 0)">Project Name</th>
+                        <th onclick="sortTable('approved-table', 1)">QA</th>
+                        <th onclick="sortTable('approved-table', 2)">Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="approved-table"></tbody>
+            </table>
+        </div>
+
+        <div id="rejected-projects" class="tab-pane">
+            <h2 class="text-2xl font-bold mb-4">Rejected Projects</h2>
+            <input type="text" id="rejected-search" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white mb-4" placeholder="Search rejected projects...">
+            <table>
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('rejected-table', 0)">Project Name</th>
+                        <th onclick="sortTable('rejected-table', 1)">QA</th>
+                        <th onclick="sortTable('rejected-table', 2)">Date</th>
+                        <th onclick="sortTable('rejected-table', 3)">Phase</th>
+                        <th onclick="sortTable('rejected-table', 4)">PC</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody id="rejected-table"></tbody>
+            </table>
+        </div>
+
+        <div id="activity-log" class="tab-pane">
+            <h2 class="text-2xl font-bold mb-4">Activity Log</h2>
+            <input type="text" id="activity-search" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white mb-4" placeholder="Search activity log...">
+            <table>
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('activity-table', 0)">Project</th>
+                        <th onclick="sortTable('activity-table', 1)">QA</th>
+                        <th onclick="sortTable('activity-table', 2)">Type</th>
+                        <th onclick="sortTable('activity-table', 3)">Details</th>
+                        <th onclick="sortTable('activity-table', 4)">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="activity-table"></tbody>
+            </table>
+        </div>
+
+        <div id="profile" class="tab-pane">
+            <h2 class="text-2xl font-bold mb-4">Profile</h2>
+            <form id="profile-form" class="space-y-4">
+                <div class="form-group">
+                    <label for="profile-username" class="block text-sm font-medium mb-2">Username</label>
+                    <input type="text" id="profile-username" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" readonly>
                 </div>
-                <div class="mb-4">
-                    <label for="edit-project-category" class="block text-sm font-medium mb-2">Category</label>
-                    <select id="edit-project-category" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Project Category">
-                        <option value="Web">Web</option>
-                        <option value="Mobile">Mobile</option>
-                        <option value="Hybrid">Hybrid</option>
-                    </select>
+                <div class="form-group">
+                    <label for="profile-role" class="block text-sm font-medium mb-2">Role</label>
+                    <input type="text" id="profile-role" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" readonly>
                 </div>
-                <div class="mb-4">
-                    <label for="edit-project-type" class="block text-sm font-medium mb-2">Type</label>
-                    <select id="edit-project-type" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Project Type">
-                        <option value="WordPress">WordPress</option>
-                        <option value="PHP">PHP</option>
-                        <option value="iOS">iOS</option>
-                        <option value="Android">Android</option>
-                    </select>
+                <div class="form-group">
+                    <label for="profile-email" class="block text-sm font-medium mb-2">Email</label>
+                    <input type="email" id="profile-email" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white">
                 </div>
-                <div class="mb-4">
-                    <label for="edit-project-phase" class="block text-sm font-medium mb-2">Phase</label>
-                    <select id="edit-project-phase" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Project Phase">
-                        <option value="HTML">HTML</option>
-                        <option value="Development">Development</option>
-                        <option value="Live">Live</option>
-                    </select>
+                <div class="form-group">
+                    <label for="change-password" class="block text-sm font-medium mb-2">Change Password</label>
+                    <input type="password" id="change-password" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="New password">
                 </div>
-                <div class="mb-4">
-                    <label for="edit-project-kt" class="block text-sm font-medium mb-2">KT Received</label>
-                    <select id="edit-project-kt" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="KT Received">
-                        <option value="Yes">Yes</option>
-                        <option value="No">No</option>
-                    </select>
-                </div>
-                <div class="mb-4">
-                    <label for="edit-project-start" class="block text-sm font-medium mb-2">Start Date</label>
-                    <input type="date" id="edit-project-start" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Start Date">
-                </div>
-                <div class="mb-4">
-                    <label for="edit-project-end" class="block text-sm font-medium mb-2">End Date</label>
-                    <input type="date" id="edit-project-end" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="End Date">
-                </div>
-                <div class="mb-4">
-                    <label for="edit-project-bug-tracker" class="block text-sm font-medium mb-2">Bug Tracker Link</label>
-                    <input type="url" id="edit-project-bug-tracker" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Bug Tracker Link">
-                </div>
-                <div class="mb-4">
-                    <label for="edit-project-qa" class="block text-sm font-medium mb-2">Assigned QA</label>
-                    <select id="edit-project-qa" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Assigned QA">
-                        <option value="">Not Assigned</option>
-                    </select>
-                </div>
-                <div class="flex justify-end gap-2">
-                    <button type="button" onclick="closeModal('edit-project-modal')" class="p-2 bg-[var(--secondary)] text-white rounded" aria-label="Cancel">Cancel</button>
-                    <button type="submit" class="btn-primary py-2 px-4 rounded" aria-label="Save Project">Save</button>
-                </div>
+                <button type="submit" class="btn-primary py-2 px-4 rounded">Update Profile</button>
             </form>
         </div>
-    </div>
 
-    <div id="report-bug-modal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-lg font-bold mb-4 text-[var(--primary)]">Report Bug</h3>
-            <form id="report-bug-form">
-                <input type="hidden" id="bug-project-id">
-                <div class="mb-4">
-                    <label for="bug-type" class="block text-sm font-medium mb-2">Bug Type</label>
-                    <select id="bug-type" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Bug Type">
-                        <option value="HTML">HTML Bug</option>
-                        <option value="Functional">Functional Bug</option>
+        <div id="user-management" class="tab-pane team-lead-only">
+            <h2 class="text-2xl font-bold mb-4">User Management</h2>
+            <form id="add-user-form" class="space-y-4 mb-4">
+                <div class="form-group">
+                    <label for="new-username" class="block text-sm font-medium mb-2">Email</label>
+                    <input type="email" id="new-username" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="e.g., newuser@intersmart.in" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password" class="block text-sm font-medium mb-2">Password</label>
+                    <input type="password" id="new-password" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-name" class="block text-sm font-medium mb-2">Name</label>
+                    <input type="text" id="new-name" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-role" class="block text-sm font-medium mb-2">Role</label>
+                    <select id="new-role" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                        <option value="Team Lead">Team Lead</option>
+                        <option value="QA Member">QA Member</option>
                     </select>
                 </div>
-                <div class="mb-4">
-                    <label for="bug-description" class="block text-sm font-medium mb-2">Description</label>
-                    <textarea id="bug-description" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Bug Description"></textarea>
-                </div>
-                <div class="flex justify-end gap-2">
-                    <button type="button" onclick="closeModal('report-bug-modal')" class="p-2 bg-[var(--secondary)] text-white rounded" aria-label="Cancel">Cancel</button>
-                    <button type="submit" class="btn-primary py-2 px-4 rounded" aria-label="Report Bug">Report Bug</button>
-                </div>
+                <button type="submit" class="btn-primary py-2 px-4 rounded">Add User</button>
             </form>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="users-table"></tbody>
+            </table>
         </div>
+
+        <div id="create-project-modal" class="modal">
+            <div class="modal-content">
+                <h2>Create Project</h2>
+                <form id="create-project-form" class="space-y-4">
+                    <div class="form-group">
+                        <label for="project-name" class="block text-sm font-medium mb-2">Project Name</label>
+                        <input type="text" id="project-name" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-category" class="block text-sm font-medium mb-2">Category</label>
+                        <select id="project-category" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                            <option value="Web">Web</option>
+                            <option value="Mobile">Mobile</option>
+                            <option value="API">API</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-type" class="block text-sm font-medium mb-2">Type</label>
+                        <select id="project-type" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                            <option value="Internal">Internal</option>
+                            <option value="External">External</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-phase" class="block text-sm font-medium mb-2">Phase</label>
+                        <select id="project-phase" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                            <option value="Unit Testing">Unit Testing</option>
+                            <option value="Integration Testing">Integration Testing</option>
+                            <option value="System Testing">System Testing</option>
+                            <option value="Regression Testing">Regression Testing</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="bug-tracker" class="block text-sm font-medium mb-2">Bug Tracker URL</label>
+                        <input type="url" id="bug-tracker" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white">
+                    </div>
+                    <div class="form-group">
+                        <label for="start-date" class="block text-sm font-medium mb-2">Start Date</label>
+                        <input type="date" id="start-date" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="end-date" class="block text-sm font-medium mb-2">End Date</label>
+                        <input type="date" id="end-date" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" onclick="closeModal('create-project-modal')" class="p-2 bg-[var(--dark-hover)] text-white rounded">Cancel</button>
+                        <button type="submit" class="btn-primary py-2 px-4 rounded">Create Project</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="edit-project-modal" class="modal">
+            <div class="modal-content">
+                <h2>Edit Project</h2>
+                <form id="edit-project-form" class="space-y-4">
+                    <input type="hidden" id="edit-project-id">
+                    <div class="form-group">
+                        <label for="edit-project-name" class="block text-sm font-medium mb-2">Project Name</label>
+                        <input type="text" id="edit-project-name" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-project-category" class="block text-sm font-medium mb-2">Category</label>
+                        <select id="edit-project-category" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                            <option value="Web">Web</option>
+                            <option value="Mobile">Mobile</option>
+                            <option value="API">API</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-project-type" class="block text-sm font-medium mb-2">Type</label>
+                        <select id="edit-project-type" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                            <option value="Internal">Internal</option>
+                            <option value="External">External</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-project-phase" class="block text-sm font-medium mb-2">Phase</label>
+                        <select id="edit-project-phase" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                            <option value="Unit Testing">Unit Testing</option>
+                            <option value="Integration Testing">Integration Testing</option>
+                            <option value="System Testing">System Testing</option>
+                            <option value="Regression Testing">Regression Testing</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-project-kt" class="block text-sm font-medium mb-2">KT</label>
+                        <select id="edit-project-kt" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-project-start" class="block text-sm font-medium mb-2">Start Date</label>
+                        <input type="date" id="edit-project-start" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-project-end" class="block text-sm font-medium mb-2">End Date</label>
+                        <input type="date" id="edit-project-end" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-project-bug-tracker" class="block text-sm font-medium mb-2">Bug Tracker URL</label>
+                        <input type="url" id="edit-project-bug-tracker" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-project-qa" class="block text-sm font-medium mb-2">Assigned QA</label>
+                        <select id="edit-project-qa" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white"></select>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" onclick="closeModal('edit-project-modal')" class="p-2 bg-[var(--dark-hover)] text-white rounded">Cancel</button>
+                        <button type="submit" class="btn-primary py-2 px-4 rounded">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="report-bug-modal" class="modal">
+            <div class="modal-content">
+                <h2>Report Bug</h2>
+                <form id="report-bug-form" class="space-y-4">
+                    <input type="hidden" id="bug-project-id">
+                    <div class="form-group">
+                        <label for="bug-type" class="block text-sm font-medium mb-2">Bug Type</label>
+                        <select id="bug-type" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
+                            <option value="HTML">HTML</option>
+                            <option value="Functional">Functional</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="bug-description" class="block text-sm font-medium mb-2">Description</label>
+                        <textarea id="bug-description" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Bug Description"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" onclick="closeModal('report-bug-modal')" class="p-2 bg-[var(--dark-hover)] text-white rounded" aria-label="Cancel">Cancel</button>
+                        <button type="submit" class="btn-primary py-2 px-4 rounded" aria-label="Report Bug">Report Bug</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="notification" class="notification"></div>
     </div>
+
+    <!-- Papa Parse for CSV Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
 
     <script>
-        let credentials = JSON.parse(localStorage.getItem('credentials')) || {
-            'abhiram@intersmart.in': { password: 'lead123', role: 'Team Lead', name: 'Abhiram P Mohan' },
-            'Minnu@intersmart.in': { password: 'qa1234', role: 'QA Member', name: 'Minnu Sebastian' },
-            'Aswathi@intersmart.in': { password: 'qa4564', role: 'QA Member', name: 'Aswathi M Asok' }
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBq2gKRE6O5v2LB1bGmj6z4VyH_sc6WsVA",
+            authDomain: "qa-team-dashboard-62687.firebaseapp.com",
+            projectId: "qa-team-dashboard-62687",
+            storageBucket: "qa-team-dashboard-62687.firebasestorage.app",
+            messagingSenderId: "245214914125",
+            appId: "1:245214914125:web:b36a6cdecc1c29a8e31e04",
+            measurementId: "G-19K1YSBXH0"
         };
-        let currentUser = null;
-        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-        let projects = JSON.parse(localStorage.getItem('projects')) || [];
-        let approvedProjects = JSON.parse(localStorage.getItem('approvedProjects')) || [];
-        let rejectedProjects = JSON.parse(localStorage.getItem('rejectedProjects')) || [];
-        let activityLog = JSON.parse(localStorage.getItem('activityLog')) || [];
-        let userProfiles = JSON.parse(localStorage.getItem('userProfiles')) || {};
 
-        // Load Theme
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null;
+
+        // Load Theme on Page Load
         document.addEventListener('DOMContentLoaded', () => {
             const savedTheme = localStorage.getItem('theme') || 'dark';
             document.body.classList.toggle('light-theme', savedTheme === 'light');
             document.getElementById('theme-toggle').value = savedTheme;
             populateQADropdowns();
             renderUsersTable();
+
+            // Activate the first tab by default
+            document.querySelector('.nav-link').classList.add('active');
         });
 
-        // Login
+        // Login Handler with Enhanced Debugging
         document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            if (credentials[username] && credentials[username].password === password) {
-                currentUser = { username, ...credentials[username] };
-                document.getElementById('login-page').classList.add('hidden');
-                document.getElementById('dashboard').classList.remove('hidden');
-                document.getElementById('user-name').textContent = currentUser.name;
-                if (currentUser.role === 'Team Lead') {
-                    document.querySelectorAll('.team-lead-only').forEach(el => el.classList.remove('hidden'));
-                }
-                loadDashboardData();
-            } else {
-                showNotification('Invalid credentials');
+            console.log('Attempting login with:', { username, password });
+
+            auth.signInWithEmailAndPassword(username, password)
+                .then(async (userCredential) => {
+                    console.log('Firebase Authentication successful:', userCredential.user.email);
+                    const userId = username.split('@')[0];
+                    console.log('Fetching user data from Firestore for ID:', userId);
+
+                    const userDoc = await db.collection('users').doc(userId).get();
+                    if (!userDoc.exists) {
+                        console.error('User data not found in Firestore for ID:', userId);
+                        showNotification('User data not found in database. Please contact your admin to add your user profile.');
+                        auth.signOut();
+                        return;
+                    }
+
+                    console.log('User data found in Firestore:', userDoc.data());
+                    currentUser = { username, ...userDoc.data() };
+                    console.log('Current user set:', currentUser);
+
+                    document.getElementById('login-page').classList.add('hidden');
+                    document.getElementById('dashboard').classList.remove('hidden');
+                    document.getElementById('user-name').textContent = currentUser.name;
+
+                    if (currentUser.role === 'Team Lead') {
+                        document.querySelectorAll('.team-lead-only').forEach(el => el.classList.remove('hidden'));
+                    }
+
+                    loadDashboardData();
+                })
+                .catch((error) => {
+                    console.error('Login error:', error.code, error.message);
+                    if (error.code === 'auth/wrong-password') {
+                        showNotification('Incorrect password. Please try again or use "Forgot Password".');
+                    } else if (error.code === 'auth/user-not-found') {
+                        showNotification('User not found. Please check your email or contact your admin.');
+                    } else if (error.code === 'auth/invalid-email') {
+                        showNotification('Invalid email format. Please enter a valid email address.');
+                    } else {
+                        showNotification('Login failed: ' + error.message);
+                    }
+                });
+        });
+
+        // Forgot Password Handler
+        document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            const email = prompt('Please enter your email address to reset your password:');
+            if (email) {
+                auth.sendPasswordResetEmail(email)
+                    .then(() => {
+                        showNotification('Password reset email sent! Check your inbox (and spam/junk folder).');
+                    })
+                    .catch((error) => {
+                        console.error('Password reset error:', error.code, error.message);
+                        if (error.code === 'auth/user-not-found') {
+                            showNotification('No user found with this email. Please check your email or contact your admin.');
+                        } else if (error.code === 'auth/invalid-email') {
+                            showNotification('Invalid email format. Please enter a valid email address.');
+                        } else {
+                            showNotification('Error sending password reset email: ' + error.message);
+                        }
+                    });
             }
         });
 
-        // Logout
+        // Logout Handler
         function logout() {
-            currentUser = null;
-            document.getElementById('dashboard').classList.add('hidden');
-            document.getElementById('login-page').classList.remove('hidden');
+            auth.signOut().then(() => {
+                currentUser = null;
+                document.getElementById('dashboard').classList.add('hidden');
+                document.getElementById('login-page').classList.remove('hidden');
+            }).catch((error) => {
+                showNotification('Logout failed: ' + error.message);
+            });
         }
 
         // Tab Navigation
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
                 document.querySelectorAll('.tab-pane').forEach(tab => tab.classList.remove('active'));
                 const targetTab = document.getElementById(link.getAttribute('href').substring(1));
                 targetTab.classList.add('active');
@@ -700,7 +1016,7 @@
             const notification = document.getElementById('notification');
             notification.textContent = message;
             notification.style.display = 'block';
-            setTimeout(() => notification.style.display = 'none', 3000);
+            setTimeout(() => notification.style.display = 'none', 5000); // Increased to 5 seconds for better visibility
         }
 
         // Modal Handling
@@ -715,19 +1031,35 @@
         }
 
         // Load Dashboard Data
-        function loadDashboardData() {
-            renderStandupTasksTable();
-            renderProjectsTable(projects);
-            renderApprovedTable(approvedProjects);
-            renderRejectedTable(rejectedProjects);
-            renderActivityTable(activityLog);
-            renderProfile();
-            populateProjectDropdown();
-            renderUsersTable();
+        async function loadDashboardData() {
+            try {
+                const tasksSnap = await db.collection('tasks').where('assignee', '==', currentUser.username).get();
+                const tasks = tasksSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const projectsSnap = await db.collection('projects').get();
+                const projects = projectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const approvedSnap = await db.collection('approvedProjects').get();
+                const approvedProjects = approvedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const rejectedSnap = await db.collection('rejectedProjects').get();
+                const rejectedProjects = rejectedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const activitySnap = await db.collection('activityLog').get();
+                const activityLog = activitySnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                renderStandupTasksTable(tasks);
+                renderProjectsTable(projects);
+                renderApprovedTable(approvedProjects);
+                renderRejectedTable(rejectedProjects);
+                renderActivityTable(activityLog);
+                renderProfile();
+                populateProjectDropdown(projects);
+                renderUsersTable();
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showNotification('Failed to load dashboard data: ' + error.message);
+            }
         }
 
         // Render Daily Standup Form as a Table
-        function renderStandupTasksTable() {
+        function renderStandupTasksTable(tasks) {
             const table = document.getElementById('standup-tasks-table');
             table.innerHTML = tasks
                 .filter(t => t.assignee === currentUser.username)
@@ -737,10 +1069,10 @@
                     const isDueSoon = dueDate - today < 24 * 60 * 60 * 1000 && dueDate > today;
                     return `
                         <tr>
-                            <td>${t.name}</td>
-                            <td>${t.projectName}</td>
-                            <td>${t.assignedDate}</td>
-                            <td>${t.dueDate} ${isDueSoon ? '<span class="alert-due">Due Soon</span>' : ''}</td>
+                            <td>${t.name || 'N/A'}</td>
+                            <td>${t.projectName || 'N/A'}</td>
+                            <td>${t.assignedDate || 'N/A'}</td>
+                            <td>${t.dueDate || 'N/A'} ${isDueSoon ? '<span class="alert-due">Due Soon</span>' : ''}</td>
                             <td>${t.status === 'inprogress' ? 'In Progress' : 'Completed'}</td>
                             <td>
                                 ${t.status === 'inprogress' ? `
@@ -762,29 +1094,34 @@
         }
 
         // Mark Task as Completed
-        function markTaskCompleted(taskId) {
-            const task = tasks.find(t => t.id === taskId);
-            if (task) {
-                task.status = 'completed';
-                localStorage.setItem('tasks', JSON.stringify(tasks));
+        async function markTaskCompleted(taskId) {
+            try {
+                await db.collection('tasks').doc(taskId).update({ status: 'completed' });
+                const taskSnap = await db.collection('tasks').doc(taskId).get();
+                const task = taskSnap.data();
                 logActivity(task.projectId, currentUser.username, 'Task Completed', `Marked "${task.name}" as completed`);
-                renderStandupTasksTable();
+                loadDashboardData();
                 showNotification(`Task "${task.name}" marked as completed`);
+            } catch (error) {
+                showNotification('Failed to mark task as completed: ' + error.message);
             }
         }
 
         // Delete Task
-        function deleteTask(taskId) {
+        async function deleteTask(taskId) {
             if (confirm('Are you sure you want to delete this task?')) {
-                tasks = tasks.filter(t => t.id !== taskId);
-                localStorage.setItem('tasks', JSON.stringify(tasks));
-                renderStandupTasksTable();
-                showNotification('Task deleted successfully');
+                try {
+                    await db.collection('tasks').doc(taskId).delete();
+                    loadDashboardData();
+                    showNotification('Task deleted successfully');
+                } catch (error) {
+                    showNotification('Failed to delete task: ' + error.message);
+                }
             }
         }
 
         // Assign Task
-        document.getElementById('assign-task-form').addEventListener('submit', (e) => {
+        document.getElementById('assign-task-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (currentUser.role !== 'Team Lead') return;
             const projectId = document.getElementById('assign-project').value;
@@ -793,110 +1130,126 @@
             const taskName = document.getElementById('task-name').value;
             const dueDate = document.getElementById('due-date').value;
 
-            const project = projects.find(p => p.id === projectId);
-            if (project) {
-                const newTask = {
-                    id: Date.now().toString(),
-                    projectId: projectId,
-                    projectName: project.name,
-                    name: taskName,
-                    assignee: qa,
-                    assignedDate: new Date().toISOString().split('T')[0],
-                    dueDate: dueDate,
-                    status: 'inprogress'
-                };
-                tasks.push(newTask);
-                project.assignedQA = qa;
-                project.phase = phase;
-                localStorage.setItem('tasks', JSON.stringify(tasks));
-                localStorage.setItem('projects', JSON.stringify(projects));
-                logActivity(projectId, qa, 'Task Assigned', `Assigned "${taskName}" to ${credentials[qa].name}`);
-                renderStandupTasksTable();
-                renderProjectsTable(projects);
-                showNotification(`Task "${taskName}" assigned to ${credentials[qa].name}`);
-                e.target.reset();
+            try {
+                const projectSnap = await db.collection('projects').doc(projectId).get();
+                const project = projectSnap.data();
+                if (project) {
+                    const newTask = {
+                        projectId: projectId,
+                        projectName: project.name,
+                        name: taskName,
+                        assignee: qa,
+                        assignedDate: new Date().toISOString().split('T')[0],
+                        dueDate: dueDate,
+                        status: 'inprogress',
+                        alertSent: false
+                    };
+                    await db.collection('tasks').add(newTask);
+                    await db.collection('projects').doc(projectId).update({ assignedQA: qa, phase });
+                    logActivity(projectId, qa, 'Task Assigned', `Assigned "${taskName}" to ${qa}`);
+                    loadDashboardData();
+                    showNotification(`Task "${taskName}" assigned to ${qa}`);
+                    e.target.reset();
+                } else {
+                    showNotification('Project not found');
+                }
+            } catch (error) {
+                showNotification('Failed to assign task: ' + error.message);
             }
         });
 
         // Projects Table
-        function renderProjectsTable(data) {
-            const table = document.getElementById('projects-table');
-            table.innerHTML = data.map(p => `
-                <tr>
-                    <td class="editable" onclick="editProject('${p.id}')">${p.name}</td>
-                    <td>${p.category}</td>
-                    <td>${p.type}</td>
-                    <td>${p.phase}</td>
-                    <td>${p.kt}</td>
-                    <td>${p.start}</td>
-                    <td>${p.end}</td>
-                    <td>${p.status}</td>
-                    <td>${p.bugs}</td>
-                    <td>${p.htmlBugs}</td>
-                    <td>${p.funcBugs}</td>
-                    <td>${credentials[p.assignedQA]?.name || 'Not Assigned'}</td>
-                    <td><a href="${p.bugTracker || '#'}" target="_blank" aria-label="View Bug Tracker">${p.bugTracker ? 'View' : 'N/A'}</a></td>
-                    <td>
-                        <button class="text-blue-400 text-sm mr-2 tooltip" onclick="openReportBugModal('${p.id}')" aria-label="Report a bug">
-                            Report Bug
-                            <span class="tooltiptext">Report a bug for this project</span>
-                        </button>
-                        ${currentUser.role === 'Team Lead' ? `
-                            <button class="text-green-400 text-sm mr-2 tooltip" onclick="approveProject('${p.id}')" aria-label="Approve project">
-                                Approve
-                                <span class="tooltiptext">Approve this project</span>
+        async function renderProjectsTable(projects) {
+            try {
+                const table = document.getElementById('projects-table');
+                const usersSnap = await db.collection('users').get();
+                const users = Object.fromEntries(usersSnap.docs.map(doc => [doc.id, doc.data()]));
+                table.innerHTML = projects.map(p => `
+                    <tr>
+                        <td class="editable" onclick="editProject('${p.id}')">${p.name || 'N/A'}</td>
+                        <td>${p.category || 'N/A'}</td>
+                        <td>${p.type || 'N/A'}</td>
+                        <td>${p.phase || 'N/A'}</td>
+                        <td>${p.kt || 'N/A'}</td>
+                        <td>${p.start || 'N/A'}</td>
+                        <td>${p.end || 'N/A'}</td>
+                        <td>${p.status || 'N/A'}</td>
+                        <td>${p.bugs || 0}</td>
+                        <td>${p.htmlBugs || 0}</td>
+                        <td>${p.funcBugs || 0}</td>
+                        <td>${users[p.assignedQA]?.name || 'Not Assigned'}</td>
+                        <td><a href="${p.bugTracker || '#'}" target="_blank" aria-label="View Bug Tracker">${p.bugTracker ? 'View' : 'N/A'}</a></td>
+                        <td>
+                            <button class="text-blue-400 text-sm mr-2 tooltip" onclick="openReportBugModal('${p.id}')" aria-label="Report a bug">
+                                Report Bug
+                                <span class="tooltiptext">Report a bug for this project</span>
                             </button>
-                            <button class="text-red-400 text-sm mr-2 tooltip" onclick="rejectProject('${p.id}')" aria-label="Reject project">
-                                Reject
-                                <span class="tooltiptext">Reject this project</span>
-                            </button>
-                            <button class="text-red-400 text-sm tooltip" onclick="deleteProject('${p.id}')" aria-label="Delete project">
-                                Delete
-                                <span class="tooltiptext">Delete this project</span>
-                            </button>
-                        ` : ''}
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function editProject(projectId) {
-            if (currentUser.role !== 'Team Lead') return;
-            const project = projects.find(p => p.id === projectId);
-            if (project) {
-                document.getElementById('edit-project-id').value = project.id;
-                document.getElementById('edit-project-name').value = project.name;
-                document.getElementById('edit-project-category').value = project.category;
-                document.getElementById('edit-project-type').value = project.type;
-                document.getElementById('edit-project-phase').value = project.phase;
-                document.getElementById('edit-project-kt').value = project.kt;
-                document.getElementById('edit-project-start').value = project.start;
-                document.getElementById('edit-project-end').value = project.end;
-                document.getElementById('edit-project-bug-tracker').value = project.bugTracker;
-                document.getElementById('edit-project-qa').value = project.assignedQA || '';
-                openModal('edit-project-modal');
+                            ${currentUser.role === 'Team Lead' ? `
+                                <button class="text-green-400 text-sm mr-2 tooltip" onclick="approveProject('${p.id}')" aria-label="Approve project">
+                                    Approve
+                                    <span class="tooltiptext">Approve this project</span>
+                                </button>
+                                <button class="text-red-400 text-sm mr-2 tooltip" onclick="rejectProject('${p.id}')" aria-label="Reject project">
+                                    Reject
+                                    <span class="tooltiptext">Reject this project</span>
+                                </button>
+                                <button class="text-red-400 text-sm tooltip" onclick="deleteProject('${p.id}')" aria-label="Delete project">
+                                    Delete
+                                    <span class="tooltiptext">Delete this project</span>
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                showNotification('Failed to load projects table: ' + error.message);
             }
         }
 
-        document.getElementById('edit-project-form').addEventListener('submit', (e) => {
+        async function editProject(projectId) {
+            if (currentUser.role !== 'Team Lead') return;
+            try {
+                const projectSnap = await db.collection('projects').doc(projectId).get();
+                const project = projectSnap.data();
+                if (project) {
+                    document.getElementById('edit-project-id').value = projectId;
+                    document.getElementById('edit-project-name').value = project.name;
+                    document.getElementById('edit-project-category').value = project.category;
+                    document.getElementById('edit-project-type').value = project.type;
+                    document.getElementById('edit-project-phase').value = project.phase;
+                    document.getElementById('edit-project-kt').value = project.kt;
+                    document.getElementById('edit-project-start').value = project.start;
+                    document.getElementById('edit-project-end').value = project.end;
+                    document.getElementById('edit-project-bug-tracker').value = project.bugTracker;
+                    document.getElementById('edit-project-qa').value = project.assignedQA || '';
+                    openModal('edit-project-modal');
+                }
+            } catch (error) {
+                showNotification('Failed to load project for editing: ' + error.message);
+            }
+        }
+
+        document.getElementById('edit-project-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const projectId = document.getElementById('edit-project-id').value;
-            const project = projects.find(p => p.id === projectId);
-            if (project) {
-                project.name = document.getElementById('edit-project-name').value;
-                project.category = document.getElementById('edit-project-category').value;
-                project.type = document.getElementById('edit-project-type').value;
-                project.phase = document.getElementById('edit-project-phase').value;
-                project.kt = document.getElementById('edit-project-kt').value;
-                project.start = document.getElementById('edit-project-start').value;
-                project.end = document.getElementById('edit-project-end').value;
-                project.bugTracker = document.getElementById('edit-project-bug-tracker').value;
-                project.assignedQA = document.getElementById('edit-project-qa').value;
-                localStorage.setItem('projects', JSON.stringify(projects));
+            try {
+                await db.collection('projects').doc(projectId).update({
+                    name: document.getElementById('edit-project-name').value,
+                    category: document.getElementById('edit-project-category').value,
+                    type: document.getElementById('edit-project-type').value,
+                    phase: document.getElementById('edit-project-phase').value,
+                    kt: document.getElementById('edit-project-kt').value,
+                    start: document.getElementById('edit-project-start').value,
+                    end: document.getElementById('edit-project-end').value,
+                    bugTracker: document.getElementById('edit-project-bug-tracker').value,
+                    assignedQA: document.getElementById('edit-project-qa').value
+                });
                 logActivity(projectId, currentUser.username, 'Project Updated', `Edited project details`);
-                renderProjectsTable(projects);
+                loadDashboardData();
                 closeModal('edit-project-modal');
                 showNotification('Project updated successfully');
+            } catch (error) {
+                showNotification('Failed to update project: ' + error.message);
             }
         });
 
@@ -906,185 +1259,249 @@
             openModal('report-bug-modal');
         }
 
-        document.getElementById('report-bug-form').addEventListener('submit', (e) => {
+        document.getElementById('report-bug-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const projectId = document.getElementById('bug-project-id').value;
             const bugType = document.getElementById('bug-type').value;
             const description = document.getElementById('bug-description').value;
 
-            const project = projects.find(p => p.id === projectId);
-            if (project) {
-                project.bugs = (project.bugs || 0) + 1;
-                if (bugType === 'HTML') project.htmlBugs = (project.htmlBugs || 0) + 1;
-                else project.funcBugs = (project.funcBugs || 0) + 1;
-                project.status = 'Awaiting Fixes';
-                localStorage.setItem('projects', JSON.stringify(projects));
-                logActivity(projectId, currentUser.username, 'Bug Reported', `${bugType} bug: ${description}`);
-                renderProjectsTable(projects);
-                closeModal('report-bug-modal');
-                showNotification(`Bug reported for ${project.name}`);
+            try {
+                const projectRef = db.collection('projects').doc(projectId);
+                const projectSnap = await projectRef.get();
+                const project = projectSnap.data();
+                if (project) {
+                    const updates = {
+                        bugs: (project.bugs || 0) + 1,
+                        status: 'Awaiting Fixes'
+                    };
+                    if (bugType === 'HTML') {
+                        updates.htmlBugs = (project.htmlBugs || 0) + 1;
+                    } else {
+                        updates.funcBugs = (project.funcBugs || 0) + 1;
+                    }
+                    await projectRef.update(updates);
+                    logActivity(projectId, currentUser.username, 'Bug Reported', `${bugType} bug: ${description}`);
+                    loadDashboardData();
+                    closeModal('report-bug-modal');
+                    showNotification(`Bug reported for ${project.name}`);
+                }
+            } catch (error) {
+                showNotification('Failed to report bug: ' + error.message);
             }
         });
 
         // Approve/Reject Project
-        function approveProject(projectId) {
+        async function approveProject(projectId) {
             if (currentUser.role !== 'Team Lead') return;
-            const project = projects.find(p => p.id === projectId);
-            if (project) {
-                approvedProjects.push({
-                    id: Date.now().toString(),
-                    projectId: projectId,
-                    name: project.name,
-                    qa: project.assignedQA || 'Not Assigned',
-                    date: new Date().toISOString().split('T')[0]
-                });
-                projects = projects.filter(p => p.id !== projectId);
-                localStorage.setItem('projects', JSON.stringify(projects));
-                localStorage.setItem('approvedProjects', JSON.stringify(approvedProjects));
-                logActivity(projectId, currentUser.username, 'Project Approved', `Approved for live`);
-                renderProjectsTable(projects);
-                renderApprovedTable(approvedProjects);
-                showNotification(`Project ${project.name} approved`);
+            try {
+                const projectSnap = await db.collection('projects').doc(projectId).get();
+                const project = projectSnap.data();
+                if (project) {
+                    await db.collection('approvedProjects').add({
+                        projectId,
+                        name: project.name,
+                        qa: project.assignedQA || 'Not Assigned',
+                        date: new Date().toISOString().split('T')[0]
+                    });
+                    await db.collection('projects').doc(projectId).delete();
+                    logActivity(projectId, currentUser.username, 'Project Approved', `Approved for live`);
+                    loadDashboardData();
+                    showNotification(`Project ${project.name} approved`);
+                }
+            } catch (error) {
+                showNotification('Failed to approve project: ' + error.message);
             }
         }
 
-        function rejectProject(projectId) {
+        async function rejectProject(projectId) {
             if (currentUser.role !== 'Team Lead') return;
-            const project = projects.find(p => p.id === projectId);
-            if (project) {
-                const reason = prompt('Enter reason for rejection:');
-                if (reason) {
-                    rejectedProjects.push({
-                        id: Date.now().toString(),
-                        projectId: projectId,
-                        name: project.name,
-                        qa: project.assignedQA || 'Not Assigned',
-                        date: new Date().toISOString().split('T')[0],
-                        phase: project.phase,
-                        pc: 'Bindhu', // Placeholder
-                        reason: reason
-                    });
-                    projects = projects.filter(p => p.id !== projectId);
-                    localStorage.setItem('projects', JSON.stringify(projects));
-                    localStorage.setItem('rejectedProjects', JSON.stringify(rejectedProjects));
-                    logActivity(projectId, currentUser.username, 'Project Rejected', `Reason: ${reason}`);
-                    renderProjectsTable(projects);
-                    renderRejectedTable(rejectedProjects);
-                    showNotification(`Project ${project.name} rejected`);
+            try {
+                const projectSnap = await db.collection('projects').doc(projectId).get();
+                const project = projectSnap.data();
+                if (project) {
+                    const reason = prompt('Enter reason for rejection:');
+                    if (reason) {
+                        await db.collection('rejectedProjects').add({
+                            projectId,
+                            name: project.name,
+                            qa: project.assignedQA || 'Not Assigned',
+                            date: new Date().toISOString().split('T')[0],
+                            phase: project.phase,
+                            pc: 'Bindhu',
+                            reason
+                        });
+                        await db.collection('projects').doc(projectId).delete();
+                        logActivity(projectId, currentUser.username, 'Project Rejected', `Reason: ${reason}`);
+                        loadDashboardData();
+                        showNotification(`Project ${project.name} rejected`);
+                    }
+                }
+            } catch (error) {
+                showNotification('Failed to reject project: ' + error.message);
+            }
+        }
+
+        async function deleteProject(projectId) {
+            if (currentUser.role !== 'Team Lead') return;
+            if (confirm('Are you sure you want to delete this project?')) {
+                try {
+                    await db.collection('projects').doc(projectId).delete();
+                    logActivity(projectId, currentUser.username, 'Project Deleted', `Project removed`);
+                    loadDashboardData();
+                    showNotification('Project deleted successfully');
+                } catch (error) {
+                    showNotification('Failed to delete project: ' + error.message);
                 }
             }
         }
 
-        function deleteProject(projectId) {
-            if (currentUser.role !== 'Team Lead') return;
-            if (confirm('Are you sure you want to delete this project?')) {
-                projects = projects.filter(p => p.id !== projectId);
-                localStorage.setItem('projects', JSON.stringify(projects));
-                logActivity(projectId, currentUser.username, 'Project Deleted', `Project removed`);
-                renderProjectsTable(projects);
-                showNotification('Project deleted successfully');
-            }
-        }
-
         // Search Projects
-        document.getElementById('project-search').addEventListener('input', (e) => {
+        document.getElementById('project-search').addEventListener('input', async (e) => {
             const searchTerm = e.target.value.toLowerCase();
-            const filteredProjects = projects.filter(p => 
-                p.name.toLowerCase().includes(searchTerm) ||
-                p.category.toLowerCase().includes(searchTerm) ||
-                p.type.toLowerCase().includes(searchTerm) ||
-                (p.assignedQA && credentials[p.assignedQA]?.name.toLowerCase().includes(searchTerm))
-            );
-            renderProjectsTable(filteredProjects);
+            try {
+                const projectsSnap = await db.collection('projects').get();
+                const projects = projectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const usersSnap = await db.collection('users').get();
+                const users = Object.fromEntries(usersSnap.docs.map(doc => [doc.id, doc.data()]));
+                const filteredProjects = projects.filter(p => 
+                    p.name.toLowerCase().includes(searchTerm) ||
+                    p.category.toLowerCase().includes(searchTerm) ||
+                    p.type.toLowerCase().includes(searchTerm) ||
+                    (p.assignedQA && users[p.assignedQA]?.name.toLowerCase().includes(searchTerm))
+                );
+                renderProjectsTable(filteredProjects);
+            } catch (error) {
+                showNotification('Failed to search projects: ' + error.message);
+            }
         });
 
         // Approved Projects Table
-        function renderApprovedTable(data) {
-            const table = document.getElementById('approved-table');
-            table.innerHTML = data.map(p => `
-                <tr>
-                    <td>${p.name}</td>
-                    <td>${credentials[p.qa]?.name || 'Not Assigned'}</td>
-                    <td>${p.date}</td>
-                    <td><span class="btn-approved">APPROVED</span></td>
-                </tr>
-            `).join('');
+        async function renderApprovedTable(approvedProjects) {
+            try {
+                const usersSnap = await db.collection('users').get();
+                const users = Object.fromEntries(usersSnap.docs.map(doc => [doc.id, doc.data()]));
+                const table = document.getElementById('approved-table');
+                table.innerHTML = approvedProjects.map(p => `
+                    <tr>
+                        <td>${p.name || 'N/A'}</td>
+                        <td>${users[p.qa]?.name || 'Not Assigned'}</td>
+                        <td>${p.date || 'N/A'}</td>
+                        <td><span class="btn-approved">APPROVED</span></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                showNotification('Failed to render approved table: ' + error.message);
+            }
         }
 
-        document.getElementById('approved-search').addEventListener('input', (e) => {
+        document.getElementById('approved-search').addEventListener('input', async (e) => {
             const searchTerm = e.target.value.toLowerCase();
-            const filteredProjects = approvedProjects.filter(p => 
-                p.name.toLowerCase().includes(searchTerm) ||
-                (p.qa && credentials[p.qa]?.name.toLowerCase().includes(searchTerm))
-            );
-            renderApprovedTable(filteredProjects);
+            try {
+                const approvedSnap = await db.collection('approvedProjects').get();
+                const approvedProjects = approvedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const filteredProjects = approvedProjects.filter(p => 
+                    p.name.toLowerCase().includes(searchTerm) ||
+                    (p.qa && users[p.qa]?.name.toLowerCase().includes(searchTerm))
+                );
+                renderApprovedTable(filteredProjects);
+            } catch (error) {
+                showNotification('Failed to search approved projects: ' + error.message);
+            }
         });
 
         // Rejected Projects Table
-        function renderRejectedTable(data) {
-            const table = document.getElementById('rejected-table');
-            table.innerHTML = data.map(p => `
-                <tr>
-                    <td>${p.name}</td>
-                    <td>${credentials[p.qa]?.name || 'Not Assigned'}</td>
-                    <td>${p.date}</td>
-                    <td>${p.phase}</td>
-                    <td>${p.pc}</td>
-                    <td>${p.reason}</td>
-                </tr>
-            `).join('');
+        async function renderRejectedTable(rejectedProjects) {
+            try {
+                const usersSnap = await db.collection('users').get();
+                const users = Object.fromEntries(usersSnap.docs.map(doc => [doc.id, doc.data()]));
+                const table = document.getElementById('rejected-table');
+                table.innerHTML = rejectedProjects.map(p => `
+                    <tr>
+                        <td>${p.name || 'N/A'}</td>
+                        <td>${users[p.qa]?.name || 'Not Assigned'}</td>
+                        <td>${p.date || 'N/A'}</td>
+                        <td>${p.phase || 'N/A'}</td>
+                        <td>${p.pc || 'N/A'}</td>
+                        <td>${p.reason || 'N/A'}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                showNotification('Failed to render rejected table: ' + error.message);
+            }
         }
 
-        document.getElementById('rejected-search').addEventListener('input', (e) => {
+        document.getElementById('rejected-search').addEventListener('input', async (e) => {
             const searchTerm = e.target.value.toLowerCase();
-            const filteredProjects = rejectedProjects.filter(p => 
-                p.name.toLowerCase().includes(searchTerm) ||
-                (p.qa && credentials[p.qa]?.name.toLowerCase().includes(searchTerm)) ||
-                p.reason.toLowerCase().includes(searchTerm)
-            );
-            renderRejectedTable(filteredProjects);
+            try {
+                const rejectedSnap = await db.collection('rejectedProjects').get();
+                const rejectedProjects = rejectedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const filteredProjects = rejectedProjects.filter(p => 
+                    p.name.toLowerCase().includes(searchTerm) ||
+                    (p.qa && users[p.qa]?.name.toLowerCase().includes(searchTerm)) ||
+                    p.reason.toLowerCase().includes(searchTerm)
+                );
+                renderRejectedTable(filteredProjects);
+            } catch (error) {
+                showNotification('Failed to search rejected projects: ' + error.message);
+            }
         });
 
         // Activity Log
-        function renderActivityTable(data) {
-            const table = document.getElementById('activity-table');
-            table.innerHTML = data.map(a => `
-                <tr>
-                    <td>${projects.find(p => p.id === a.projectId)?.name || 'N/A'}</td>
-                    <td>${credentials[a.qa]?.name || 'Unknown'}</td>
-                    <td>${a.type}</td>
-                    <td>${a.details}</td>
-                    <td>${new Date(a.timestamp).toLocaleString()}</td>
-                </tr>
-            `).join('');
+        async function renderActivityTable(activityLog) {
+            try {
+                const projectsSnap = await db.collection('projects').get();
+                const projects = projectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const usersSnap = await db.collection('users').get();
+                const users = Object.fromEntries(usersSnap.docs.map(doc => [doc.id, doc.data()]));
+
+                const table = document.getElementById('activity-table');
+                table.innerHTML = activityLog.map(a => `
+                    <tr>
+                        <td>${projects.find(p => p.id === a.projectId)?.name || 'N/A'}</td>
+                        <td>${users[a.qa]?.name || 'Unknown'}</td>
+                        <td>${a.type || 'N/A'}</td>
+                        <td>${a.details || 'N/A'}</td>
+                        <td>${new Date(a.timestamp).toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                showNotification('Failed to render activity table: ' + error.message);
+            }
         }
 
-        document.getElementById('activity-search').addEventListener('input', (e) => {
+        document.getElementById('activity-search').addEventListener('input', async (e) => {
             const searchTerm = e.target.value.toLowerCase();
-            const filteredActivity = activityLog.filter(a => 
-                (projects.find(p => p.id === a.projectId)?.name.toLowerCase().includes(searchTerm)) ||
-                (credentials[a.qa]?.name.toLowerCase().includes(searchTerm)) ||
-                a.type.toLowerCase().includes(searchTerm) ||
-                a.details.toLowerCase().includes(searchTerm)
-            );
-            renderActivityTable(filteredActivity);
+            try {
+                const activitySnap = await db.collection('activityLog').get();
+                const activityLog = activitySnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const filteredActivity = activityLog.filter(a => 
+                    (projects.find(p => p.id === a.projectId)?.name.toLowerCase().includes(searchTerm)) ||
+                    (users[a.qa]?.name.toLowerCase().includes(searchTerm)) ||
+                    a.type.toLowerCase().includes(searchTerm) ||
+                    a.details.toLowerCase().includes(searchTerm)
+                );
+                renderActivityTable(filteredActivity);
+            } catch (error) {
+                showNotification('Failed to search activity log: ' + error.message);
+            }
         });
 
-        function logActivity(projectId, qa, type, details) {
-            activityLog.push({
-                id: Date.now().toString(),
-                projectId: projectId,
-                qa: qa,
-                type: type,
-                details: details,
-                timestamp: new Date().toISOString()
-            });
-            localStorage.setItem('activityLog', JSON.stringify(activityLog));
-            renderActivityTable(activityLog);
+        async function logActivity(projectId, qa, type, details) {
+            try {
+                await db.collection('activityLog').add({
+                    projectId,
+                    qa,
+                    type,
+                    details,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                console.error('Failed to log activity:', error);
+            }
         }
 
         // Create Project
-        document.getElementById('create-project-form').addEventListener('submit', (e) => {
+        document.getElementById('create-project-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (currentUser.role !== 'Team Lead') return;
             const projectName = document.getElementById('project-name').value;
@@ -1095,132 +1512,157 @@
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
 
-            const newProject = {
-                id: Date.now().toString(),
-                name: projectName,
-                category: projectCategory,
-                type: projectType,
-                phase: projectPhase,
-                kt: 'No',
-                start: startDate,
-                end: endDate,
-                status: 'In Progress',
-                bugs: 0,
-                htmlBugs: 0,
-                funcBugs: 0,
-                assignedQA: '',
-                bugTracker: bugTracker
-            };
-            projects.push(newProject);
-            localStorage.setItem('projects', JSON.stringify(projects));
-            logActivity(newProject.id, currentUser.username, 'Project Created', `Created ${projectName}`);
-            renderProjectsTable(projects);
-            populateProjectDropdown();
-            showNotification(`Project ${projectName} created successfully`);
-            e.target.reset();
+            try {
+                const docRef = await db.collection('projects').add({
+                    name: projectName,
+                    category: projectCategory,
+                    type: projectType,
+                    phase: projectPhase,
+                    kt: 'No',
+                    start: startDate,
+                    end: endDate,
+                    status: 'In Progress',
+                    bugs: 0,
+                    htmlBugs: 0,
+                    funcBugs: 0,
+                    assignedQA: '',
+                    bugTracker
+                });
+                logActivity(docRef.id, currentUser.username, 'Project Created', `Created ${projectName}`);
+                loadDashboardData();
+                showNotification(`Project ${projectName} created successfully`);
+                e.target.reset();
+            } catch (error) {
+                showNotification('Failed to create project: ' + error.message);
+            }
         });
 
         // Populate Project Dropdown
-        function populateProjectDropdown() {
+        function populateProjectDropdown(projects) {
             const projectSelect = document.getElementById('assign-project');
-            projectSelect.innerHTML = '<option value="">Select Project</option>';
-            projects.forEach(project => {
-                const option = document.createElement('option');
-                option.value = project.id;
-                option.textContent = project.name;
-                projectSelect.appendChild(option);
-            });
+            projectSelect.innerHTML = '<option value="">Select Project</option>' + 
+                projects.map(project => `<option value="${project.id}">${project.name}</option>`).join('');
         }
 
         // Populate QA Dropdowns
-        function populateQADropdowns() {
-            const assignQA = document.getElementById('assign-qa');
-            const reportQA = document.getElementById('report-qa');
-            const editQA = document.getElementById('edit-project-qa');
-            assignQA.innerHTML = '<option value="">Select QA</option>';
-            reportQA.innerHTML = '<option value="">All QA</option>';
-            editQA.innerHTML = '<option value="">Not Assigned</option>';
-            Object.keys(credentials).forEach(username => {
-                const name = credentials[username].name;
-                [assignQA, reportQA, editQA].forEach(select => {
-                    const option = document.createElement('option');
-                    option.value = username;
-                    option.textContent = `${name} (${username})`;
-                    select.appendChild(option);
-                });
-            });
+        async function populateQADropdowns() {
+            try {
+                const usersSnap = await db.collection('users').get();
+                const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const assignQA = document.getElementById('assign-qa');
+                const reportQA = document.getElementById('report-qa');
+                const editQA = document.getElementById('edit-project-qa');
+                
+                assignQA.innerHTML = '<option value="">Select QA</option>' + 
+                    users.map(user => `<option value="${user.id}">${user.name} (${user.id})</option>`).join('');
+                reportQA.innerHTML = '<option value="">All QA</option>' + 
+                    users.map(user => `<option value="${user.id}">${user.name} (${user.id})</option>`).join('');
+                editQA.innerHTML = '<option value="">Not Assigned</option>' + 
+                    users.map(user => `<option value="${user.id}">${user.name} (${user.id})</option>`).join('');
+            } catch (error) {
+                showNotification('Failed to load QA dropdowns: ' + error.message);
+            }
         }
 
         // User Management
-        document.getElementById('add-user-form').addEventListener('submit', (e) => {
+        document.getElementById('add-user-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (currentUser.role !== 'Team Lead') return;
             const username = document.getElementById('new-username').value;
             const password = document.getElementById('new-password').value;
             const name = document.getElementById('new-name').value;
             const role = document.getElementById('new-role').value;
-            if (credentials[username]) {
-                showNotification('User already exists');
-                return;
-            }
-            credentials[username] = { password, role, name };
-            localStorage.setItem('credentials', JSON.stringify(credentials));
-            populateQADropdowns();
-            renderUsersTable();
-            showNotification(`User ${name} added successfully`);
-            e.target.reset();
-        });
 
-        function renderUsersTable() {
-            const table = document.getElementById('users-table');
-            table.innerHTML = Object.keys(credentials).map(username => `
-                <tr>
-                    <td>${username}</td>
-                    <td>${credentials[username].name}</td>
-                    <td>${credentials[username].role}</td>
-                    <td>
-                        ${currentUser.role === 'Team Lead' && username !== currentUser.username ? `
-                            <button class="text-red-400 text-sm tooltip" onclick="deleteUser('${username}')" aria-label="Delete user">
-                                Delete
-                                <span class="tooltiptext">Delete this user</span>
-                            </button>
-                        ` : ''}
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function deleteUser(username) {
-            if (confirm(`Are you sure you want to delete user ${credentials[username].name}?`)) {
-                delete credentials[username];
-                localStorage.setItem('credentials', JSON.stringify(credentials));
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(username, password);
+                const userId = username.split('@')[0];
+                
+                await db.collection('users').doc(userId).set({
+                    name,
+                    role
+                });
+                
                 populateQADropdowns();
                 renderUsersTable();
-                showNotification('User deleted successfully');
+                showNotification(`User ${name} added successfully`);
+                e.target.reset();
+            } catch (error) {
+                showNotification('Failed to add user: ' + error.message);
+            }
+        });
+
+        async function renderUsersTable() {
+            try {
+                const usersSnap = await db.collection('users').get();
+                const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const table = document.getElementById('users-table');
+                table.innerHTML = users.map(user => `
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>${user.name}</td>
+                        <td>${user.role}</td>
+                        <td>
+                            ${currentUser.role === 'Team Lead' && user.id !== currentUser.username.split('@')[0] ? `
+                                <button class="text-red-400 text-sm tooltip" onclick="deleteUser('${user.id}')" aria-label="Delete user">
+                                    Delete
+                                    <span class="tooltiptext">Delete this user</span>
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                showNotification('Failed to load users table: ' + error.message);
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (confirm(`Are you sure you want to delete user ${userId}? Note: You will need to manually delete this user from Firebase Authentication in the Firebase Console.`)) {
+                try {
+                    await db.collection('users').doc(userId).delete();
+                    loadDashboardData();
+                    showNotification('User deleted from Firestore. Please delete the user from Firebase Authentication manually.');
+                } catch (error) {
+                    showNotification('Failed to delete user from Firestore: ' + error.message);
+                }
             }
         }
 
         // Profile
-        function renderProfile() {
-            const profile = userProfiles[currentUser.username] || { email: '' };
-            document.getElementById('profile-username').value = currentUser.username;
-            document.getElementById('profile-role').value = currentUser.role;
-            document.getElementById('profile-email').value = profile.email;
+        async function renderProfile() {
+            try {
+                const userId = currentUser.username.split('@')[0];
+                const userDoc = await db.collection('users').doc(userId).get();
+                const profile = userDoc.data();
+                document.getElementById('profile-username').value = currentUser.username;
+                document.getElementById('profile-role').value = profile.role;
+                document.getElementById('profile-email').value = profile.email || currentUser.username;
+            } catch (error) {
+                showNotification('Failed to load profile: ' + error.message);
+            }
         }
 
-        document.getElementById('profile-form').addEventListener('submit', (e) => {
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const newPassword = document.getElementById('change-password').value;
-            if (newPassword) {
-                credentials[currentUser.username].password = newPassword;
-                localStorage.setItem('credentials', JSON.stringify(credentials));
-                showNotification('Password updated successfully');
+            const newEmail = document.getElementById('profile-email').value;
+            const userId = currentUser.username.split('@')[0];
+
+            try {
+                if (newPassword) {
+                    await auth.currentUser.updatePassword(newPassword);
+                    showNotification('Password updated successfully');
+                }
+                if (newEmail && newEmail !== currentUser.username) {
+                    await auth.currentUser.updateEmail(newEmail);
+                    await db.collection('users').doc(userId).update({ email: newEmail });
+                    currentUser.username = newEmail;
+                    showNotification('Email updated successfully');
+                }
+                loadDashboardData();
+            } catch (error) {
+                showNotification('Failed to update profile: ' + error.message);
             }
-            userProfiles[currentUser.username] = {
-                email: document.getElementById('profile-email').value
-            };
-            localStorage.setItem('userProfiles', JSON.stringify(userProfiles));
-            showNotification('Profile updated successfully');
         });
 
         // Theme Toggle
@@ -1231,101 +1673,217 @@
         });
 
         // Export Report
-        function exportReport() {
+        async function exportReport() {
             const reportType = document.getElementById('report-type').value;
             const month = document.getElementById('report-month').value;
             const qa = document.getElementById('report-qa').value;
             const projectFilter = document.getElementById('report-project').value.toLowerCase();
 
-            let reportData;
-            if (reportType === 'monthly') {
-                reportData = projects
-                    .filter(p => !projectFilter || p.name.toLowerCase().includes(projectFilter))
-                    .filter(p => !qa || p.assignedQA === qa)
-                    .filter(p => !month || p.start.startsWith(month))
-                    .map(p => ({
-                        'Project Name': p.name,
-                        'Category': p.category,
-                        'QA': credentials[p.assignedQA]?.name || 'N/A',
-                        'HTML Bugs': p.htmlBugs,
-                        'Functional Bugs': p.funcBugs,
-                        'Total Bugs': p.bugs,
-                        'Phase': p.phase,
-                        'Live Approved': approvedProjects.some(a => a.projectId === p.id) ? 'Yes' : 'No',
-                        'Testing Days': Math.ceil((new Date(p.end) - new Date(p.start)) / (1000 * 60 * 60 * 24))
-                    }));
-            } else if (reportType === 'rejected') {
-                reportData = rejectedProjects
-                    .filter(r => !projectFilter || r.name.toLowerCase().includes(projectFilter))
-                    .filter(r => !qa || r.qa === qa)
-                    .filter(r => !month || r.date.startsWith(month))
-                    .map(r => ({
-                        'Project Name': r.name,
-                        'QA': credentials[r.qa]?.name || 'N/A',
-                        'Rejected Date': r.date,
-                        'Phase': r.phase,
-                        'PC': r.pc,
-                        'Reason': r.reason
-                    }));
-            } else if (reportType === 'qa-wise') {
-                reportData = tasks
-                    .filter(t => !qa || t.assignee === qa)
-                    .filter(t => !month || t.assignedDate.startsWith(month))
-                    .map(t => {
-                        const project = projects.find(p => p.id === t.projectId);
-                        return {
-                            'QA': credentials[t.assignee]?.name || 'N/A',
-                            'Project Name': t.projectName,
-                            'Total Bugs': project ? project.bugs : 0,
-                            'Tasks Completed': t.status === 'completed' ? 1 : 0
-                        };
-                    });
-            }
+            try {
+                let reportData;
+                const usersSnap = await db.collection('users').get();
+                const users = Object.fromEntries(usersSnap.docs.map(doc => [doc.id, doc.data()]));
 
-            const csv = Papa.unparse(reportData);
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `${reportType}_report_${new Date().toISOString().split('T')[0]}.csv`;
-            link.click();
-            showNotification(`Exported ${reportType} report`);
+                if (reportType === 'monthly') {
+                    const projectsSnap = await db.collection('projects').get();
+                    const projects = projectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const approvedSnap = await db.collection('approvedProjects').get();
+                    const approvedProjects = approvedSnap.docs.map(doc => doc.data());
+                    reportData = projects
+                        .filter(p => !projectFilter || p.name.toLowerCase().includes(projectFilter))
+                        .filter(p => !qa || p.assignedQA === qa)
+                        .filter(p => !month || p.start.startsWith(month))
+                        .map(p => ({
+                            'Project Name': p.name,
+                            'Category': p.category,
+                            'QA': users[p.assignedQA]?.name || 'N/A',
+                            'HTML Bugs': p.htmlBugs,
+                            'Functional Bugs': p.funcBugs,
+                            'Total Bugs': p.bugs,
+                            'Phase': p.phase,
+                            'Live Approved': approvedProjects.some(a => a.projectId === p.id) ? 'Yes' : 'No',
+                            'Testing Days': Math.ceil((new Date(p.end) - new Date(p.start)) / (1000 * 60 * 60 * 24))
+                        }));
+                } else if (reportType === 'rejected') {
+                    const rejectedSnap = await db.collection('rejectedProjects').get();
+                    const rejectedProjects = rejectedSnap.docs.map(doc => doc.data());
+                    reportData = rejectedProjects
+                        .filter(r => !projectFilter || r.name.toLowerCase().includes(projectFilter))
+                        .filter(r => !qa || r.qa === qa)
+                        .filter(r => !month || r.date.startsWith(month))
+                        .map(r => ({
+                            'Project Name': r.name,
+                            'QA': users[r.qa]?.name || 'N/A',
+                            'Rejected Date': r.date,
+                            'Phase': r.phase,
+                            'PC': r.pc,
+                            'Reason': r.reason
+                        }));
+                } else if (reportType ==='qa-wise') {
+                    const projectsSnap = await db.collection('projects').get();
+                    const projects = projectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const approvedSnap = await db.collection('approvedProjects').get();
+                    const approvedProjects = approvedSnap.docs.map(doc => doc.data());
+                    const rejectedSnap = await db.collection('rejectedProjects').get();
+                    const rejectedProjects = rejectedSnap.docs.map(doc => doc.data());
+
+                    // Group projects by QA
+                    const qaReport = {};
+                    projects.forEach(p => {
+                        if (!qa || p.assignedQA === qa) {
+                            if (!qaReport[p.assignedQA]) {
+                                qaReport[p.assignedQA] = {
+                                    totalProjects: 0,
+                                    totalBugs: 0,
+                                    htmlBugs: 0,
+                                    funcBugs: 0,
+                                    approved: 0,
+                                    rejected: 0
+                                };
+                            }
+                            qaReport[p.assignedQA].totalProjects += 1;
+                            qaReport[p.assignedQA].totalBugs += p.bugs || 0;
+                            qaReport[p.assignedQA].htmlBugs += p.htmlBugs || 0;
+                            qaReport[p.assignedQA].funcBugs += p.funcBugs || 0;
+                            if (approvedProjects.some(a => a.projectId === p.id)) {
+                                qaReport[p.assignedQA].approved += 1;
+                            }
+                            if (rejectedProjects.some(r => r.projectId === p.id)) {
+                                qaReport[p.assignedQA].rejected += 1;
+                            }
+                        }
+                    });
+
+                    reportData = Object.keys(qaReport).map(qaId => ({
+                        'QA': users[qaId]?.name || 'Unknown',
+                        'Total Projects': qaReport[qaId].totalProjects,
+                        'Total Bugs': qaReport[qaId].totalBugs,
+                        'HTML Bugs': qaReport[qaId].htmlBugs,
+                        'Functional Bugs': qaReport[qaId].funcBugs,
+                        'Approved Projects': qaReport[qaId].approved,
+                        'Rejected Projects': qaReport[qaId].rejected
+                    }));
+                }
+
+                // Export to CSV using Papa Parse
+                if (reportData.length > 0) {
+                    const csv = Papa.unparse(reportData);
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `${reportType}-report-${new Date().toISOString().split('T')[0]}.csv`);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    showNotification('Report exported successfully');
+                } else {
+                    showNotification('No data available for the selected filters');
+                }
+            } catch (error) {
+                showNotification('Failed to export report: ' + error.message);
+            }
         }
 
         // Table Sorting
         function sortTable(tableId, colIndex) {
             const table = document.getElementById(tableId);
             let rows = Array.from(table.rows);
-            const isDate = colIndex === 2 || colIndex === 3 || colIndex === 4;
+            const isNumeric = rows.every(row => !isNaN(parseFloat(row.cells[colIndex].textContent)) || row.cells[colIndex].textContent === 'N/A');
+            const direction = table.dataset.sortDirection === 'asc' ? 'desc' : 'asc';
+            table.dataset.sortDirection = direction;
 
             rows.sort((a, b) => {
                 let aValue = a.cells[colIndex].textContent.trim();
                 let bValue = b.cells[colIndex].textContent.trim();
-                if (isDate) {
-                    aValue = new Date(aValue);
-                    bValue = new Date(bValue);
-                } else if (!isNaN(aValue) && !isNaN(bValue)) {
-                    aValue = parseInt(aValue);
-                    bValue = parseInt(bValue);
+
+                // Handle 'N/A' values
+                if (aValue === 'N/A') return 1;
+                if (bValue === 'N/A') return -1;
+
+                if (isNumeric) {
+                    aValue = parseFloat(aValue) || 0;
+                    bValue = parseFloat(bValue) || 0;
+                    return direction === 'asc' ? aValue - bValue : bValue - aValue;
+                } else {
+                    return direction === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
                 }
-                return aValue > bValue ? 1 : -1;
             });
 
             table.innerHTML = '';
             rows.forEach(row => table.appendChild(row));
         }
 
-        // Check Due Dates
-        setInterval(() => {
-            tasks.forEach(task => {
-                const dueDate = new Date(task.dueDate);
-                const now = new Date();
-                if (dueDate - now < 24 * 60 * 60 * 1000 && !task.alertSent && task.status !== 'completed') {
-                    showNotification(`Task "${task.name}" is due soon (${task.dueDate})`);
-                    task.alertSent = true;
-                    localStorage.setItem('tasks', JSON.stringify(tasks));
+        // Check for Due Tasks and Send Alerts (Simulated)
+        async function checkDueTasks() {
+            try {
+                const tasksSnap = await db.collection('tasks').where('status', '==', 'inprogress').get();
+                const tasks = tasksSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const today = new Date();
+                tasks.forEach(async task => {
+                    const dueDate = new Date(task.dueDate);
+                    const timeDiff = dueDate - today;
+                    if (timeDiff <= 24 * 60 * 60 * 1000 && timeDiff > 0 && !task.alertSent) {
+                        // Simulate sending an alert (e.g., email or notification)
+                        console.log(`Alert: Task "${task.name}" for ${task.assignee} is due soon on ${task.dueDate}`);
+                        await db.collection('tasks').doc(task.id).update({ alertSent: true });
+                    }
+                });
+            } catch (error) {
+                console.error('Error checking due tasks:', error);
+            }
+        }
+
+        // Run due task check on load
+        document.addEventListener('DOMContentLoaded', () => {
+            checkDueTasks();
+        });
+
+        // Accessibility: Close modals with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.style.display = 'none';
+                });
+            }
+        });
+
+        // Ensure Firestore Security Rules Compatibility
+        // Note: The Firestore security rules should be set as follows in the Firebase Console:
+        /*
+        rules_version = '2';
+        service cloud.firestore {
+            match /databases/{database}/documents {
+                match /users/{userId} {
+                    allow read: if request.auth != null;
+                    allow write: if request.auth != null && request.auth.uid == userId || request.auth.token.role == 'Team Lead';
                 }
-            });
-        }, 60000);
+                match /projects/{projectId} {
+                    allow read: if request.auth != null;
+                    allow write: if request.auth != null && request.auth.token.role == 'Team Lead';
+                }
+                match /tasks/{taskId} {
+                    allow read: if request.auth != null;
+                    allow write: if request.auth != null && (request.auth.token.role == 'Team Lead' || resource.data.assignee == request.auth.uid);
+                }
+                match /approvedProjects/{projectId} {
+                    allow read: if request.auth != null;
+                    allow write: if request.auth != null && request.auth.token.role == 'Team Lead';
+                }
+                match /rejectedProjects/{projectId} {
+                    allow read: if request.auth != null;
+                    allow write: if request.auth != null && request.auth.token.role == 'Team Lead';
+                }
+                match /activityLog/{logId} {
+                    allow read: if request.auth != null;
+                    allow write: if request.auth != null;
+                }
+            }
+        }
+        */
+        // Ensure these rules are applied in the Firebase Console to match the app's functionality.
+
     </script>
 </body>
 </html>
