@@ -1,326 +1,537 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QA Team Dashboard</title>
-    <link rel="icon" type="image/png" href="images/fav.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700;900&family=Work+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #fbd003; /* Yellow */
-            --secondary: #929294; /* Gray */
-            --dark-bg: #1a1a1a;
-            --dark-card: #2a2a2a;
-            --dark-hover: #3a3a3a;
-            --text: #ffffff;
-            --light-bg: #f4f4f4;
-            --light-card: #ffffff;
-            --light-hover: #e0e0e0;
-            --light-text: #333333;
-            --border-color: #444;
-            --light-border: #ddd;
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #1a2526;
+            --widget-background: #2e3f52;
+            --text-color: #f5f5f5;
+            --shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+            --border-radius: 6px;
+            --light-background: #f0f2f5;
+            --light-widget: #ffffff;
+            --light-text: #333;
         }
 
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
         }
 
         body {
-            font-family: "Work Sans", "Noto Sans", sans-serif;
-            background: var(--dark-bg);
-            color: var(--text);
-            transition: all 0.3s ease;
+            background-color: var(--background-color);
+            color: var(--text-color);
             line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        body.light-theme {
-            background: var(--light-bg);
+        body.light-mode {
+            background-color: var(--light-background);
             color: var(--light-text);
+        }
+
+        body.light-mode .sidebar,
+        body.light-mode .widget,
+        body.light-mode .header,
+        body.light-mode .kanban-column,
+        body.light-mode .modal-content,
+        body.light-mode .list-item,
+        body.light-mode .category-item,
+        body.light-mode .subcategory-item,
+        body.light-mode td,
+        body.light-mode .sidebar-item,
+        body.light-mode .widget h3,
+        body.light-mode .kanban-column h3,
+        body.light-mode .form-group label,
+        body.light-mode .stats-number,
+        body.light-mode .stats-list {
+            background-color: var(--light-widget);
+            color: var(--light-text);
+        }
+
+        body.light-mode th {
+            background-color: #e9ecef;
+            color: var(--light-text);
+        }
+
+        body.light-mode .sidebar-item:hover,
+        body.light-mode .sidebar-item.active {
+            color: #fff;
+        }
+
+        body.light-mode .slider .moon,
+        body.light-mode .slider .sun {
+            color: var(--light-text);
+        }
+
+        body.light-mode .container {
+            --uib-color: black;
+        }
+
+        body:not(.light-mode) .container {
+            --uib-color: white;
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        /* Login Page Styles */
-        #login-page {
             display: flex;
             min-height: 100vh;
-            align-items: center;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--background-color);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: width 0.3s, background-color 0.3s;
+        }
+
+        .sidebar.collapsed {
+            width: 60px;
+        }
+
+        .sidebar.collapsed .sidebar-item span {
+            display: none;
+        }
+
+        .sidebar.collapsed .sidebar-item {
             justify-content: center;
         }
 
-        #login-page .login-container {
-            background-color: var(--dark-card);
-            padding: 24px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            width: 100%;
-            max-width: 400px;
+        .sidebar.collapsed .sidebar-item.active {
+            background-color: var(--primary-color);
+            color: #fff;
+            border-radius: var(--border-radius);
+            width: 40px;
+            height: 40px;
         }
 
-        body.light-theme #login-page .login-container {
-            background-color: var(--light-card);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        #login-page h2 {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--primary);
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-
-        #login-page .form-group {
-            margin-bottom: 1rem;
-        }
-
-        #login-page label {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: medium;
-            margin-bottom: 0.5rem;
-            color: var(--text);
-        }
-
-        body.light-theme #login-page label {
-            color: var(--light-text);
-        }
-
-        #login-page input {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            background-color: var(--dark-hover);
-            color: var(--text);
-            font-size: 0.875rem;
-        }
-
-        body.light-theme #login-page input {
-            background-color: var(--light-card);
-            color: var(--light-text);
-            border-color: var(--light-border);
-        }
-
-        #login-page input::placeholder {
-            color: var(--secondary);
-        }
-
-        #login-page button {
-            width: 100%;
-            padding: 0.5rem;
-            background-color: var(--primary);
-            color: #000000;
-            border: none;
-            border-radius: 4px;
-            font-size: 0.875rem;
-            font-weight: medium;
+        .sidebar-item {
+            padding: 14px 18px;
+            margin-bottom: 10px;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.3s ease;
+            border-radius: var(--border-radius);
+            transition: background-color 0.3s;
+            color: var(--text-color);
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        #login-page button:hover {
-            background-color: #e5bd00;
-            transform: scale(1.02);
+        .sidebar-item:hover,
+        .sidebar-item.active {
+            background-color: var(--primary-color);
+            color: #fff;
         }
 
-        /* Header Styles */
-        header {
+        .sidebar-toggle {
+            font-size: 20px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        .breadcrumbs {
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: var(--secondary-color);
+        }
+
+        .breadcrumbs a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
-            background: var(--dark-card);
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 15px 25px;
+            background-color: var(--widget-background);
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            border-radius: var(--border-radius);
+            transition: background-color 0.3s;
         }
 
-        body.light-theme header {
-            background: var(--light-card);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .logo img {
-            height: 40px;
-            vertical-align: middle;
-        }
-
-        .user-info {
+        .header-left {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
         }
 
-        .user-info select, .user-info button {
-            padding: 5px 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
+        .header-left img {
+            height: 40px;
         }
 
-        /* Navigation Tabs */
-        .nav-tabs {
+        .header-right {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--primary);
-            overflow-x: auto;
-            padding-bottom: 5px;
-        }
-
-        .nav-link {
-            padding: 10px 20px;
-            background: var(--dark-card);
-            border-radius: 8px 8px 0 0;
-            cursor: pointer;
-            transition: background 0.3s, color 0.3s;
-            white-space: nowrap;
+            align-items: center;
+            gap: 20px;
             font-size: 16px;
         }
 
-        body.light-theme .nav-link {
-            background: var(--light-card);
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
         }
 
-        .nav-link:hover {
-            background: var(--dark-hover);
-            color: var(--primary);
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
         }
 
-        body.light-theme .nav-link:hover {
-            background: var(--light-hover);
-            color: var(--primary);
+        .btn-primary:hover {
+            background-color: #0056b3;
         }
 
-        .nav-link.active {
-            background: var(--primary);
-            color: #000000;
+        .btn-danger {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
         }
 
-        /* Tab Panes */
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #34495e;
+            transition: 0.4s;
+            border-radius: 34px;
+            overflow: hidden;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #f1c40f;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+            background-color: #fff;
+        }
+
+        .slider .moon,
+        .slider .sun {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            transition: opacity 0.4s;
+        }
+
+        .slider .moon {
+            left: 10px;
+            opacity: 1;
+            color: #fff;
+        }
+
+        .slider .sun {
+            right: 10px;
+            opacity: 0;
+            color: #fff;
+        }
+
+        input:checked + .slider .moon {
+            opacity: 0;
+        }
+
+        input:checked + .slider .sun {
+            opacity: 1;
+        }
+
+        .loader-container {
+            --uib-size: 40px;
+            --uib-color: white;
+            --uib-speed: .9s;
+            --uib-center: calc(var(--uib-size) / 2 - var(--uib-size) / 5 / 2);
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            align-items: center;
+            justify-content: flex-start;
+            height: var(--uib-size);
+            width: var(--uib-size);
+            animation: rotate calc(var(--uib-speed) * 3) linear infinite;
+            z-index: 1002;
+        }
+
+        .dot {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100%;
+            width: 100%;
+        }
+
+        .dot::before {
+            content: '';
+            height: 20%;
+            width: 20%;
+            border-radius: 50%;
+            background-color: var(--uib-color);
+            animation: oscillate var(--uib-speed) ease-in-out infinite alternate;
+            transition: background-color 0.3s ease;
+        }
+
+        .dot:nth-child(1)::before { transform: translateX(var(--uib-center)); }
+        .dot:nth-child(2) { transform: rotate(45deg); }
+        .dot:nth-child(2)::before { transform: translateX(var(--uib-center)); animation-delay: calc(var(--uib-speed) * -0.125); }
+        .dot:nth-child(3) { transform: rotate(90deg); }
+        .dot:nth-child(3)::before { transform: translateX(var(--uib-center)); animation-delay: calc(var(--uib-speed) * -0.25); }
+        .dot:nth-child(4) { transform: rotate(135deg); }
+        .dot:nth-child(4)::before { transform: translateX(var(--uib-center)); animation-delay: calc(var(--uib-speed) * -0.375); }
+        .dot:nth-child(5) { transform: rotate(180deg); }
+        .dot:nth-child(5)::before { transform: translateX(var(--uib-center)); animation-delay: calc(var(--uib-speed) * -0.5); }
+        .dot:nth-child(6) { transform: rotate(225deg); }
+        .dot:nth-child(6)::before { transform: translateX(var(--uib-center)); animation-delay: calc(var(--uib-speed) * -0.625); }
+        .dot:nth-child(7) { transform: rotate(270deg); }
+        .dot:nth-child(7)::before { transform: translateX(var(--uib-center)); animation-delay: calc(var(--uib-speed) * -0.75); }
+        .dot:nth-child(8) { transform: rotate(315deg); }
+        .dot:nth-child(8)::before { transform: translateX(var(--uib-center)); animation-delay: calc(var(--uib-speed) * -0.875); }
+
+        @keyframes oscillate {
+            0% { transform: translateX(var(--uib-center)) scale(0); opacity: 0.25; }
+            100% { transform: translateX(0) scale(1); opacity: 1; }
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         .tab-pane {
             display: none;
-            background: var(--dark-card);
-            padding: 20px;
-            border-radius: 8px;
-            transition: opacity 0.3s ease;
-        }
-
-        body.light-theme .tab-pane {
-            background: var(--light-card);
         }
 
         .tab-pane.active {
             display: block;
-            opacity: 1;
         }
 
-        /* Tables */
+        .widget {
+            background-color: var(--widget-background);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            transition: background-color 0.3s;
+        }
+
+        .widget h3 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+        }
+
+        .stats {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .stats-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .stats-list {
+            font-size: 16px;
+        }
+
+        .stats-list-item {
+            margin-bottom: 10px;
+        }
+
+        .kanban-board {
+            display: flex;
+            gap: 25px;
+        }
+
+        .kanban-column {
+            flex: 1;
+            background-color: var(--widget-background);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            min-height: 300px;
+            transition: background-color 0.3s;
+        }
+
+        .kanban-column.todo { border-left: 4px solid #ffc107; }
+        .kanban-column.in-progress { border-left: 4px solid #fd7e14; }
+        .kanban-column.done { border-left: 4px solid #28a745; }
+        .kanban-column.dragover { background-color: #3b4d64; }
+
+        .kanban-column h3 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
-            background: var(--dark-card);
-        }
-
-        body.light-theme table {
-            background: var(--light-card);
+            background-color: var(--widget-background);
+            box-shadow: var(--shadow);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            table-layout: auto;
+            transition: background-color 0.3s;
         }
 
         th, td {
-            padding: 12px;
+            padding: 14px 18px;
             text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        body.light-theme th, body.light-theme td {
-            border-bottom: 1px solid var(--light-border);
+            border-bottom: 1px solid #444;
+            font-size: 14px;
+            color: var(--text-color);
+            white-space: normal;
+            word-wrap: break-word;
+            min-width: 120px;
         }
 
         th {
-            background: var(--dark-hover);
-            color: var(--primary);
+            background-color: var(--primary-color);
+            color: #fff;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 14px;
+            padding: 12px 18px;
+            position: sticky;
+            top: 0;
+            z-index: 1;
             cursor: pointer;
-            font-weight: bold;
-        }
-
-        body.light-theme th {
-            background: var(--light-hover);
-            color: var(--primary);
         }
 
         th:hover {
-            background: var(--primary);
-            color: #000000;
+            background-color: #0056b3;
         }
 
-        .editable:hover {
-            background: var(--dark-hover);
-            cursor: pointer;
+        td {
+            background-color: #34495e;
+            transition: background-color 0.3s;
         }
 
-        body.light-theme .editable:hover {
-            background: var(--light-hover);
+        body.light-mode td {
+            background-color: #f9f9f9;
         }
 
-        /* Forms */
-        .form-group {
-            margin-bottom: 15px;
+        tr:nth-child(even) td {
+            background-color: #3e5c76;
         }
 
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
+        body.light-mode tr:nth-child(even) td {
+            background-color: #e9ecef;
         }
 
-        input, select, textarea {
-            width: 100%;
+        tr:hover td {
+            background-color: #4a6a8a;
+        }
+
+        body.light-mode tr:hover td {
+            background-color: #d1d8e0;
+        }
+
+        td select, td input {
             padding: 8px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            background: var(--dark-hover);
-            color: var(--text);
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
             font-size: 14px;
+            width: 100%;
+            background-color: #fff;
+            color: #333;
+            box-sizing: border-box;
         }
 
-        body.light-theme input, body.light-theme select, body.light-theme textarea {
-            background: var(--light-card);
-            color: var(--light-text);
-            border-color: var(--light-border);
+        td input[type="number"] {
+            width: 60px;
         }
 
-        button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.3s, transform 0.3s;
-        }
+        .bug-high { color: #dc3545; font-weight: bold; }
+        .bug-medium { color: #fd7e14; }
+        .bug-low { color: #28a745; }
 
-        .btn-primary {
-            background: var(--primary);
-            color: #000000;
-        }
-
-        .btn-primary:hover {
-            background: #e5bd00;
-            transform: scale(1.02);
-        }
-
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -328,1555 +539,1818 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.6);
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
 
         .modal-content {
-            background: var(--dark-card);
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid var(--secondary);
-            width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background-color: var(--widget-background);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            width: 450px;
+            max-width: 90%;
+            position: relative;
+            color: var(--text-color);
+            transition: background-color 0.3s;
         }
 
-        body.light-theme .modal-content {
-            background: var(--light-card);
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            cursor: pointer;
+            font-size: 24px;
+            color: var(--text-color);
         }
 
-        .modal-content h2 {
-            margin-bottom: 15px;
-            font-size: 20px;
-            color: var(--primary);
-        }
-
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        /* Notification */
         .notification {
             display: none;
             position: fixed;
             top: 20px;
             right: 20px;
-            background: var(--primary);
-            color: #000000;
-            padding: 10px 20px;
-            border-radius: 5px;
-            z-index: 1000;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Utility Classes */
-        .hidden {
-            display: none !important;
-        }
-
-        .team-lead-only {
-            display: none;
-        }
-
-        .alert-due {
-            background: #e24a4a;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            display: inline-block;
-        }
-
-        .btn-approved {
-            background: #4a90e2;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            display: inline-block;
-        }
-
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
-
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 120px;
-            background: #555;
+            background-color: var(--primary-color);
             color: #fff;
-            text-align: center;
-            border-radius: 6px;
-            padding: 5px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -60px;
-            opacity: 0;
-            transition: opacity 0.3s;
+            padding: 12px 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            font-size: 16px;
+            z-index: 1001;
         }
 
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
+        .error-notification {
+            background-color: #dc3545;
         }
 
-        /* Responsive Design */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        .form-group label.required::after {
+            content: '*';
+            color: #dc3545;
+            margin-left: 4px;
+        }
+
+        input, select, textarea {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            width: 100%;
+            background-color: #fff;
+            color: #333;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 4px var(--primary-color);
+        }
+
+        select {
+            appearance: none;
+            background: url('data:image/svg+xml;utf8,<svg fill="gray" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
+            background-size: 16px;
+        }
+
+        .list-item {
+            background-color: var(--widget-background);
+            padding: 14px;
+            margin-bottom: 10px;
+            border-radius: var(--border-radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .category-item {
+            background-color: var(--widget-background);
+            padding: 14px;
+            margin-bottom: 10px;
+            border-radius: var(--border-radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .subcategory-list {
+            margin-left: 25px;
+            margin-bottom: 25px;
+        }
+
+        .subcategory-item {
+            background-color: #34495e;
+            padding: 10px;
+            margin-bottom: 6px;
+            border-radius: var(--border-radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        body.light-mode .subcategory-item {
+            background-color: #e9ecef;
+        }
+
+        h2 {
+            font-size: 26px;
+            margin-bottom: 25px;
+            color: var(--text-color);
+        }
+
+        .search-bar {
+            margin-bottom: 20px;
+        }
+
+        .search-bar input {
+            padding: 10px;
+            width: 100%;
+            max-width: 300px;
+        }
+
         @media (max-width: 768px) {
-            header {
+            .container {
                 flex-direction: column;
-                gap: 10px;
-                text-align: center;
             }
 
-            .user-info {
+            .sidebar {
+                width: 100%;
+                padding: 10px;
+            }
+
+            .sidebar.collapsed {
+                width: 50px;
+                position: fixed;
+                height: 100%;
+                z-index: 100;
+            }
+
+            .main-content {
+                padding: 15px;
+                margin-left: 0;
+            }
+
+            .header {
                 flex-direction: column;
+                align-items: flex-start;
                 gap: 10px;
             }
 
-            .nav-tabs {
+            .header-right {
                 flex-direction: column;
                 align-items: flex-start;
             }
 
-            .nav-link {
-                width: 100%;
-                text-align: left;
+            .kanban-board {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
 
             table {
-                font-size: 14px;
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+                font-size: 12px;
             }
 
             th, td {
-                padding: 8px;
+                min-width: 100px;
             }
 
             .modal-content {
-                width: 95%;
+                width: 90%;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar-toggle {
+                font-size: 16px;
+            }
+
+            .sidebar-item {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .header-left img {
+                height: 30px;
+            }
+
+            .btn-primary, .btn-danger {
+                padding: 8px 15px;
+                font-size: 12px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                font-size: 12px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Login Page -->
-    <div id="login-page">
-        <div class="login-container">
-            <h2>QA Team Dashboard</h2>
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-toggle" onclick="toggleSidebar()">☰</div>
+            <div class="sidebar-item active" data-tab="dashboard"><span>📊 Dashboard</span></div>
+            <div class="sidebar-item" data-tab="daily-standup"><span>📅 Daily Standup</span></div>
+            <div class="sidebar-item" data-tab="kanban-board"><span>📋 Kanban Board</span></div>
+            <div class="sidebar-item team-lead-only" data-tab="project-management"><span>🏗️ Projects</span></div>
+            <div class="sidebar-item" data-tab="project-overview"><span>🔍 Project Overview</span></div>
+            <div class="sidebar-item" data-tab="approved-projects"><span>✅ Approved Projects</span></div>
+            <div class="sidebar-item" data-tab="rejected-projects"><span>❌ Rejected Projects</span></div>
+            <div class="sidebar-item team-lead-admin" data-tab="project-types"><span>📑 Project Types</span></div>
+            <div class="sidebar-item team-lead-admin" data-tab="qa-report"><span>📈 QA Report</span></div>
+            <div class="sidebar-item team-lead-only" data-tab="activity-log"><span>🕒 Activity Log</span></div>
+            <div class="sidebar-item" data-tab="profile"><span>👤 Profile</span></div>
+            <div class="sidebar-item team-lead-only" data-tab="user-management"><span>👥 User Management</span></div>
+            <div class="sidebar-item team-lead-only" data-tab="assign-roles"><span>🔑 Assign Roles</span></div>
+        </div>
+        <div class="main-content">
+            <div class="header">
+                <div class="header-left">
+                    <img src="images/logo.png" alt="Intersmart Logo">
+                    <span style="font-size: 18px; font-weight: bold;">QA Team Dashboard</span>
+                </div>
+                <div class="header-right">
+                    <div class="user-avatar" id="user-avatar"></div>
+                    <span id="user-name"></span>
+                    <div class="theme-switch-wrapper">
+                        <label class="theme-switch" for="theme-checkbox">
+                            <input type="checkbox" id="theme-checkbox" onchange="toggleTheme()">
+                            <span class="slider">
+                                <span class="moon">🌙✨</span>
+                                <span class="sun">☀️</span>
+                            </span>
+                        </label>
+                    </div>
+                    <button class="btn-primary" onclick="logout()">Logout</button>
+                </div>
+            </div>
+            <div class="breadcrumbs" id="breadcrumbs"></div>
+            <div id="notification" class="notification"></div>
+            <div id="loader" class="loader-container">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+            <div id="dashboard" class="tab-pane active">
+                <h2>Welcome, <span id="welcome-user"></span>!</h2>
+                <div id="dashboard-content" class="stats-grid"></div>
+            </div>
+            <div id="daily-standup" class="tab-pane">
+                <h2>Daily Standup</h2>
+                <form id="standup-form">
+                    <div class="form-group">
+                        <label for="standup-yesterday" class="required">Yesterday’s Work</label>
+                        <input type="text" id="standup-yesterday" placeholder="What did you do yesterday?" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="standup-today" class="required">Today’s Plan</label>
+                        <input type="text" id="standup-today" placeholder="What will you do today?" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="standup-blockers">Blockers</label>
+                        <input type="text" id="standup-blockers" placeholder="Any blockers?">
+                    </div>
+                    <button type="submit" class="btn-primary">Submit Standup</button>
+                </form>
+            </div>
+            <div id="kanban-board" class="tab-pane">
+                <h2>Kanban Board</h2>
+                <button class="btn-primary" onclick="showTaskForm()" style="margin-bottom: 25px;">Add Task</button>
+                <div class="kanban-board">
+                    <div class="kanban-column todo" ondrop="drop(event, 'To Do')" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+                        <h3>To Do</h3>
+                        <div id="to-do-tasks"></div>
+                    </div>
+                    <div class="kanban-column in-progress" ondrop="drop(event, 'In Progress')" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+                        <h3>In Progress</h3>
+                        <div id="in-progress-tasks"></div>
+                    </div>
+                    <div class="kanban-column done" ondrop="drop(event, 'Done')" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+                        <h3>Done</h3>
+                        <div id="done-tasks"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="project-management" class="tab-pane team-lead-only">
+                <h2>Projects</h2>
+                <button class="btn-primary" onclick="showProjectForm()" style="margin-bottom: 25px;">Create Project</button>
+                <div id="projects-list"></div>
+            </div>
+            <div id="project-overview" class="tab-pane">
+                <h2>Project Overview</h2>
+                <div class="search-bar">
+                    <input type="text" id="project-search" placeholder="Search by project name, category, or status" onkeyup="filterProjects()">
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable(0)">Project Name</th>
+                            <th onclick="sortTable(1)">Assigned QA</th>
+                            <th onclick="sortTable(2)">Project</th>
+                            <th onclick="sortTable(3)">Category</th>
+                            <th onclick="sortTable(4)">Subcategory</th>
+                            <th onclick="sortTable(5)">Phase</th>
+                            <th onclick="sortTable(6)">KT Received</th>
+                            <th onclick="sortTable(7)">Start Date</th>
+                            <th onclick="sortTable(8)">End Date</th>
+                            <th onclick="sortTable(9)">Status</th>
+                            <th onclick="sortTable(10)">Total Bugs</th>
+                            <th onclick="sortTable(11)">High HTML Bugs</th>
+                            <th onclick="sortTable(12)">Med HTML Bugs</th>
+                            <th onclick="sortTable(13)">Low HTML Bugs</th>
+                            <th onclick="sortTable(14)">High Func Bugs</th>
+                            <th onclick="sortTable(15)">Med Func Bugs</th>
+                            <th onclick="sortTable(16)">Low Func Bugs</th>
+                            <th onclick="sortTable(17)">TL Verification</th>
+                            <th onclick="sortTable(18)">Approval Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="project-overview-table"></tbody>
+                </table>
+            </div>
+            <div id="approved-projects" class="tab-pane">
+                <h2>Approved Projects</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Project Name</th>
+                            <th>Assigned QA</th>
+                            <th>Project</th>
+                            <th>Category</th>
+                            <th>Subcategory</th>
+                            <th>Phase</th>
+                            <th>KT Received</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Status</th>
+                            <th>Total Bugs</th>
+                            <th>High HTML Bugs</th>
+                            <th>Med HTML Bugs</th>
+                            <th>Low HTML Bugs</th>
+                            <th>High Func Bugs</th>
+                            <th>Med Func Bugs</th>
+                            <th>Low Func Bugs</th>
+                            <th>Approved Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="approved-projects-table"></tbody>
+                </table>
+            </div>
+            <div id="rejected-projects" class="tab-pane">
+                <h2>Rejected Projects</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Project Name</th>
+                            <th>Assigned QA</th>
+                            <th>Project</th>
+                            <th>Category</th>
+                            <th>Subcategory</th>
+                            <th>Phase</th>
+                            <th>KT Received</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Status</th>
+                            <th>Total Bugs</th>
+                            <th>High HTML Bugs</th>
+                            <th>Med HTML Bugs</th>
+                            <th>Low HTML Bugs</th>
+                            <th>High Func Bugs</th>
+                            <th>Med Func Bugs</th>
+                            <th>Low Func Bugs</th>
+                            <th>Rejection Date</th>
+                            <th>Rejection Reason</th>
+                            <th>Rejected By</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rejected-projects-table"></tbody>
+                </table>
+            </div>
+            <div id="project-types" class="tab-pane team-lead-admin">
+                <h2>Project Types</h2>
+                <button class="btn-primary" onclick="showCategoryForm()" style="margin-bottom: 25px;">Add Category</button>
+                <div id="project-types-list"></div>
+            </div>
+            <div id="qa-report" class="tab-pane team-lead-admin">
+                <h2>QA Report</h2>
+                <div class="filters" style="display: flex; gap: 15px; margin-bottom: 25px;">
+                    <input type="date" id="report-filter-date">
+                    <select id="report-filter-qa"></select>
+                    <select id="report-filter-project"></select>
+                    <select id="report-filter-category" onchange="updateSubcategoryFilter()"></select>
+                    <select id="report-filter-subcategory"></select>
+                    <button class="btn-primary" onclick="renderReports()">Apply Filters</button>
+                    <button class="btn-primary" onclick="exportReport()">Export Report</button>
+                </div>
+                <div id="reports-list"></div>
+                <div id="bug-stats"></div>
+            </div>
+            <div id="activity-log" class="tab-pane team-lead-only">
+                <h2>Activity Log</h2>
+                <div id="activity-log-list"></div>
+            </div>
+            <div id="profile" class="tab-pane">
+                <h2>Profile</h2>
+                <form id="profile-form">
+                    <div class="form-group">
+                        <label for="profile-name" class="required">Your Name</label>
+                        <input type="text" id="profile-name" placeholder="Enter your name" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Update Profile</button>
+                </form>
+            </div>
+            <div id="user-management" class="tab-pane team-lead-only">
+                <h2>User Management</h2>
+                <button class="btn-primary" onclick="showUserForm()" style="margin-bottom: 25px;">Add User</button>
+                <div id="users-list"></div>
+            </div>
+            <div id="assign-roles" class="tab-pane team-lead-only">
+                <h2>Assign Roles</h2>
+                <div id="roles-list"></div>
+            </div>
+        </div>
+    </div>
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()" tabindex="0">×</span>
+            <h2 id="modal-title"></h2>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeLoginModal()" tabindex="0">×</span>
+            <h2>Login</h2>
             <form id="login-form">
                 <div class="form-group">
-                    <label for="username">Email</label>
-                    <input type="email" id="username" placeholder="Enter your email" required>
+                    <label for="login-user-id" class="required">User ID</label>
+                    <input type="text" id="login-user-id" placeholder="Enter User ID" required>
                 </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="Password" required>
-                </div>
-                <button type="submit">Login</button>
+                <button type="submit" class="btn-primary">Login</button>
             </form>
-            <p style="text-align: center; margin-top: 1rem;">
-                <a href="#" id="forgot-password-link" style="color: var(--primary); text-decoration: none;">Forgot Password?</a>
-            </p>
-            <!-- Password Reset Form -->
-            <div id="reset-password-form" class="hidden" style="margin-top: 1rem;">
-                <div class="form-group">
-                    <label for="reset-email">Enter your email to reset password</label>
-                    <input type="email" id="reset-email" placeholder="e.g., user@intersmart.in" required>
-                </div>
-                <div style="display: flex; gap: 10px; justify-content: center;">
-                    <button id="reset-password-submit" class="btn-primary">Send Reset Email</button>
-                    <button id="reset-password-cancel" class="p-2 bg-[var(--dark-hover)] text-white rounded">Cancel</button>
-                </div>
-            </div>
         </div>
     </div>
-    <!-- Main Dashboard -->
-    <div id="dashboard" class="container hidden">
-        <header>
-            <div class="logo">
-                <img src="images/logo.png" alt="Logo">
-            </div>
-            <div class="user-info">
-                <span id="user-name"></span>
-                <select id="theme-toggle">
-                    <option value="dark">Dark</option>
-                    <option value="light">Light</option>
-                </select>
-                <button class="btn-primary py-1 px-3" onclick="logout()">Logout</button>
-            </div>
-        </header>
-
-        <div class="nav-tabs">
-            <div class="nav-link active" href="#daily-standup">Daily Standup</div>
-            <div class="nav-link" href="#project-management">Project Management</div>
-            <div class="nav-link" href="#approved-projects">Approved Projects</div>
-            <div class="nav-link" href="#rejected-projects">Rejected Projects</div>
-            <div class="nav-link" href="#activity-log">Activity Log</div>
-            <div class="nav-link" href="#profile">Profile</div>
-            <div class="nav-link team-lead-only" href="#user-management">User Management</div>
-        </div>
-
-        <div id="daily-standup" class="tab-pane active">
-            <h2 class="text-2xl font-bold mb-4">Daily Standup</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Task Name</th>
-                        <th>Project</th>
-                        <th>Assigned Date</th>
-                        <th>Due Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="standup-tasks-table"></tbody>
-            </table>
-            <div class="team-lead-only">
-                <h3 class="text-xl font-semibold mb-4">Assign Task</h3>
-                <form id="assign-task-form" class="space-y-4">
-                    <div class="form-group">
-                        <label for="assign-project" class="block text-sm font-medium mb-2">Project</label>
-                        <select id="assign-project" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="assign-qa" class="block text-sm font-medium mb-2">QA</label>
-                        <select id="assign-qa" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="project-phase" class="block text-sm font-medium mb-2">Phase</label>
-                        <select id="project-phase" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                            <option value="Unit Testing">Unit Testing</option>
-                            <option value="Integration Testing">Integration Testing</option>
-                            <option value="System Testing">System Testing</option>
-                            <option value="Regression Testing">Regression Testing</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="task-name" class="block text-sm font-medium mb-2">Task Name</label>
-                        <input type="text" id="task-name" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="due-date" class="block text-sm font-medium mb-2">Due Date</label>
-                        <input type="date" id="due-date" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                    </div>
-                    <button type="submit" class="btn-primary py-2 px-4 rounded">Assign Task</button>
-                </form>
-            </div>
-        </div>
-
-        <div id="project-management" class="tab-pane">
-            <h2 class="text-2xl font-bold mb-4">Project Management</h2>
-            <div class="team-lead-only mb-4">
-                <button class="btn-primary py-2 px-4 rounded" onclick="openModal('create-project-modal')">Create Project</button>
-            </div>
-            <input type="text" id="project-search" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white mb-4" placeholder="Search projects...">
-            <table>
-                <thead>
-                    <tr>
-                        <th onclick="sortTable('projects-table', 0)">Project Name</th>
-                        <th onclick="sortTable('projects-table', 1)">Category</th>
-                        <th onclick="sortTable('projects-table', 2)">Type</th>
-                        <th onclick="sortTable('projects-table', 3)">Phase</th>
-                        <th onclick="sortTable('projects-table', 4)">KT</th>
-                        <th onclick="sortTable('projects-table', 5)">Start Date</th>
-                        <th onclick="sortTable('projects-table', 6)">End Date</th>
-                        <th onclick="sortTable('projects-table', 7)">Status</th>
-                        <th onclick="sortTable('projects-table', 8)">Total Bugs</th>
-                        <th onclick="sortTable('projects-table', 9)">HTML Bugs</th>
-                        <th onclick="sortTable('projects-table', 10)">Functional Bugs</th>
-                        <th onclick="sortTable('projects-table', 11)">Assigned QA</th>
-                        <th>Bug Tracker</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="projects-table"></tbody>
-            </table>
-            <div class="team-lead-only">
-                <h3 class="text-xl font-semibold mb-4">Export Report</h3>
-                <form class="space-y-4">
-                    <div class="form-group">
-                        <label for="report-type" class="block text-sm font-medium mb-2">Report Type</label>
-                        <select id="report-type" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white">
-                            <option value="monthly">Monthly Report</option>
-                            <option value="rejected">Rejected Projects</option>
-                            <option value="qa-wise">QA-wise Report</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="report-month" class="block text-sm font-medium mb-2">Month</label>
-                        <input type="month" id="report-month" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white">
-                    </div>
-                    <div class="form-group">
-                        <label for="report-qa" class="block text-sm font-medium mb-2">QA</label>
-                        <select id="report-qa" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white"></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="report-project" class="block text-sm font-medium mb-2">Project Filter</label>
-                        <input type="text" id="report-project" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="Filter by project name">
-                    </div>
-                    <button type="button" class="btn-primary py-2 px-4 rounded" onclick="exportReport()">Export Report</button>
-                </form>
-            </div>
-        </div>
-
-        <div id="approved-projects" class="tab-pane">
-            <h2 class="text-2xl font-bold mb-4">Approved Projects</h2>
-            <input type="text" id="approved-search" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white mb-4" placeholder="Search approved projects...">
-            <table>
-                <thead>
-                    <tr>
-                        <th onclick="sortTable('approved-table', 0)">Project Name</th>
-                        <th onclick="sortTable('approved-table', 1)">QA</th>
-                        <th onclick="sortTable('approved-table', 2)">Date</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="approved-table"></tbody>
-            </table>
-        </div>
-
-        <div id="rejected-projects" class="tab-pane">
-            <h2 class="text-2xl font-bold mb-4">Rejected Projects</h2>
-            <input type="text" id="rejected-search" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white mb-4" placeholder="Search rejected projects...">
-            <table>
-                <thead>
-                    <tr>
-                        <th onclick="sortTable('rejected-table', 0)">Project Name</th>
-                        <th onclick="sortTable('rejected-table', 1)">QA</th>
-                        <th onclick="sortTable('rejected-table', 2)">Date</th>
-                        <th onclick="sortTable('rejected-table', 3)">Phase</th>
-                        <th onclick="sortTable('rejected-table', 4)">PC</th>
-                        <th>Reason</th>
-                    </tr>
-                </thead>
-                <tbody id="rejected-table"></tbody>
-            </table>
-        </div>
-
-        <div id="activity-log" class="tab-pane">
-            <h2 class="text-2xl font-bold mb-4">Activity Log</h2>
-            <input type="text" id="activity-search" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white mb-4" placeholder="Search activity log...">
-            <table>
-                <thead>
-                    <tr>
-                        <th onclick="sortTable('activity-table', 0)">Project</th>
-                        <th onclick="sortTable('activity-table', 1)">QA</th>
-                        <th onclick="sortTable('activity-table', 2)">Type</th>
-                        <th onclick="sortTable('activity-table', 3)">Details</th>
-                        <th onclick="sortTable('activity-table', 4)">Timestamp</th>
-                    </tr>
-                </thead>
-                <tbody id="activity-table"></tbody>
-            </table>
-        </div>
-
-        <div id="profile" class="tab-pane">
-            <h2 class="text-2xl font-bold mb-4">Profile</h2>
-            <form id="profile-form" class="space-y-4">
-                <div class="form-group">
-                    <label for="profile-username" class="block text-sm font-medium mb-2">Username</label>
-                    <input type="text" id="profile-username" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" readonly>
-                </div>
-                <div class="form-group">
-                    <label for="profile-role" class="block text-sm font-medium mb-2">Role</label>
-                    <input type="text" id="profile-role" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" readonly>
-                </div>
-                <div class="form-group">
-                    <label for="profile-email" class="block text-sm font-medium mb-2">Email</label>
-                    <input type="email" id="profile-email" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white">
-                </div>
-                <div class="form-group">
-                    <label for="change-password" class="block text-sm font-medium mb-2">Change Password</label>
-                    <input type="password" id="change-password" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="New password">
-                </div>
-                <button type="submit" class="btn-primary py-2 px-4 rounded">Update Profile</button>
-            </form>
-        </div>
-
-        <div id="user-management" class="tab-pane team-lead-only">
-            <h2 class="text-2xl font-bold mb-4">User Management</h2>
-            <form id="add-user-form" class="space-y-4 mb-4">
-                <div class="form-group">
-                    <label for="new-username" class="block text-sm font-medium mb-2">Email</label>
-                    <input type="email" id="new-username" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" placeholder="e.g., newuser@intersmart.in" required>
-                </div>
-                <div class="form-group">
-                    <label for="new-password" class="block text-sm font-medium mb-2">Password</label>
-                    <input type="password" id="new-password" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                </div>
-                <div class="form-group">
-                    <label for="new-name" class="block text-sm font-medium mb-2">Name</label>
-                    <input type="text" id="new-name" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                </div>
-                <div class="form-group">
-                    <label for="new-role" class="block text-sm font-medium mb-2">Role</label>
-                    <select id="new-role" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                        <option value="Team Lead">Team Lead</option>
-                        <option value="QA Member">QA Member</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn-primary py-2 px-4 rounded">Add User</button>
-            </form>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Username</th>
-                        <th>Name</th>
-                        <th>Role</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="users-table"></tbody>
-            </table>
-        </div>
-
-        <div id="create-project-modal" class="modal">
-            <div class="modal-content">
-                <h2>Create Project</h2>
-                <form id="create-project-form" class="space-y-4">
-                    <div class="form-group">
-                        <label for="project-name" class="block text-sm font-medium mb-2">Project Name</label>
-                        <input type="text" id="project-name" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="project-category" class="block text-sm font-medium mb-2">Category</label>
-                        <select id="project-category" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                            <option value="Web">Web</option>
-                            <option value="Mobile">Mobile</option>
-                            <option value="API">API</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="project-type" class="block text-sm font-medium mb-2">Type</label>
-                        <select id="project-type" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                            <option value="Internal">Internal</option>
-                            <option value="External">External</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="project-phase" class="block text-sm font-medium mb-2">Phase</label>
-                        <select id="project-phase" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                            <option value="Unit Testing">Unit Testing</option>
-                            <option value="Integration Testing">Integration Testing</option>
-                            <option value="System Testing">System Testing</option>
-                            <option value="Regression Testing">Regression Testing</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="bug-tracker" class="block text-sm font-medium mb-2">Bug Tracker URL</label>
-                        <input type="url" id="bug-tracker" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white">
-                    </div>
-                    <div class="form-group">
-                        <label for="start-date" class="block text-sm font-medium mb-2">Start Date</label>
-                        <input type="date" id="start-date" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="end-date" class="block text-sm font-medium mb-2">End Date</label>
-                        <input type="date" id="end-date" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                    </div>
-                    <div class="modal-actions">
-                        <button type="button" onclick="closeModal('create-project-modal')" class="p-2 bg-[var(--dark-hover)] text-white rounded">Cancel</button>
-                        <button type="submit" class="btn-primary py-2 px-4 rounded">Create Project</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div id="edit-project-modal" class="modal">
-            <div class="modal-content">
-                <h2>Edit Project</h2>
-                <form id="edit-project-form" class="space-y-4">
-                    <input type="hidden" id="edit-project-id">
-                    <div class="form-group">
-                        <label for="edit-project-name" class="block text-sm font-medium mb-2">Project Name</label>
-                        <input type="text" id="edit-project-name" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-project-category" class="block text-sm font-medium mb-2">Category</label>
-                        <select id="edit-project-category" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                            <option value="Web">Web</option>
-                            <option value="Mobile">Mobile</option>
-                            <option value="API">API</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-project-type" class="block text-sm font-medium mb-2">Type</label>
-                        <select id="edit-project-type" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                            <option value="Internal">Internal</option>
-                            <option value="External">External</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-project-phase" class="block text-sm font-medium mb-2">Phase</label>
-                        <select id="edit-project-phase" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                            <option value="Unit Testing">Unit Testing</option>
-                            <option value="Integration Testing">Integration Testing</option>
-                            <option value="System Testing">System Testing</option>
-                            <option value="Regression Testing">Regression Testing</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-project-kt" class="block text-sm font-medium mb-2">KT</label>
-                        <select id="edit-project-kt" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                            <option value="Yes">Yes</option>
-                            <option value="No">No</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-project-start" class="block text-sm font-medium mb-2">Start Date</label>
-                        <input type="date" id="edit-project-start" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-project-end" class="block text-sm font-medium mb-2">End Date</label>
-                        <input type="date" id="edit-project-end" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-project-bug-tracker" class="block text-sm font-medium mb-2">Bug Tracker URL</label>
-                        <input type="url" id="edit-project-bug-tracker" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white">
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-project-qa" class="block text-sm font-medium mb-2">Assigned QA</label>
-                        <select id="edit-project-qa" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white"></select>
-                    </div>
-                    <div class="modal-actions">
-                        <button type="button" onclick="closeModal('edit-project-modal')" class="p-2 bg-[var(--dark-hover)] text-white rounded">Cancel</button>
-                        <button type="submit" class="btn-primary py-2 px-4 rounded">Save Changes</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div id="report-bug-modal" class="modal">
-            <div class="modal-content">
-                <h2>Report Bug</h2>
-                <form id="report-bug-form" class="space-y-4">
-                    <input type="hidden" id="bug-project-id">
-                    <div class="form-group">
-                        <label for="bug-type" class="block text-sm font-medium mb-2">Bug Type</label>
-                        <select id="bug-type" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required>
-                            <option value="HTML">HTML</option>
-                            <option value="Functional">Functional</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="bug-description" class="block text-sm font-medium mb-2">Description</label>
-                        <textarea id="bug-description" class="w-full p-2 border rounded bg-[var(--dark-hover)] text-white" required aria-label="Bug Description"></textarea>
-                    </div>
-                    <div class="modal-actions">
-                        <button type="button" onclick="closeModal('report-bug-modal')" class="p-2 bg-[var(--dark-hover)] text-white rounded" aria-label="Cancel">Cancel</button>
-                        <button type="submit" class="btn-primary py-2 px-4 rounded" aria-label="Report Bug">Report Bug</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div id="notification" class="notification"></div>
-    </div>
-
-    <!-- Papa Parse for CSV Export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
 
     <script>
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBq2gKRE6O5v2LB1bGmj6z4VyH_sc6WsVA",
-            authDomain: "qa-team-dashboard-62687.firebaseapp.com",
-            projectId: "qa-team-dashboard-62687",
-            storageBucket: "qa-team-dashboard-62687.firebasestorage.app",
-            messagingSenderId: "245214914125",
-            appId: "1:245214914125:web:b36a6cdecc1c29a8e31e04",
-            measurementId: "G-19K1YSBXH0"
+        let state = {
+            currentUser: null,
+            users: [
+                { id: 'TL01', name: 'Abhiram P Mohan', role: 'Team Lead', email: 'jane@example.com' },
+                { id: 'u2', name: 'Abhiram', role: 'QA Member', email: 'abhiram@example.com' },
+                { id: 'u3', name: 'Carol', role: 'Admin', email: 'carol@example.com' },
+                { id: 'u4', name: 'Aswathi', role: 'QA Member', email: 'aswathi@example.com' },
+                { id: 'u5', name: 'Minnu', role: 'QA Member', email: 'minnu@example.com' }
+            ],
+            tasks: [],
+            projects: [],
+            projectOverview: [],
+            activityLog: [],
+            standupEntries: [],
+            testingPhases: ['HTML Comparison', 'HTML Comparison Retest', 'Dev Test', 'Dev Retest', 'Before Live', 'After Live'],
+            projectCategories: [
+                { name: 'General Project Categories', subcategories: ['HTML', 'Multilingual', 'Mobile App', 'Al Jazira'] },
+                { name: 'WordPress Projects (CMS-based)', subcategories: ['WordPress', 'CMS_Word_Cust_10', 'CMS_Word_Cust_15', 'CMS_Word_Cust_25', 'CMS_Word_Cust_40', 'CMS_Word_Theme_X', 'Ecom Wordpress', 'CMS Advanced WP'] },
+                { name: 'PHP Projects (CMS-based)', subcategories: ['CMS_Adv', 'CMS_PHP_Cust_10', 'CMS_PHP_Cust_15', 'CMS_PHP_Cust_25', 'CMS_PHP_Cust_40', 'Ecom PHP'] },
+                { name: 'Custom PHP Development', subcategories: ['PHP'] }
+            ],
+            sortDirection: {}
         };
 
-        // Initialize Firebase
-        try {
-            firebase.initializeApp(firebaseConfig);
-            console.log('Firebase initialized successfully');
-        } catch (error) {
-            console.error('Firebase initialization failed:', error);
-            showNotification('Failed to initialize Firebase. Please check your configuration.');
+        function showLoginModal() {
+            document.getElementById('login-modal').style.display = 'flex';
+            document.getElementById('login-user-id').focus();
         }
 
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        function closeLoginModal() {
+            document.getElementById('login-modal').style.display = 'none';
+        }
 
-        let currentUser = null;
+        function simulateLoginFromModal(e) {
+            e.preventDefault();
+            const userId = document.getElementById('login-user-id').value.trim();
+            const user = state.users.find(u => u.id === userId);
+            if (user) {
+                state.currentUser = user;
+                showNotification(`Logged in as ${user.name}`);
+                closeLoginModal();
+                updateUserAvatar();
+                setupSidebar();
+                switchTab('dashboard');
+            } else {
+                showNotification('Invalid User ID', null, true);
+            }
+        }
 
-        // Load Theme on Page Load
+        function simulateLogin() {
+            showLoginModal();
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            document.body.classList.toggle('light-theme', savedTheme === 'light');
-            document.getElementById('theme-toggle').value = savedTheme;
-            populateQADropdowns();
-            renderUsersTable();
-
-            // Activate the first tab by default
-            document.querySelector('.nav-link').classList.add('active');
-        });
-
-        // Login Handler with Enhanced Debugging
-        document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value;
-            console.log('Attempting login with:', { username, password });
-
-            if (!username || !password) {
-                showNotification('Please enter both email and password.');
-                return;
-            }
-
-            auth.signInWithEmailAndPassword(username, password)
-                .then(async (userCredential) => {
-                    console.log('Firebase Authentication successful:', userCredential.user.email);
-                    const userId = username.split('@')[0];
-                    console.log('Fetching user data from Firestore for ID:', userId);
-
-                    try {
-                        const userDoc = await db.collection('users').doc(userId).get();
-                        if (!userDoc.exists) {
-                            console.error('User data not found in Firestore for ID:', userId);
-                            showNotification('User data not found in database. Please contact your admin to add your user profile.');
-                            await auth.signOut();
-                            return;
-                        }
-
-                        console.log('User data found in Firestore:', userDoc.data());
-                        currentUser = { username, ...userDoc.data() };
-                        console.log('Current user set:', currentUser);
-
-                        document.getElementById('login-page').classList.add('hidden');
-                        document.getElementById('dashboard').classList.remove('hidden');
-                        document.getElementById('user-name').textContent = currentUser.name;
-
-                        if (currentUser.role === 'Team Lead') {
-                            document.querySelectorAll('.team-lead-only').forEach(el => el.classList.remove('hidden'));
-                        }
-
-                        loadDashboardData();
-                    } catch (error) {
-                        console.error('Firestore error during login:', error.code, error.message);
-                        showNotification('Failed to fetch user data: ' + error.message);
-                        await auth.signOut();
-                    }
-                })
-                .catch((error) => {
-                    console.error('Login error:', error.code, error.message);
-                    if (error.code === 'auth/wrong-password') {
-                        showNotification('Incorrect password. Please try again or use "Forgot Password".');
-                    } else if (error.code === 'auth/user-not-found') {
-                        showNotification('User not found. Please check your email or contact your admin.');
-                    } else if (error.code === 'auth/invalid-email') {
-                        showNotification('Invalid email format. Please enter a valid email address.');
-                    } else if (error.code === 'auth/too-many-requests') {
-                        showNotification('Too many login attempts. Please try again later.');
-                    } else {
-                        showNotification('Login failed: ' + error.message);
-                    }
-                });
-        });
-
-        // Forgot Password Handler
-        const forgotPasswordLink = document.getElementById('forgot-password-link');
-        const resetPasswordForm = document.getElementById('reset-password-form');
-        const resetPasswordSubmit = document.getElementById('reset-password-submit');
-        const resetPasswordCancel = document.getElementById('reset-password-cancel');
-        const resetEmailInput = document.getElementById('reset-email');
-
-        forgotPasswordLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            console.log('Forgot Password link clicked');
-            resetPasswordForm.classList.toggle('hidden');
-            if (!resetPasswordForm.classList.contains('hidden')) {
-                resetEmailInput.focus();
-            }
-        });
-
-        resetPasswordCancel.addEventListener('click', (e) => {
-            e.preventDefault();
-            console.log('Cancel button clicked');
-            resetPasswordForm.classList.add('hidden');
-            resetEmailInput.value = '';
-        });
-
-        resetPasswordSubmit.addEventListener('click', (e) => {
-            e.preventDefault();
-            const email = resetEmailInput.value.trim();
-            console.log('Attempting to send password reset email to:', email);
-
-            // Client-side email validation
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!email) {
-                showNotification('Please enter your email address.');
-                return;
-            }
-            if (!emailRegex.test(email)) {
-                showNotification('Invalid email format. Please enter a valid email address.');
-                return;
-            }
-
-            // Send password reset email
-            auth.sendPasswordResetEmail(email)
-                .then(() => {
-                    console.log('Password reset email sent successfully to:', email);
-                    showNotification('Password reset email sent! Check your inbox (and spam/junk folder).');
-                    resetPasswordForm.classList.add('hidden');
-                    resetEmailInput.value = '';
-                })
-                .catch((error) => {
-                    console.error('Password reset error:', error.code, error.message);
-                    if (error.code === 'auth/user-not-found') {
-                        showNotification('No user found with this email. Please check your email or contact your admin.');
-                    } else if (error.code === 'auth/invalid-email') {
-                        showNotification('Invalid email format. Please enter a valid email address.');
-                    } else if (error.code === 'auth/too-many-requests') {
-                        showNotification('Too many requests. Please try again later.');
-                    } else {
-                        showNotification('Error sending password reset email: ' + error.message);
-                    }
-                });
-        });
-
-        // Logout Handler
-        function logout() {
-            auth.signOut().then(() => {
-                currentUser = null;
-                document.getElementById('dashboard').classList.add('hidden');
-                document.getElementById('login-page').classList.remove('hidden');
-            }).catch((error) => {
-                showNotification('Logout failed: ' + error.message);
-            });
-        }
-
-        // Tab Navigation
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', (e) => {
+            populateProjects();
+            populateProjectOverview();
+            populateTasks();
+            showLoginModal();
+            document.getElementById('login-form').addEventListener('submit', simulateLoginFromModal);
+            document.getElementById('standup-form').onsubmit = e => {
                 e.preventDefault();
-                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
-                document.querySelectorAll('.tab-pane').forEach(tab => tab.classList.remove('active'));
-                const targetTab = document.getElementById(link.getAttribute('href').substring(1));
-                targetTab.classList.add('active');
-                targetTab.style.opacity = 0;
-                setTimeout(() => targetTab.style.opacity = 1, 10);
-            });
-            link.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') link.click();
-            });
+                submitStandup();
+            };
+            document.getElementById('profile-form').onsubmit = e => {
+                e.preventDefault();
+                updateProfile();
+            };
+            if (localStorage.getItem('theme') === 'light') {
+                document.body.classList.add('light-mode');
+                document.getElementById('theme-checkbox').checked = true;
+            }
         });
 
-        // Notifications
-        function showNotification(message) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.style.display = 'block';
-            setTimeout(() => notification.style.display = 'none', 5000); // Increased to 5 seconds for better visibility
-        }
-
-        // Modal Handling
-        function openModal(modalId) {
-            const modal = document.getElementById(modalId);
-            modal.style.display = 'flex';
-            modal.querySelector('input, select, textarea').focus();
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        // Load Dashboard Data
-        async function loadDashboardData() {
-            try {
-                const tasksSnap = await db.collection('tasks').where('assignee', '==', currentUser.username).get();
-                const tasks = tasksSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const projectsSnap = await db.collection('projects').get();
-                const projects = projectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const approvedSnap = await db.collection('approvedProjects').get();
-                const approvedProjects = approvedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const rejectedSnap = await db.collection('rejectedProjects').get();
-                const rejectedProjects = rejectedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const activitySnap = await db.collection('activityLog').get();
-                const activityLog = activitySnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-                renderStandupTasksTable(tasks);
-                renderProjectsTable(projects);
-                renderApprovedTable(approvedProjects);
-                renderRejectedTable(rejectedProjects);
-                renderActivityTable(activityLog);
-                renderProfile();
-                populateProjectDropdown(projects);
-                renderUsersTable();
-            } catch (error) {
-                console.error('Error loading dashboard data:', error);
-                showNotification('Failed to load dashboard data: ' + error.message);
-            }
-        }
-
-        // Render Daily Standup Form as a Table
-        function renderStandupTasksTable(tasks) {
-            const table = document.getElementById('standup-tasks-table');
-            table.innerHTML = tasks
-                .filter(t => t.assignee === currentUser.username)
-                .map(t => {
-                    const dueDate = new Date(t.dueDate);
-                    const today = new Date();
-                    const isDueSoon = dueDate - today < 24 * 60 * 60 * 1000 && dueDate > today;
-                    return `
-                        <tr>
-                            <td>${t.name || 'N/A'}</td>
-                            <td>${t.projectName || 'N/A'}</td>
-                            <td>${t.assignedDate || 'N/A'}</td>
-                            <td>${t.dueDate || 'N/A'} ${isDueSoon ? '<span class="alert-due">Due Soon</span>' : ''}</td>
-                            <td>${t.status === 'inprogress' ? 'In Progress' : 'Completed'}</td>
-                            <td>
-                                ${t.status === 'inprogress' ? `
-                                    <button class="text-green-400 text-sm tooltip" onclick="markTaskCompleted('${t.id}')" aria-label="Mark task as completed">
-                                        Mark as Completed
-                                        <span class="tooltiptext">Mark this task as completed</span>
-                                    </button>
-                                ` : ''}
-                                ${currentUser.role === 'Team Lead' ? `
-                                    <button class="text-red-400 text-sm ml-2 tooltip" onclick="deleteTask('${t.id}')" aria-label="Delete task">
-                                        Delete
-                                        <span class="tooltiptext">Delete this task</span>
-                                    </button>
-                                ` : ''}
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-        }
-
-        // Mark Task as Completed
-        async function markTaskCompleted(taskId) {
-            try {
-                await db.collection('tasks').doc(taskId).update({ status: 'completed' });
-                const taskSnap = await db.collection('tasks').doc(taskId).get();
-                const task = taskSnap.data();
-                logActivity(task.projectId, currentUser.username, 'Task Completed', `Marked "${task.name}" as completed`);
-                loadDashboardData();
-                showNotification(`Task "${task.name}" marked as completed`);
-            } catch (error) {
-                showNotification('Failed to mark task as completed: ' + error.message);
-            }
-        }
-
-        // Delete Task
-        async function deleteTask(taskId) {
-            if (confirm('Are you sure you want to delete this task?')) {
-                try {
-                    await db.collection('tasks').doc(taskId).delete();
-                    loadDashboardData();
-                    showNotification('Task deleted successfully');
-                } catch (error) {
-                    showNotification('Failed to delete task: ' + error.message);
+        function setupSidebar() {
+            const role = state.currentUser?.role || '';
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                const tabId = item.getAttribute('data-tab');
+                if (role === 'QA Member') {
+                    if (['project-management', 'project-types', 'qa-report', 'activity-log', 'user-management', 'assign-roles'].includes(tabId)) {
+                        item.style.display = 'none';
+                        return;
+                    }
                 }
-            }
-        }
-
-        // Assign Task
-        document.getElementById('assign-task-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (currentUser.role !== 'Team Lead') return;
-            const projectId = document.getElementById('assign-project').value;
-            const qa = document.getElementById('assign-qa').value;
-            const phase = document.getElementById('project-phase').value;
-            const taskName = document.getElementById('task-name').value;
-            const dueDate = document.getElementById('due-date').value;
-
-            try {
-                const projectSnap = await db.collection('projects').doc(projectId).get();
-                const project = projectSnap.data();
-                if (project) {
-                    const newTask = {
-                        projectId: projectId,
-                        projectName: project.name,
-                        name: taskName,
-                        assignee: qa,
-                        assignedDate: new Date().toISOString().split('T')[0],
-                        dueDate: dueDate,
-                        status: 'inprogress',
-                        alertSent: false
-                    };
-                    await db.collection('tasks').add(newTask);
-                    await db.collection('projects').doc(projectId).update({ assignedQA: qa, phase });
-                    logActivity(projectId, qa, 'Task Assigned', `Assigned "${taskName}" to ${qa}`);
-                    loadDashboardData();
-                    showNotification(`Task "${taskName}" assigned to ${qa}`);
-                    e.target.reset();
+                if (role === 'QA Member' && ['approved-projects', 'rejected-projects'].includes(tabId)) {
+                    item.style.display = state.projectOverview.some(po => po.qaId === state.currentUser.id && po.tlVerification === 'Verified') ? 'block' : 'none';
                 } else {
-                    showNotification('Project not found');
+                    item.style.display = 'block';
                 }
-            } catch (error) {
-                showNotification('Failed to assign task: ' + error.message);
-            }
-        });
 
-        // Projects Table
-        async function renderProjectsTable(projects) {
-            try {
-                const table = document.getElementById('projects-table');
-                const usersSnap = await db.collection('users').get();
-                const users = Object.fromEntries(usersSnap.docs.map(doc => [doc.id, doc.data()]));
-                table.innerHTML = projects.map(p => `
+                item.addEventListener('click', () => {
+                    console.log(`Clicked sidebar item: ${tabId}`);
+                    switchTab(tabId);
+                });
+                item.setAttribute('tabindex', '0');
+                item.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        console.log(`Keydown on sidebar item: ${tabId}`);
+                        switchTab(tabId);
+                    }
+                });
+            });
+        }
+
+        function switchTab(tabId) {
+            console.log(`Switching to tab: ${tabId}`);
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+            const pane = document.getElementById(tabId);
+            const item = document.querySelector(`.sidebar-item[data-tab="${tabId}"]`);
+            if (pane && item && isAuthorized(tabId)) {
+                console.log(`Tab ${tabId} authorized and found`);
+                pane.classList.add('active');
+                item.classList.add('active');
+                updateBreadcrumbs(tabId);
+                loadTabData(tabId);
+            } else {
+                console.log(`Tab ${tabId} not authorized or not found`);
+            }
+        }
+
+        function isAuthorized(tabId) {
+            if (!state.currentUser) return false;
+            const role = state.currentUser.role;
+            if (role === 'Team Lead') return true;
+            if (role === 'Admin' && document.getElementById(tabId).classList.contains('team-lead-admin')) return true;
+            return !document.getElementById(tabId).classList.contains('team-lead-only') && !document.getElementById(tabId).classList.contains('team-lead-admin');
+        }
+
+        function updateBreadcrumbs(tabId) {
+            const tabNames = {
+                'dashboard': 'Dashboard',
+                'daily-standup': 'Daily Standup',
+                'kanban-board': 'Kanban Board',
+                'project-management': 'Projects',
+                'project-overview': 'Project Overview',
+                'approved-projects': 'Approved Projects',
+                'rejected-projects': 'Rejected Projects',
+                'project-types': 'Project Types',
+                'qa-report': 'QA Report',
+                'activity-log': 'Activity Log',
+                'profile': 'Profile',
+                'user-management': 'User Management',
+                'assign-roles': 'Assign Roles'
+            };
+            document.getElementById('breadcrumbs').innerHTML = `<a href="#" onclick="switchTab('dashboard')">Dashboard</a> > ${tabNames[tabId]}`;
+        }
+
+        function loadTabData(tabId) {
+            showLoading();
+            setTimeout(() => {
+                const loaders = {
+                    'dashboard': renderDashboard,
+                    'daily-standup': renderStandup,
+                    'kanban-board': renderKanban,
+                    'project-management': renderProjects,
+                    'project-overview': renderProjectOverview,
+                    'approved-projects': renderApprovedProjects,
+                    'rejected-projects': renderRejectedProjects,
+                    'project-types': renderProjectTypes,
+                    'qa-report': renderReports,
+                    'activity-log': renderActivityLog,
+                    'profile': renderProfile,
+                    'user-management': renderUsers,
+                    'assign-roles': renderAssignRoles
+                };
+                loaders[tabId]?.();
+                hideLoading();
+            }, 500);
+        }
+
+        function showNotification(message, userId = null, isError = false) {
+            if (!userId || userId === state.currentUser?.id) {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.classList.toggle('error-notification', isError);
+                notification.style.display = 'block';
+                setTimeout(() => notification.style.display = 'none', 3000);
+            }
+            if (state.currentUser) {
+                state.activityLog.push({ action: `Notified: ${message}`, user: state.currentUser.name, timestamp: Date.now() });
+            }
+        }
+
+        function showModal(title, content) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-body').innerHTML = content;
+            document.getElementById('modal').style.display = 'flex';
+            document.querySelector('.modal-close').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function showLoading() {
+            document.getElementById('loader').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loader').style.display = 'none';
+        }
+
+        function loadInitialData() {
+            if (state.currentUser) {
+                document.getElementById('user-name').textContent = `Welcome ${state.currentUser.name}`;
+                document.getElementById('welcome-user').textContent = state.currentUser.name;
+                const qaFilter = document.getElementById('report-filter-qa');
+                qaFilter.innerHTML = `<option value="">Filter by QA</option>` + state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+                const projectFilter = document.getElementById('report-filter-project');
+                projectFilter.innerHTML = `<option value="">Filter by Project</option>` + state.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+                const categoryFilter = document.getElementById('report-filter-category');
+                categoryFilter.innerHTML = `<option value="">Filter by Category</option>` + state.projectCategories.map(cat => `<option value="${cat.name}">${cat.name}</option>`).join('');
+                updateSubcategoryFilter();
+            }
+        }
+
+        function updateSubcategoryFilter() {
+            const categoryFilter = document.getElementById('report-filter-category').value;
+            const subcategoryFilter = document.getElementById('report-filter-subcategory');
+            if (categoryFilter) {
+                const category = state.projectCategories.find(cat => cat.name === categoryFilter);
+                subcategoryFilter.innerHTML = `<option value="">Filter by Subcategory</option>` + category.subcategories.map(sub => `<option value="${sub}">${sub}</option>`).join('');
+            } else {
+                subcategoryFilter.innerHTML = `<option value="">Filter by Subcategory</option>`;
+            }
+        }
+
+        function renderDashboardForTL() {
+            const stats = calculateDashboardStats();
+            const projectsByCategory = state.projectCategories.map(category => {
+                const categoryStats = stats[category.name] || { projects: 0, pendingApprovals: 0, completedProjects: 0 };
+                return `
+                    <div class="widget">
+                        <h3>${category.name}</h3>
+                        ${categoryStats.projects === 0 ? `
+                            <p>No projects yet—create one now!</p>
+                        ` : `
+                            <div class="stats">
+                                <span class="stats-number">${categoryStats.projects}</span>
+                                <span>Projects</span>
+                            </div>
+                            <div class="stats-list">
+                                <div class="stats-list-item">Pending Approvals: ${categoryStats.pendingApprovals}</div>
+                                <div class="stats-list-item">Completed Projects: ${categoryStats.completedProjects}</div>
+                            </div>
+                        `}
+                    </div>
+                `;
+            }).join('');
+
+            const pendingVerifications = state.projectOverview.filter(po => po.tlVerification === 'Pending');
+            const verificationSection = `
+                <div class="widget">
+                    <h3>Projects Pending TL Verification</h3>
+                    ${pendingVerifications.length ? pendingVerifications.map(po => `
+                        <div class="list-item">
+                            <span>${po.projectName} (QA: ${state.users.find(u => u.id === po.qaId)?.name || 'Unknown'})</span>
+                            <div>
+                                <button class="btn-primary" onclick="verifyProject('${po.id}', true)">Verify</button>
+                                <button class="btn-danger" onclick="verifyProject('${po.id}', false)">Not Verified</button>
+                            </div>
+                        </div>
+                    `).join('') : '<p>No projects pending verification.</p>'}
+                </div>
+            `;
+
+            document.getElementById('dashboard-content').innerHTML = projectsByCategory + verificationSection;
+        }
+
+        function renderDashboardForMember() {
+            const assignedProjects = state.projectOverview.filter(po => po.qaId === state.currentUser.id);
+            const projectsSummary = assignedProjects.map(po => `
+                <div class="widget">
+                    <h3>${po.projectName}</h3>
+                    <div class="stats-list">
+                        <div class="stats-list-item">Category: ${po.projectCategory}</div>
+                        <div class="stats-list-item">Subcategory: ${po.projectSubcategory}</div>
+                        <div class="stats-list-item">Phase: ${po.currentPhase}</div>
+                        <div class="stats-list-item">Status: ${po.status}</div>
+                        <div class="stats-list-item">Total Bugs: ${po.totalBugs}</div>
+                        <div class="stats-list-item">TL Verification: ${po.tlVerification || 'Not Requested'}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('dashboard-content').innerHTML = projectsSummary || `
+                <div class="widget">
+                    <h3>No Assigned Projects</h3>
+                    <p>You currently have no projects assigned.</p>
+                </div>
+            `;
+        }
+
+        function renderDashboard() {
+            if (!state.currentUser) return;
+            if (state.currentUser.role === 'Team Lead') {
+                renderDashboardForTL();
+            } else {
+                renderDashboardForMember();
+            }
+        }
+
+        function renderStandup() {}
+
+        function submitStandup() {
+            const yesterday = document.getElementById('standup-yesterday').value.trim();
+            const today = document.getElementById('standup-today').value.trim();
+            if (!yesterday || !today) {
+                showNotification('Please fill in all required fields', null, true);
+                return;
+            }
+            const entry = {
+                yesterday,
+                today,
+                blockers: document.getElementById('standup-blockers').value.trim(),
+                user: state.currentUser.name,
+                date: new Date().toISOString()
+            };
+            state.standupEntries.push(entry);
+            state.activityLog.push({ action: 'Submitted standup', user: state.currentUser.name, timestamp: Date.now() });
+            showNotification('Standup submitted successfully');
+            document.getElementById('standup-form').reset();
+        }
+
+        function renderKanban() {
+            const columns = ['to-do', 'in-progress', 'done'];
+            columns.forEach(col => {
+                const status = col.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                let tasks = state.tasks.filter(t => t.status === status);
+                if (state.currentUser.role !== 'Team Lead') {
+                    tasks = tasks.filter(t => t.assignedTo === state.currentUser.id);
+                }
+                const taskHtml = tasks.length ? tasks.map(t => `
+                    <div style="background: #34495e; padding: 14px; margin-bottom: 10px; border-radius: 4px; cursor: move; box-shadow: var(--shadow); color: var(--text-color); font-size: 16px;" draggable="true" ondragstart="drag(event, '${t.id}')">
+                        ${t.name} (Assigned to: ${state.users.find(u => u.id === t.assignedTo)?.name || 'Unassigned'})
+                    </div>
+                `).join('') : `<p>No tasks yet—click 'Add Task' to get started!</p>`;
+                document.getElementById(`${col}-tasks`).innerHTML = taskHtml;
+            });
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function dragEnter(ev) {
+            ev.target.closest('.kanban-column').classList.add('dragover');
+        }
+
+        function dragLeave(ev) {
+            ev.target.closest('.kanban-column').classList.remove('dragover');
+        }
+
+        function drag(ev, taskId) {
+            ev.dataTransfer.setData('text', taskId);
+        }
+
+        function drop(ev, status) {
+            ev.preventDefault();
+            const taskId = ev.dataTransfer.getData('text');
+            const task = state.tasks.find(t => t.id === taskId);
+            if (task) {
+                const previousStatus = task.status;
+                task.status = status;
+                state.activityLog.push({ action: `Moved task to ${status}`, user: state.currentUser.name, timestamp: Date.now() });
+                renderKanban();
+                showNotification(`Task moved to ${status}`, task.assignedTo);
+
+                if (previousStatus === 'To Do' && status === 'In Progress') {
+                    const project = state.projects.find(p => p.id === task.projectId);
+                    if (project) {
+                        const existingEntry = state.projectOverview.find(po => po.projectId === task.projectId && po.currentPhase === task.phase);
+                        if (!existingEntry) {
+                            state.projectOverview.push({
+                                id: `po${Date.now()}`,
+                                projectId: task.projectId,
+                                projectName: project.name,
+                                qaId: task.assignedTo,
+                                projectCategory: project.projectCategory || '',
+                                projectSubcategory: project.projectSubcategory || '',
+                                currentPhase: task.phase,
+                                ktReceived: '',
+                                startDate: '',
+                                endDate: '',
+                                status: 'In Progress',
+                                totalBugs: 0,
+                                highPriorityHtmlBugs: 0,
+                                mediumPriorityHtmlBugs: 0,
+                                lowPriorityHtmlBugs: 0,
+                                highPriorityFunctionalBugs: 0,
+                                mediumPriorityFunctionalBugs: 0,
+                                lowPriorityFunctionalBugs: 0,
+                                tlVerification: 'Not Requested',
+                                approvalStatus: 'Not Set',
+                                approvedDate: '',
+                                rejectionDate: '',
+                                rejectionReason: '',
+                                rejectedBy: ''
+                            });
+                            renderProjectOverview();
+                            renderDashboard();
+                        }
+                    }
+                }
+            }
+            ev.target.closest('.kanban-column').classList.remove('dragover');
+        }
+
+        function showTaskForm() {
+            if (state.currentUser.role !== 'Team Lead') return showNotification('Only Team Lead can add tasks');
+            const content = `
+                <form id="task-form">
+                    <div class="form-group">
+                        <label for="task-name" class="required">Task Name</label>
+                        <input type="text" id="task-name" placeholder="Enter task name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-project" class="required">Project</label>
+                        <select id="task-project" required>
+                            <option value="">Select Project</option>
+                            ${state.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-phase" class="required">Phase</label>
+                        <select id="task-phase" required>
+                            <option value="">Select Phase</option>
+                            ${state.testingPhases.map(phase => `<option value="${phase}">${phase}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-assigned" class="required">Assignee</label>
+                        <select id="task-assigned" required>
+                            <option value="">Select Assignee</option>
+                            ${state.users.map(u => `<option value="${u.id}">${u.name} (${u.role})</option>`).join('')}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Add Task</button>
+                </form>
+            `;
+            showModal('Add Task', content);
+            document.getElementById('task-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                addTask();
+            });
+        }
+
+        function addTask() {
+            const projectId = document.getElementById('task-project').value;
+            const project = state.projects.find(p => p.id === projectId);
+            if (!project) return showNotification('Please select a valid project', null, true);
+
+            const taskName = document.getElementById('task-name').value.trim();
+            const phase = document.getElementById('task-phase').value;
+            const assignedTo = document.getElementById('task-assigned').value;
+            if (!taskName || !phase || !assignedTo) return showNotification('All fields are required', null, true);
+
+            const task = {
+                id: `t${Date.now()}`,
+                name: taskName,
+                projectId: projectId,
+                phase: phase,
+                assignedTo: assignedTo,
+                status: 'To Do'
+            };
+            state.tasks.push(task);
+            state.activityLog.push({ action: `Added new task: ${task.name}`, user: state.currentUser.name, timestamp: Date.now() });
+            renderKanban();
+            closeModal();
+            showNotification(`Task "${task.name}" assigned to ${state.users.find(u => u.id === task.assignedTo)?.name}`, task.assignedTo);
+        }
+
+        function renderProjects() {
+            document.getElementById('projects-list').innerHTML = state.projects.map(p => `
+                <div class="list-item">
+                    <span>${p.name} - ${p.status} (Category: ${p.projectCategory || 'N/A'}, Subcategory: ${p.projectSubcategory || 'N/A'})</span>
+                </div>
+            `).join('');
+        }
+
+        function showProjectForm() {
+            if (state.currentUser.role !== 'Team Lead') return showNotification('Only Team Lead can create projects');
+            const content = `
+                <form id="project-form">
+                   egister                    <div class="form-group">
+                        <label for="project-name" class="required">Project Name</label>
+                        <input type="text" id="project-name" placeholder="e.g., Website Redesign" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bug-tracker-link" class="required">Bug Tracker Link (GitLab)</label>
+                        <input type="text" id="bug-tracker-link" placeholder="e.g., https://gitlab.com/project" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-category" class="required">Category</label>
+                        <select id="project-category" required onchange="updateProjectSubcategoryOptions()">
+                            <option value="">Choose a category</option>
+                            ${state.projectCategories.map(cat => `<option value="${cat.name}">${cat.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-subcategory" class="required">Subcategory</label>
+                        <select id="project-subcategory" required>
+                            <option value="">Select Subcategory</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Create Project</button>
+                </form>
+            `;
+            showModal('Create Project', content);
+            document.getElementById('project-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                createProject();
+            });
+        }
+
+        function updateProjectSubcategoryOptions() {
+            const category = document.getElementById('project-category').value;
+            const subcategorySelect = document.getElementById('project-subcategory');
+            if (category) {
+                const subcategories = state.projectCategories.find(cat => cat.name === category).subcategories;
+                subcategorySelect.innerHTML = `<option value="">Select Subcategory</option>` + subcategories.map(sub => `<option value="${sub}">${sub}</option>`).join('');
+            } else {
+                subcategorySelect.innerHTML = `<option value="">Select Subcategory</option>`;
+            }
+        }
+
+        function createProject() {
+            const name = document.getElementById('project-name').value.trim();
+            const bugTrackerLink = document.getElementById('bug-tracker-link').value.trim();
+            const category = document.getElementById('project-category').value;
+            const subcategory = document.getElementById('project-subcategory').value;
+            if (!name || !bugTrackerLink || !category || !subcategory) {
+                showNotification('All fields are required', null, true);
+                return;
+            }
+
+            const project = {
+                id: `p${Date.now()}`,
+                name,
+                bugTrackerLink,
+                status: 'In Progress',
+                projectCategory: category,
+                projectSubcategory: subcategory
+            };
+            state.projects.push(project);
+            state.activityLog.push({ action: `Created project ${project.name}`, user: state.currentUser.name, timestamp: Date.now() });
+            renderProjects();
+            closeModal();
+            showNotification('Project created');
+            const projectFilter = document.getElementById('report-filter-project');
+            projectFilter.innerHTML = `<option value="">Filter by Project</option>` + state.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        }
+
+        function renderProjectTypes() {
+            if (state.currentUser.role !== 'Team Lead' && state.currentUser.role !== 'Admin') return showNotification('Only Team Lead or Admin can manage project types');
+            const projectTypesList = document.getElementById('project-types-list');
+            projectTypesList.innerHTML = state.projectCategories.map((category, index) => `
+                <div class="category-item">
+                    <span>${category.name}</span>
+                    <div>
+                        <button class="btn-primary" onclick="showSubcategoryForm(${index})" title="Add Subcategory">Add Subcategory</button>
+                        <button class="btn-danger" onclick="deleteCategory(${index})" title="Delete Category">Delete</button>
+                    </div>
+                </div>
+                <div class="subcategory-list">
+                    ${category.subcategories.map((sub, subIndex) => `
+                        <div class="subcategory-item">
+                            <span>${sub}</span>
+                            <button class="btn-danger" onclick="deleteSubcategory(${index}, ${subIndex})" title="Delete Subcategory">Delete</button>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
+        }
+
+        function showCategoryForm() {
+            const content = `
+                <form id="category-form">
+                    <div class="form-group">
+                        <label for="category-name" class="required">Category Name</label>
+                        <input type="text" id="category-name" placeholder="e.g., New Category" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Add Category</button>
+                </form>
+            `;
+            showModal('Add Category', content);
+            document.getElementById('category-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                addCategory();
+            });
+        }
+
+        function addCategory() {
+            const categoryName = document.getElementById('category-name').value.trim();
+            if (!categoryName) return showNotification('Category name cannot be empty', null, true);
+            if (state.projectCategories.some(cat => cat.name === categoryName)) return showNotification('Category already exists', null, true);
+
+            state.projectCategories.push({ name: categoryName, subcategories: [] });
+            state.activityLog.push({ action: `Added category ${categoryName}`, user: state.currentUser.name, timestamp: Date.now() });
+            renderProjectTypes();
+            closeModal();
+            showNotification('Category added');
+            updateCategoryFilters();
+        }
+
+        function deleteCategory(index) {
+            const category = state.projectCategories[index];
+            if (state.projects.some(p => p.projectCategory === category.name)) {
+                return showNotification('Cannot delete category with associated projects', null, true);
+            }
+            state.projectCategories.splice(index, 1);
+            state.activityLog.push({ action: `Deleted category ${category.name}`, user: state.currentUser.name, timestamp: Date.now() });
+            renderProjectTypes();
+            showNotification('Category deleted');
+            updateCategoryFilters();
+        }
+
+        function showSubcategoryForm(categoryIndex) {
+            const category = state.projectCategories[categoryIndex];
+            const content = `
+                <form id="subcategory-form">
+                    <div class="form-group">
+                        <label for="subcategory-name" class="required">Subcategory Name</label>
+                        <input type="text" id="subcategory-name" placeholder="e.g., New Subcategory" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Add Subcategory</button>
+                </form>
+            `;
+            showModal(`Add Subcategory to ${category.name}`, content);
+            document.getElementById('subcategory-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                addSubcategory(categoryIndex);
+            });
+        }
+
+        function addSubcategory(categoryIndex) {
+            const subcategoryName = document.getElementById('subcategory-name').value.trim();
+            if (!subcategoryName) return showNotification('Subcategory name cannot be empty', null, true);
+            const category = state.projectCategories[categoryIndex];
+            if (category.subcategories.includes(subcategoryName)) return showNotification('Subcategory already exists in this category', null, true);
+
+            category.subcategories.push(subcategoryName);
+            state.activityLog.push({ action: `Added subcategory ${subcategoryName} to ${category.name}`, user: state.currentUser.name, timestamp: Date.now() });
+            renderProjectTypes();
+            closeModal();
+            showNotification('Subcategory added');
+            updateCategoryFilters();
+        }
+
+        function deleteSubcategory(categoryIndex, subcategoryIndex) {
+            const category = state.projectCategories[categoryIndex];
+            const subcategory = category.subcategories[subcategoryIndex];
+            if (state.projects.some(p => p.projectCategory === category.name && p.projectSubcategory === subcategory)) {
+                return showNotification('Cannot delete subcategory with associated projects', null, true);
+            }
+            category.subcategories.splice(subcategoryIndex, 1);
+            state.activityLog.push({ action: `Deleted subcategory ${subcategory} from ${category.name}`, user: state.currentUser.name, timestamp: Date.now() });
+            renderProjectTypes();
+            showNotification('Subcategory deleted');
+            updateCategoryFilters();
+        }
+
+        function updateCategoryFilters() {
+            const categoryFilter = document.getElementById('report-filter-category');
+            categoryFilter.innerHTML = `<option value="">Filter by Category</option>` + state.projectCategories.map(cat => `<option value="${cat.name}">${cat.name}</option>`).join('');
+            updateSubcategoryFilter();
+        }
+
+        function renderProjectOverview() {
+            const tbody = document.getElementById('project-overview-table');
+            const isTeamLead = state.currentUser.role === 'Team Lead';
+            const isQAMember = state.currentUser.role === 'QA Member';
+
+            let projectsToShow = state.projectOverview;
+            if (isQAMember) {
+                projectsToShow = state.projectOverview.filter(po => po.qaId === state.currentUser.id);
+            }
+
+            tbody.innerHTML = projectsToShow.map(po => {
+                const project = state.projects.find(p => p.id === po.projectId);
+                const isVerified = po.tlVerification === 'Verified';
+                const isPendingVerification = po.tlVerification === 'Pending';
+                const isNotVerified = po.tlVerification === 'Not Verified';
+
+                return `
                     <tr>
-                        <td class="editable" onclick="editProject('${p.id}')">${p.name || 'N/A'}</td>
-                        <td>${p.category || 'N/A'}</td>
-                        <td>${p.type || 'N/A'}</td>
-                        <td>${p.phase || 'N/A'}</td>
-                        <td>${p.kt || 'N/A'}</td>
-                        <td>${p.start || 'N/A'}</td>
-                        <td>${p.end || 'N/A'}</td>
-                        <td>${p.status || 'N/A'}</td>
-                        <td>${p.bugs || 0}</td>
-                        <td>${p.htmlBugs || 0}</td>
-                        <td>${p.funcBugs || 0}</td>
-                        <td>${users[p.assignedQA]?.name || 'Not Assigned'}</td>
-                        <td><a href="${p.bugTracker || '#'}" target="_blank" aria-label="View Bug Tracker">${p.bugTracker ? 'View' : 'N/A'}</a></td>
+                        <td>${po.projectName}</td>
                         <td>
-                            <button class="text-blue-400 text-sm mr-2 tooltip" onclick="openReportBugModal('${p.id}')" aria-label="Report a bug">
-                                Report Bug
-                                <span class="tooltiptext">Report a bug for this project</span>
-                            </button>
-                            ${currentUser.role === 'Team Lead' ? `
-                                <button class="text-green-400 text-sm mr-2 tooltip" onclick="approveProject('${p.id}')" aria-label="Approve project">
-                                    Approve
-                                    <span class="tooltiptext">Approve this project</span>
-                                </button>
-                                <button class="text-red-400 text-sm mr-2 tooltip" onclick="rejectProject('${p.id}')" aria-label="Reject project">
-                                    Reject
-                                    <span class="tooltiptext">Reject this project</span>
-                                </button>
-                                <button class="text-red-400 text-sm tooltip" onclick="deleteProject('${p.id}')" aria-label="Delete project">
-                                    Delete
-                                    <span class="tooltiptext">Delete this project</span>
-                                </button>
+                            <select ${isTeamLead ? '' : 'disabled'} onchange="updateProjectOverview('${po.id}', 'qaId', this.value)">
+                                <option value="">Select QA</option>
+                                ${state.users.map(u => `<option value="${u.id}" ${u.id === po.qaId ? 'selected' : ''}>${u.name}</option>`).join('')}
+                            </select>
+                        </td>
+                        <td>
+                            <select ${isTeamLead ? '' : 'disabled'} onchange="updateProjectOverview('${po.id}', 'projectId', this.value)">
+                                <option value="">Select Project</option>
+                                ${state.projects.map(p => `<option value="${p.id}" ${p.id === po.projectId ? 'selected' : ''}>${p.name}</option>`).join('')}
+                            </select>
+                        </td>
+                        <td>
+                            <select ${isTeamLead ? '' : 'disabled'} onchange="updateProjectOverview('${po.id}', 'projectCategory', this.value); updateSubcategoryOptions('${po.id}', this.value)">
+                                <option value="">Select Category</option>
+                                ${state.projectCategories.map(cat => `<option value="${cat.name}" ${cat.name === po.projectCategory ? 'selected' : ''}>${cat.name}</option>`).join('')}
+                            </select>
+                        </td>
+                        <td>
+                            <select id="subcategory-${po.id}" ${isTeamLead ? '' : 'disabled'} onchange="updateProjectOverview('${po.id}', 'projectSubcategory', this.value)">
+                                <option value="">Select Subcategory</option>
+                                ${po.projectCategory ? state.projectCategories.find(cat => cat.name === po.projectCategory).subcategories.map(sub => `<option value="${sub}" ${sub === po.projectSubcategory ? 'selected' : ''}>${sub}</option>`).join('') : ''}
+                            </select>
+                        </td>
+                        <td>
+                            <select onchange="updateProjectOverview('${po.id}', 'currentPhase', this.value)">
+                                <option value="">Select Phase</option>
+                                ${state.testingPhases.map(phase => `<option value="${phase}" ${phase === po.currentPhase ? 'selected' : ''}>${phase}</option>`).join('')}
+                            </select>
+                        </td>
+                        <td>
+                            <select onchange="updateProjectOverview('${po.id}', 'ktReceived', this.value)">
+                                <option value="">Select</option>
+                                <option value="Yes" ${po.ktReceived === 'Yes' ? 'selected' : ''}>Yes</option>
+                                <option value="No" ${po.ktReceived === 'No' ? 'selected' : ''}>No</option>
+                            </select>
+                        </td>
+                        <td><input type="date" value="${po.startDate}" onchange="updateProjectOverview('${po.id}', 'startDate', this.value)"></td>
+                        <td><input type="date" value="${po.endDate}" onchange="updateProjectOverview('${po.id}', 'endDate', this.value)"></td>
+                        <td>
+                            <select onchange="updateProjectOverview('${po.id}', 'status', this.value)">
+                                <option value="In Progress" ${po.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                                <option value="Pending" ${po.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                            </select>
+                        </td>
+                        <td>${po.totalBugs}</td>
+                        <td class="bug-high"><input type="number" value="${po.highPriorityHtmlBugs || 0}" onchange="updateProjectOverview('${po.id}', 'highPriorityHtmlBugs', this.value)"></td>
+                        <td class="bug-medium"><input type="number" value="${po.mediumPriorityHtmlBugs || 0}" onchange="updateProjectOverview('${po.id}', 'mediumPriorityHtmlBugs', this.value)"></td>
+                        <td class="bug-low"><input type="number" value="${po.lowPriorityHtmlBugs || 0}" onchange="updateProjectOverview('${po.id}', 'lowPriorityHtmlBugs', this.value)"></td>
+                        <td class="bug-high"><input type="number" value="${po.highPriorityFunctionalBugs || 0}" onchange="updateProjectOverview('${po.id}', 'highPriorityFunctionalBugs', this.value)"></td>
+                        <td class="bug-medium"><input type="number" value="${po.mediumPriorityFunctionalBugs || 0}" onchange="updateProjectOverview('${po.id}', 'mediumPriorityFunctionalBugs', this.value)"></td>
+                        <td class="bug-low"><input type="number" value="${po.lowPriorityFunctionalBugs || 0}" onchange="updateProjectOverview('${po.id}', 'lowPriorityFunctionalBugs', this.value)"></td>
+                        <td>
+                            ${isTeamLead ? (po.tlVerification === 'Pending' ? `
+                                <button class="btn-primary" onclick="verifyProject('${po.id}', true)">Verify</button>
+                                <button class="btn-danger" onclick="verifyProject('${po.id}', false)">Not Verified</button>
+                            ` : po.tlVerification || 'Not Requested') : (isPendingVerification ? 'Pending Verification' : (isNotVerified ? `
+                                <button class="btn-primary" onclick="requestVerification('${po.id}')">Resubmit for Verification</button>
+                            ` : (po.tlVerification === 'Not Requested' ? `
+                                <button class="btn-primary" onclick="requestVerification('${po.id}')">Request Verification</button>
+                            ` : 'Verified by TL')))}
+                        </td>
+                        <td>
+                            ${isTeamLead || (isQAMember && isVerified) ? `
+                                <select onchange="updateApprovalStatus('${po.id}', this.value)">
+                                    <option value="Not Set" ${po.approvalStatus === 'Not Set' ? 'selected' : ''}>Not Set</option>
+                                    <option value="Approved" ${po.approvalStatus === 'Approved' ? 'selected' : ''}>Approved</option>
+                                    <option value="Rejected" ${po.approvalStatus === 'Rejected' ? 'selected' : ''}>Rejected</option>
+                                </select>
+                            ` : 'N/A'}
+                        </td>
+                        <td>
+                            ${isNotVerified ? `
+                                <button class="btn-primary" onclick="updateBugList('${po.id}')">Update Bug List</button>
                             ` : ''}
                         </td>
                     </tr>
-                `).join('');
-            } catch (error) {
-                showNotification('Failed to load projects table: ' + error.message);
+                `;
+            }).join('');
+            filterProjects();
+        }
+
+        function updateSubcategoryOptions(projectId, category) {
+            const subcategorySelect = document.getElementById(`subcategory-${projectId}`);
+            if (category) {
+                const subcategories = state.projectCategories.find(cat => cat.name === category).subcategories;
+                subcategorySelect.innerHTML = `<option value="">Select Subcategory</option>` + subcategories.map(sub => `<option value="${sub}">${sub}</option>`).join('');
+            } else {
+                subcategorySelect.innerHTML = `<option value="">Select Subcategory</option>`;
             }
         }
 
-        async function editProject(projectId) {
-            if (currentUser.role !== 'Team Lead') return;
-            try {
-                const projectSnap = await db.collection('projects').doc(projectId).get();
-                const project = projectSnap.data();
-                if (project) {
-                    document.getElementById('edit-project-id').value = projectId;
-                    document.getElementById('edit-project-name').value = project.name;
-                    document.getElementById('edit-project-category').value = project.category;
-                    document.getElementById('edit-project-type').value = project.type;
-                    document.getElementById('edit-project-phase').value = project.phase;
-                    document.getElementById('edit-project-kt').value = project.kt;
-                    document.getElementById('edit-project-start').value = project.start;
-                    document.getElementById('edit-project-end').value = project.end;
-                    document.getElementById('edit-project-bug-tracker').value = project.bugTracker;
-                    document.getElementById('edit-project-qa').value = project.assignedQA || '';
-                    openModal('edit-project-modal');
+        function updateProjectOverview(id, field, value) {
+            const entry = state.projectOverview.find(po => po.id === id);
+            if (entry) {
+                entry[field] = field.includes('Bugs') ? parseInt(value) || 0 : value;
+                if (field.includes('Bugs')) {
+                    entry.totalBugs = (entry.highPriorityHtmlBugs || 0) + (entry.mediumPriorityHtmlBugs || 0) + (entry.lowPriorityHtmlBugs || 0) +
+                                     (entry.highPriorityFunctionalBugs || 0) + (entry.mediumPriorityFunctionalBugs || 0) + (entry.lowPriorityFunctionalBugs || 0);
                 }
-            } catch (error) {
-                showNotification('Failed to load project for editing: ' + error.message);
+                state.activityLog.push({ action: `Updated project overview (${field})`, user: state.currentUser.name, timestamp: Date.now() });
+                renderProjectOverview();
+                renderDashboard();
             }
         }
 
-        document.getElementById('edit-project-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const projectId = document.getElementById('edit-project-id').value;
-            try {
-                await db.collection('projects').doc(projectId).update({
-                    name: document.getElementById('edit-project-name').value,
-                    category: document.getElementById('edit-project-category').value,
-                    type: document.getElementById('edit-project-type').value,
-                    phase: document.getElementById('edit-project-phase').value,
-                    kt: document.getElementById('edit-project-kt').value,
-                    start: document.getElementById('edit-project-start').value,
-                    end: document.getElementById('edit-project-end').value,
-                    bugTracker: document.getElementById('edit-project-bug-tracker').value,
-                    assignedQA: document.getElementById('edit-project-qa').value
-                });
-                logActivity(projectId, currentUser.username, 'Project Updated', `Edited project details`);
-                loadDashboardData();
-                closeModal('edit-project-modal');
-                showNotification('Project updated successfully');
-            } catch (error) {
-                showNotification('Failed to update project: ' + error.message);
+        function requestVerification(projectOverviewId) {
+            const entry = state.projectOverview.find(po => po.id === projectOverviewId);
+            if (entry) {
+                entry.tlVerification = 'Pending';
+                state.activityLog.push({ action: `Requested TL verification for project ${entry.projectName}`, user: state.currentUser.name, timestamp: Date.now() });
+                showNotification('Verification request sent to Team Lead', state.users.find(u => u.role === 'Team Lead')?.id);
+                renderProjectOverview();
+                renderDashboard();
             }
-        });
-
-        // Report Bug
-        function openReportBugModal(projectId) {
-            document.getElementById('bug-project-id').value = projectId;
-            openModal('report-bug-modal');
         }
 
-        document.getElementById('report-bug-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const projectId = document.getElementById('bug-project-id').value;
-            const bugType = document.getElementById('bug-type').value;
-            const description = document.getElementById('bug-description').value;
-
-            try {
-                const projectRef = db.collection('projects').doc(projectId);
-                const projectSnap = await projectRef.get();
-                const project = projectSnap.data();
-                if (project) {
-                    const updates = {
-                        bugs: (project.bugs || 0) + 1,
-                        status: 'Awaiting Fixes'
-                    };
-                    if (bugType === 'HTML') {
-                        updates.htmlBugs = (project.htmlBugs || 0) + 1;
-                    } else {
-                        updates.funcBugs = (project.funcBugs || 0) + 1;
+        function verifyProject(projectOverviewId, isVerified) {
+            const entry = state.projectOverview.find(po => po.id === projectOverviewId);
+            if (entry) {
+                entry.tlVerification = isVerified ? 'Verified' : 'Not Verified';
+                if (!isVerified) {
+                    const rejectionReason = prompt('Please provide a reason for not verifying:', '');
+                    if (rejectionReason !== null) {
+                        entry.rejectionReason = rejectionReason;
                     }
-                    await projectRef.update(updates);
-                    logActivity(projectId, currentUser.username, 'Bug Reported', `${bugType} bug: ${description}`);
-                    loadDashboardData();
-                    closeModal('report-bug-modal');
-                    showNotification(`Bug reported for ${project.name}`);
                 }
-            } catch (error) {
-                showNotification('Failed to report bug: ' + error.message);
+                state.activityLog.push({ 
+                    action: `Project ${entry.projectName} ${isVerified ? 'verified' : 'not verified'}`, 
+                    user: state.currentUser.name, 
+                    timestamp: Date.now() 
+                });
+                showNotification(`Project ${isVerified ? 'verified' : 'marked as not verified'}`, entry.qaId);
+                renderProjectOverview();
+                renderDashboard();
             }
-        });
+        }
 
-        // Approve/Reject Project
-        async function approveProject(projectId) {
-            if (currentUser.role !== 'Team Lead') return;
-            try {
-                const projectSnap = await db.collection('projects').doc(projectId).get();
-                const project = projectSnap.data();
-                if (project) {
-                    await db.collection('approvedProjects').add({
-                        projectId,
-                        name: project.name,
-                        qa: project.assignedQA || 'Not Assigned',
-                        date: new Date().toISOString().split('T')[0]
+        function updateApprovalStatus(projectOverviewId, status) {
+            const entry = state.projectOverview.find(po => po.id === projectOverviewId);
+            if (entry) {
+                entry.approvalStatus = status;
+                if (status === 'Approved') {
+                    entry.approvedDate = new Date().toISOString().split('T')[0];
+                    state.activityLog.push({ 
+                        action: `Approved project ${entry.projectName}`, 
+                        user: state.currentUser.name, 
+                        timestamp: Date.now() 
                     });
-                    await db.collection('projects').doc(projectId).delete();
-                    logActivity(projectId, currentUser.username, 'Project Approved', `Approved for live`);
-                    loadDashboardData();
-                    showNotification(`Project ${project.name} approved`);
-                }
-            } catch (error) {
-                showNotification('Failed to approve project: ' + error.message);
-            }
-        }
-
-        async function rejectProject(projectId) {
-            if (currentUser.role !== 'Team Lead') return;
-            try {
-                const projectSnap = await db.collection('projects').doc(projectId).get();
-                const project = projectSnap.data();
-                if (project) {
-                    const reason = prompt('Enter reason for rejection:');
-                    if (reason) {
-                        await db.collection('rejectedProjects').add({
-                            projectId,
-                            name: project.name,
-                            qa: project.assignedQA || 'Not Assigned',
-                            date: new Date().toISOString().split('T')[0],
-                            phase: project.phase,
-                            pc: 'Bindhu',
-                            reason
+                } else if (status === 'Rejected') {
+                    entry.rejectionDate = new Date().toISOString().split('T')[0];
+                    entry.rejectedBy = state.currentUser.name;
+                    const reason = prompt('Please provide a reason for rejection:', '');
+                    if (reason !== null) {
+                        entry.rejectionReason = reason;
+                        state.activityLog.push({ 
+                            action: `Rejected project ${entry.projectName} - Reason: ${reason}`, 
+                            user: state.currentUser.name, 
+                            timestamp: Date.now() 
                         });
-                        await db.collection('projects').doc(projectId).delete();
-                        logActivity(projectId, currentUser.username, 'Project Rejected', `Reason: ${reason}`);
-                        loadDashboardData();
-                        showNotification(`Project ${project.name} rejected`);
                     }
-                }
-            } catch (error) {
-                showNotification('Failed to reject project: ' + error.message);
-            }
-        }
-
-        async function deleteProject(projectId) {
-            if (currentUser.role !== 'Team Lead') return;
-            if (confirm('Are you sure you want to delete this project?')) {
-                try {
-                    await db.collection('projects').doc(projectId).delete();
-                    logActivity(projectId, currentUser.username, 'Project Deleted', `Project removed`);
-                    loadDashboardData();
-                    showNotification('Project deleted successfully');
-                } catch (error) {
-                    showNotification('Failed to delete project: ' + error.message);
-                }
-            }
-        }
-
-        // Search Projects
-        document.getElementById('project-search').addEventListener('input', async (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            try {
-                const projectsSnap = await db.collection('projects').get();
-                const projects = projectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const usersSnap = await db.collection('users').get();
-                const users = Object.fromEntries(usersSnap.docs.map(doc => [doc.id, doc.data()]));
-                const filteredProjects = projects.filter(p => 
-                    p.name.toLowerCase().includes(searchTerm) ||
-                    p.category.toLowerCase().includes(searchTerm) ||
-                    p.type.toLowerCase().includes(searchTerm) ||
-                    (p.assignedQA && users[p.assignedQA]?.name.toLowerCase().includes(searchTerm))
-                );
-                renderProjectsTable(filteredProjects);
-            } catch (error) {
-                showNotification('Failed to search projects: ' + error.message);
-            }
-        });
-
-        // Approved Projects Table
-        async function renderApprovedTable(approvedProjects) {
-            try {
-                const usersSnap = await db.collection('users').get();
-                const users = Object.fromEntries(usersSnap.docs.map(doc => [doc.id, doc.data()]));
-                const table = document.getElementById('approved-table');
-                table.innerHTML = approvedProjects.map(p => `
-                    <tr>
-                        <td>${p.name || 'N/A'}</td>
-                        <td>${users[p.qa]?.name || 'Not Assigned'}</td>
-                        <td>${p.date || 'N/A'}</td>
-                        <td><span class="btn-approved">APPROVED</span></td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                showNotification('Failed to render approved table: ' + error.message);
-            }
-        }
-
-        document.getElementById('approved-search').addEventListener('input', async (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            try {
-                const approvedSnap = await db.collection('approvedProjects').get();
-                const approvedProjects = approvedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const filteredProjects = approvedProjects.filter(p => 
-                    p.name.toLowerCase().includes(searchTerm) ||
-                    (p.qa && users[p.qa]?.name.toLowerCase().includes(searchTerm))
-                );
-                renderApprovedTable(filteredProjects);
-            } catch (error) {
-                showNotification('Failed to search approved projects: ' + error.message);
-            }
-        });
-
-        // Rejected Projects Table
-        async function renderRejectedTable(rejectedProjects) {
-            try {
-                const usersSnap = await db.collection('users').get();
-                const users = Object.fromEntries(usersSnap.docs.map(doc => [doc.id, doc.data()]));
-                const table = document.getElementById('rejected-table');
-                table.innerHTML = rejectedProjects.map(p => `
-                    <tr>
-                        <td>${p.name || 'N/A'}</td>
-                        <td>${users[p.qa]?.name || 'Not Assigned'}</td>
-                        <td>${p.date || 'N/A'}</td>
-                        <td>${p.phase || 'N/A'}</td>
-                        <td>${p.pc || 'N/A'}</td>
-                        <td>${p.reason || 'N/A'}</td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                showNotification('Failed to render rejected table: ' + error.message);
-            }
-        }
-
-        document.getElementById('rejected-search').addEventListener('input', async (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            try {
-                const rejectedSnap = await db.collection('rejectedProjects').get();
-                const rejectedProjects = rejectedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const filteredProjects = rejectedProjects.filter(p => 
-                    p.name.toLowerCase().includes(searchTerm) ||
-                    (p.qa && users[p.qa]?.name.toLowerCase().includes(searchTerm)) ||
-                    p.reason.toLowerCase().includes(searchTerm)
-                );
-                renderRejectedTable(filteredProjects);
-            } catch (error) {
-                showNotification('Failed to search rejected projects: ' + error.message);
-            }
-        });
-
-        // Activity Log
-        async function renderActivityTable(activityLog) {
-            try {
-                const projectsSnap = await db.collection('projects').get();
-                const projects = projectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const usersSnap = await db.collection('users').get();
-                const users = Object.fromEntries(usersSnap.docs.map(doc => [doc.id, doc.data()]));
-
-                const table = document.getElementById('activity-table');
-                table.innerHTML = activityLog.map(a => `
-                    <tr>
-                        <td>${projects.find(p => p.id === a.projectId)?.name || 'N/A'}</td>
-                        <td>${users[a.qa]?.name || 'Unknown'}</td>
-                        <td>${a.type || 'N/A'}</td>
-                        <td>${a.details || 'N/A'}</td>
-                        <td>${new Date(a.timestamp).toLocaleString()}</td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                showNotification('Failed to render activity table: ' + error.message);
-            }
-        }
-
-        document.getElementById('activity-search').addEventListener('input', async (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            try {
-                const activitySnap = await db.collection('activityLog').get();
-                const activityLog = activitySnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const filteredActivity = activityLog.filter(a => 
-                    (projects.find(p => p.id === a.projectId)?.name.toLowerCase().includes(searchTerm)) ||
-                    (users[a.qa]?.name.toLowerCase().includes(searchTerm)) ||
-                    a.type.toLowerCase().includes(searchTerm) ||
-                    a.details.toLowerCase().includes(searchTerm)
-                );
-                renderActivityTable(filteredActivity);
-            } catch (error) {
-                showNotification('Failed to search activity log: ' + error.message);
-            }
-        });
-
-        async function logActivity(projectId, qa, type, details) {
-            try {
-                await db.collection('activityLog').add({
-                    projectId,
-                    qa,
-                    type,
-                    details,
-                    timestamp: new Date().toISOString()
-                });
-            } catch (error) {
-                console.error('Failed to log activity:', error);
-            }
-        }
-
-        // Create Project
-        document.getElementById('create-project-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (currentUser.role !== 'Team Lead') return;
-            const projectName = document.getElementById('project-name').value;
-            const projectCategory = document.getElementById('project-category').value;
-            const projectType = document.getElementById('project-type').value;
-            const projectPhase = document.getElementById('project-phase').value;
-            const bugTracker = document.getElementById('bug-tracker').value;
-            const startDate = document.getElementById('start-date').value;
-            const endDate = document.getElementById('end-date').value;
-
-            try {
-                const docRef = await db.collection('projects').add({
-                    name: projectName,
-                    category: projectCategory,
-                    type: projectType,
-                    phase: projectPhase,
-                    kt: 'No',
-                    start: startDate,
-                    end: endDate,
-                    status: 'In Progress',
-                    bugs: 0,
-                    htmlBugs: 0,
-                    funcBugs: 0,
-                    assignedQA: '',
-                    bugTracker
-                });
-                logActivity(docRef.id, currentUser.username, 'Project Created', `Created ${projectName}`);
-                loadDashboardData();
-                showNotification(`Project ${projectName} created successfully`);
-                e.target.reset();
-            } catch (error) {
-                showNotification('Failed to create project: ' + error.message);
-            }
-        });
-
-        // Populate Project Dropdown
-        function populateProjectDropdown(projects) {
-            const projectSelect = document.getElementById('assign-project');
-            projectSelect.innerHTML = '<option value="">Select Project</option>' + 
-                projects.map(project => `<option value="${project.id}">${project.name}</option>`).join('');
-        }
-
-        // Populate QA Dropdowns
-        async function populateQADropdowns() {
-            try {
-                const usersSnap = await db.collection('users').get();
-                const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const assignQA = document.getElementById('assign-qa');
-                const reportQA = document.getElementById('report-qa');
-                const editQA = document.getElementById('edit-project-qa');
-                
-                assignQA.innerHTML = '<option value="">Select QA</option>' + 
-                    users.map(user => `<option value="${user.id}">${user.name} (${user.id})</option>`).join('');
-                reportQA.innerHTML = '<option value="">All QA</option>' + 
-                    users.map(user => `<option value="${user.id}">${user.name} (${user.id})</option>`).join('');
-                editQA.innerHTML = '<option value="">Not Assigned</option>' + 
-                    users.map(user => `<option value="${user.id}">${user.name} (${user.id})</option>`).join('');
-            } catch (error) {
-                showNotification('Failed to load QA dropdowns: ' + error.message);
-            }
-        }
-
-        // User Management
-        document.getElementById('add-user-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (currentUser.role !== 'Team Lead') return;
-            const username = document.getElementById('new-username').value;
-            const password = document.getElementById('new-password').value;
-            const name = document.getElementById('new-name').value;
-            const role = document.getElementById('new-role').value;
-
-            try {
-                const userCredential = await auth.createUserWithEmailAndPassword(username, password);
-                const userId = username.split('@')[0];
-                
-                await db.collection('users').doc(userId).set({
-                    name,
-                    role
-                });
-                
-                populateQADropdowns();
-                renderUsersTable();
-                showNotification(`User ${name} added successfully`);
-                e.target.reset();
-            } catch (error) {
-                showNotification('Failed to add user: ' + error.message);
-            }
-        });
-
-        async function renderUsersTable() {
-            try {
-                const usersSnap = await db.collection('users').get();
-                const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const table = document.getElementById('users-table');
-                table.innerHTML = users.map(user => `
-                    <tr>
-                        <td>${user.id}</td>
-                        <td>${user.name}</td>
-                        <td>${user.role}</td>
-                        <td>
-                            ${currentUser.role === 'Team Lead' && user.id !== currentUser.username.split('@')[0] ? `
-                                <button class="text-red-400 text-sm tooltip" onclick="deleteUser('${user.id}')" aria-label="Delete user">
-                                    Delete
-                                    <span class="tooltiptext">Delete this user</span>
-                                </button>
-                            ` : ''}
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                showNotification('Failed to load users table: ' + error.message);
-            }
-        }
-
-        async function deleteUser(userId) {
-            if (confirm(`Are you sure you want to delete user ${userId}? Note: You will need to manually delete this user from Firebase Authentication in the Firebase Console.`)) {
-                try {
-                    await db.collection('users').doc(userId).delete();
-                    loadDashboardData();
-                    showNotification('User deleted from Firestore. Please delete the user from Firebase Authentication manually.');
-                } catch (error) {
-                    showNotification('Failed to delete user from Firestore: ' + error.message);
-                }
-            }
-        }
-
-        // Profile
-        async function renderProfile() {
-            try {
-                const userId = currentUser.username.split('@')[0];
-                const userDoc = await db.collection('users').doc(userId).get();
-                const profile = userDoc.data();
-                document.getElementById('profile-username').value = currentUser.username;
-                document.getElementById('profile-role').value = profile.role;
-                document.getElementById('profile-email').value = profile.email || currentUser.username;
-            } catch (error) {
-                showNotification('Failed to load profile: ' + error.message);
-            }
-        }
-
-        javascript
-
-Collapse
-
-Wrap
-
-Copy
-        // Profile Form Submission
-        document.getElementById('profile-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('profile-email').value;
-            const newPassword = document.getElementById('change-password').value;
-            const userId = currentUser.username.split('@')[0];
-
-            try {
-                // Update Firestore user profile
-                await db.collection('users').doc(userId).update({
-                    email: email
-                });
-
-                // Update password if provided
-                if (newPassword) {
-                    const user = auth.currentUser;
-                    await user.updatePassword(newPassword);
-                    showNotification('Password updated successfully');
-                }
-
-                showNotification('Profile updated successfully');
-                loadDashboardData();
-            } catch (error) {
-                showNotification('Failed to update profile: ' + error.message);
-            }
-        });
-
-        // Export Report
-        async function exportReport() {
-            try {
-                const reportType = document.getElementById('report-type').value;
-                const reportMonth = document.getElementById('report-month').value;
-                const reportQA = document.getElementById('report-qa').value;
-                const reportProject = document.getElementById('report-project').value.toLowerCase();
-
-                let data = [];
-                if (reportType === 'monthly') {
-                    const projectsSnap = await db.collection('projects').get();
-                    const projects = projectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    const approvedSnap = await db.collection('approvedProjects').get();
-                    const approvedProjects = approvedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    const rejectedSnap = await db.collection('rejectedProjects').get();
-                    const rejectedProjects = rejectedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-                    data = [...projects, ...approvedProjects, ...rejectedProjects]
-                        .filter(p => {
-                            const date = p.date || p.start;
-                            return (!reportMonth || date.startsWith(reportMonth)) &&
-                                   (!reportQA || p.assignedQA === reportQA || p.qa === reportQA) &&
-                                   (!reportProject || p.name.toLowerCase().includes(reportProject));
-                        })
-                        .map(p => ({
-                            Project: p.name,
-                            QA: p.assignedQA || p.qa || 'Not Assigned',
-                            Status: p.status || (approvedProjects.includes(p) ? 'Approved' : 'Rejected'),
-                            Bugs: p.bugs || 0,
-                            HTML_Bugs: p.htmlBugs || 0,
-                            Functional_Bugs: p.funcBugs || 0,
-                            Date: p.date || p.start
-                        }));
-                } else if (reportType === 'rejected') {
-                    const rejectedSnap = await db.collection('rejectedProjects').get();
-                    const rejectedProjects = rejectedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    data = rejectedProjects
-                        .filter(p => (!reportMonth || p.date.startsWith(reportMonth)) &&
-                                     (!reportQA || p.qa === reportQA) &&
-                                     (!reportProject || p.name.toLowerCase().includes(reportProject)))
-                        .map(p => ({
-                            Project: p.name,
-                            QA: p.qa || 'Not Assigned',
-                            Date: p.date,
-                            Phase: p.phase,
-                            PC: p.pc,
-                            Reason: p.reason
-                        }));
-                } else if (reportType === 'qa-wise') {
-                    const projectsSnap = await db.collection('projects').get();
-                    const projects = projectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    const approvedSnap = await db.collection('approvedProjects').get();
-                    const approvedProjects = approvedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    const rejectedSnap = await db.collection('rejectedProjects').get();
-                    const rejectedProjects = rejectedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-                    data = [...projects, ...approvedProjects, ...rejectedProjects]
-                        .filter(p => (!reportQA || p.assignedQA === reportQA || p.qa === reportQA) &&
-                                     (!reportProject || p.name.toLowerCase().includes(reportProject)))
-                        .map(p => ({
-                            Project: p.name,
-                            QA: p.assignedQA || p.qa || 'Not Assigned',
-                            Status: p.status || (approvedProjects.includes(p) ? 'Approved' : 'Rejected'),
-                            Bugs: p.bugs || 0,
-                            HTML_Bugs: p.htmlBugs || 0,
-                            Functional_Bugs: p.funcBugs || 0,
-                            Date: p.date || p.start
-                        }));
-                }
-
-                // Export to CSV
-                const csv = Papa.unparse(data);
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `${reportType}-report-${new Date().toISOString().split('T')[0]}.csv`;
-                link.click();
-                showNotification('Report exported successfully');
-            } catch (error) {
-                showNotification('Failed to export report: ' + error.message);
-            }
-        }
-
-        // Table Sorting
-        function sortTable(tableId, colIndex) {
-            const table = document.getElementById(tableId);
-            let rows = Array.from(table.rows);
-            const isNumeric = rows.every(row => !isNaN(parseFloat(row.cells[colIndex].textContent)) && isFinite(row.cells[colIndex].textContent));
-            
-            rows.sort((a, b) => {
-                let aValue = a.cells[colIndex].textContent;
-                let bValue = b.cells[colIndex].textContent;
-                
-                if (isNumeric) {
-                    return parseFloat(aValue) - parseFloat(bValue);
                 } else {
-                    return aValue.localeCompare(bValue);
+                    entry.approvedDate = '';
+                    entry.rejectionDate = '';
+                    entry.rejectionReason = '';
+                    entry.rejectedBy = '';
+                }
+                showNotification(`Project approval status updated to ${status}`, entry.qaId);
+                renderProjectOverview();
+                renderApprovedProjects();
+                renderRejectedProjects();
+                setupSidebar(); // Update sidebar visibility for QA Members
+            }
+        }
+
+        function updateBugList(projectOverviewId) {
+            const entry = state.projectOverview.find(po => po.id === projectOverviewId);
+            if (entry) {
+                const content = `
+                    <form id="bug-update-form">
+                        <div class="form-group">
+                            <label for="high-html-bugs">High Priority HTML Bugs</label>
+                            <input type="number" id="high-html-bugs" value="${entry.highPriorityHtmlBugs || 0}" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="med-html-bugs">Medium Priority HTML Bugs</label>
+                            <input type="number" id="med-html-bugs" value="${entry.mediumPriorityHtmlBugs || 0}" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="low-html-bugs">Low Priority HTML Bugs</label>
+                            <input type="number" id="low-html-bugs" value="${entry.lowPriorityHtmlBugs || 0}" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="high-func-bugs">High Priority Functional Bugs</label>
+                            <input type="number" id="high-func-bugs" value="${entry.highPriorityFunctionalBugs || 0}" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="med-func-bugs">Medium Priority Functional Bugs</label>
+                            <input type="number" id="med-func-bugs" value="${entry.mediumPriorityFunctionalBugs || 0}" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="low-func-bugs">Low Priority Functional Bugs</label>
+                            <input type="number" id="low-func-bugs" value="${entry.lowPriorityFunctionalBugs || 0}" min="0">
+                        </div>
+                        <button type="submit" class="btn-primary">Update Bugs</button>
+                    </form>
+                `;
+                showModal(`Update Bug List for ${entry.projectName}`, content);
+                document.getElementById('bug-update-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const updatedBugs = {
+                        highPriorityHtmlBugs: parseInt(document.getElementById('high-html-bugs').value) || 0,
+                        mediumPriorityHtmlBugs: parseInt(document.getElementById('med-html-bugs').value) || 0,
+                        lowPriorityHtmlBugs: parseInt(document.getElementById('low-html-bugs').value) || 0,
+                        highPriorityFunctionalBugs: parseInt(document.getElementById('high-func-bugs').value) || 0,
+                        mediumPriorityFunctionalBugs: parseInt(document.getElementById('med-func-bugs').value) || 0,
+                        lowPriorityFunctionalBugs: parseInt(document.getElementById('low-func-bugs').value) || 0
+                    };
+                    entry.highPriorityHtmlBugs = updatedBugs.highPriorityHtmlBugs;
+                    entry.mediumPriorityHtmlBugs = updatedBugs.mediumPriorityHtmlBugs;
+                    entry.lowPriorityHtmlBugs = updatedBugs.lowPriorityHtmlBugs;
+                    entry.highPriorityFunctionalBugs = updatedBugs.highPriorityFunctionalBugs;
+                    entry.mediumPriorityFunctionalBugs = updatedBugs.mediumPriorityFunctionalBugs;
+                    entry.lowPriorityFunctionalBugs = updatedBugs.lowPriorityFunctionalBugs;
+                    entry.totalBugs = Object.values(updatedBugs).reduce((sum, val) => sum + val, 0);
+                    state.activityLog.push({ 
+                        action: `Updated bug list for ${entry.projectName}`, 
+                        user: state.currentUser.name, 
+                        timestamp: Date.now() 
+                    });
+                    closeModal();
+                    renderProjectOverview();
+                    showNotification('Bug list updated');
+                });
+            }
+        }
+
+        function filterProjects() {
+            const search = document.getElementById('project-search').value.toLowerCase();
+            const rows = document.querySelectorAll('#project-overview-table tr');
+            rows.forEach(row => {
+                const text = Array.from(row.cells).map(cell => cell.textContent.toLowerCase()).join(' ');
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+        }
+
+        function sortTable(columnIndex) {
+            const tbody = document.getElementById('project-overview-table');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const isNumeric = [10, 11, 12, 13, 14, 15, 16].includes(columnIndex);
+            const direction = state.sortDirection[columnIndex] === 'asc' ? 'desc' : 'asc';
+            state.sortDirection[columnIndex] = direction;
+
+            rows.sort((a, b) => {
+                let aValue = a.cells[columnIndex].textContent.trim();
+                let bValue = b.cells[columnIndex].textContent.trim();
+                if (isNumeric) {
+                    aValue = parseInt(aValue) || 0;
+                    bValue = parseInt(bValue) || 0;
+                    return direction === 'asc' ? aValue - bValue : bValue - aValue;
+                }
+                return direction === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function renderApprovedProjects() {
+            const tbody = document.getElementById('approved-projects-table');
+            const approvedProjects = state.projectOverview.filter(po => po.approvalStatus === 'Approved');
+            tbody.innerHTML = approvedProjects.map(po => `
+                <tr>
+                    <td>${po.projectName}</td>
+                    <td>${state.users.find(u => u.id === po.qaId)?.name || 'Unassigned'}</td>
+                    <td>${state.projects.find(p => p.id === po.projectId)?.name || 'N/A'}</td>
+                    <td>${po.projectCategory}</td>
+                    <td>${po.projectSubcategory}</td>
+                    <td>${po.currentPhase}</td>
+                    <td>${po.ktReceived}</td>
+                    <td>${po.startDate}</td>
+                    <td>${po.endDate}</td>
+                    <td>${po.status}</td>
+                    <td>${po.totalBugs}</td>
+                    <td class="bug-high">${po.highPriorityHtmlBugs || 0}</td>
+                    <td class="bug-medium">${po.mediumPriorityHtmlBugs || 0}</td>
+                    <td class="bug-low">${po.lowPriorityHtmlBugs || 0}</td>
+                    <td class="bug-high">${po.highPriorityFunctionalBugs || 0}</td>
+                    <td class="bug-medium">${po.mediumPriorityFunctionalBugs || 0}</td>
+                    <td class="bug-low">${po.lowPriorityFunctionalBugs || 0}</td>
+                    <td>${po.approvedDate}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderRejectedProjects() {
+            const tbody = document.getElementById('rejected-projects-table');
+            const rejectedProjects = state.projectOverview.filter(po => po.approvalStatus === 'Rejected');
+            tbody.innerHTML = rejectedProjects.map(po => `
+                <tr>
+                    <td>${po.projectName}</td>
+                    <td>${state.users.find(u => u.id === po.qaId)?.name || 'Unassigned'}</td>
+                    <td>${state.projects.find(p => p.id === po.projectId)?.name || 'N/A'}</td>
+                    <td>${po.projectCategory}</td>
+                    <td>${po.projectSubcategory}</td>
+                    <td>${po.currentPhase}</td>
+                    <td>${po.ktReceived}</td>
+                    <td>${po.startDate}</td>
+                    <td>${po.endDate}</td>
+                    <td>${po.status}</td>
+                    <td>${po.totalBugs}</td>
+                    <td class="bug-high">${po.highPriorityHtmlBugs || 0}</td>
+                    <td class="bug-medium">${po.mediumPriorityHtmlBugs || 0}</td>
+                    <td class="bug-low">${po.lowPriorityHtmlBugs || 0}</td>
+                    <td class="bug-high">${po.highPriorityFunctionalBugs || 0}</td>
+                    <td class="bug-medium">${po.mediumPriorityFunctionalBugs || 0}</td>
+                    <td class="bug-low">${po.lowPriorityFunctionalBugs || 0}</td>
+                    <td>${po.rejectionDate}</td>
+                    <td>${po.rejectionReason}</td>
+                    <td>${po.rejectedBy}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderReports() {
+            const dateFilter = document.getElementById('report-filter-date').value;
+            const qaFilter = document.getElementById('report-filter-qa').value;
+            const projectFilter = document.getElementById('report-filter-project').value;
+            const categoryFilter = document.getElementById('report-filter-category').value;
+            const subcategoryFilter = document.getElementById('report-filter-subcategory').value;
+
+            let filteredOverview = state.projectOverview;
+            if (dateFilter) filteredOverview = filteredOverview.filter(po => po.startDate === dateFilter || po.endDate === dateFilter);
+            if (qaFilter) filteredOverview = filteredOverview.filter(po => po.qaId === qaFilter);
+            if (projectFilter) filteredOverview = filteredOverview.filter(po => po.projectId === projectFilter);
+            if (categoryFilter) filteredOverview = filteredOverview.filter(po => po.projectCategory === categoryFilter);
+            if (subcategoryFilter) filteredOverview = filteredOverview.filter(po => po.projectSubcategory === subcategoryFilter);
+
+            const reportsList = document.getElementById('reports-list');
+            reportsList.innerHTML = filteredOverview.length ? filteredOverview.map(po => `
+                <div class="list-item">
+                    <span>${po.projectName} - ${state.users.find(u => u.id === po.qaId)?.name || 'Unassigned'} - ${po.currentPhase} - Bugs: ${po.totalBugs}</span>
+                </div>
+            `).join('') : '<p>No reports match the selected filters.</p>';
+
+            const bugStats = filteredOverview.reduce((stats, po) => {
+                stats.total += po.totalBugs;
+                stats.highHtml += po.highPriorityHtmlBugs || 0;
+                stats.medHtml += po.mediumPriorityHtmlBugs || 0;
+                stats.lowHtml += po.lowPriorityHtmlBugs || 0;
+                stats.highFunc += po.highPriorityFunctionalBugs || 0;
+                stats.medFunc += po.mediumPriorityFunctionalBugs || 0;
+                stats.lowFunc += po.lowPriorityFunctionalBugs || 0;
+                return stats;
+            }, { total: 0, highHtml: 0, medHtml: 0, lowHtml: 0, highFunc: 0, medFunc: 0, lowFunc: 0 });
+
+            document.getElementById('bug-stats').innerHTML = `
+                <div class="widget">
+                    <h3>Bug Statistics</h3>
+                    <div class="stats-list">
+                        <div class="stats-list-item">Total Bugs: ${bugStats.total}</div>
+                        <div class="stats-list-item bug-high">High Priority HTML Bugs: ${bugStats.highHtml}</div>
+                        <div class="stats-list-item bug-medium">Medium Priority HTML Bugs: ${bugStats.medHtml}</div>
+                        <div class="stats-list-item bug-low">Low Priority HTML Bugs: ${bugStats.lowHtml}</div>
+                        <div class="stats-list-item bug-high">High Priority Functional Bugs: ${bugStats.highFunc}</div>
+                        <div class="stats-list-item bug-medium">Medium Priority Functional Bugs: ${bugStats.medFunc}</div>
+                        <div class="stats-list-item bug-low">Low Priority Functional Bugs: ${bugStats.lowFunc}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function exportReport() {
+            const filteredOverview = state.projectOverview.filter(po => {
+                const dateFilter = document.getElementById('report-filter-date').value;
+                const qaFilter = document.getElementById('report-filter-qa').value;
+                const projectFilter = document.getElementById('report-filter-project').value;
+                const categoryFilter = document.getElementById('report-filter-category').value;
+                const subcategoryFilter = document.getElementById('report-filter-subcategory').value;
+                return (!dateFilter || po.startDate === dateFilter || po.endDate === dateFilter) &&
+                       (!qaFilter || po.qaId === qaFilter) &&
+                       (!projectFilter || po.projectId === projectFilter) &&
+                       (!categoryFilter || po.projectCategory === categoryFilter) &&
+                       (!subcategoryFilter || po.projectSubcategory === subcategoryFilter);
+            });
+
+            const csv = [
+                ['Project Name', 'Assigned QA', 'Project', 'Category', 'Subcategory', 'Phase', 'KT Received', 'Start Date', 'End Date', 'Status', 'Total Bugs', 'High HTML Bugs', 'Med HTML Bugs', 'Low HTML Bugs', 'High Func Bugs', 'Med Func Bugs', 'Low Func Bugs', 'TL Verification', 'Approval Status', 'Approved Date', 'Rejection Date', 'Rejection Reason', 'Rejected By'],
+                ...filteredOverview.map(po => [
+                    po.projectName,
+                    state.users.find(u => u.id === po.qaId)?.name || 'Unassigned',
+                    state.projects.find(p => p.id === po.projectId)?.name || 'N/A',
+                    po.projectCategory,
+                    po.projectSubcategory,
+                    po.currentPhase,
+                    po.ktReceived,
+                    po.startDate,
+                    po.endDate,
+                    po.status,
+                    po.totalBugs,
+                    po.highPriorityHtmlBugs || 0,
+                    po.mediumPriorityHtmlBugs || 0,
+                    po.lowPriorityHtmlBugs || 0,
+                    po.highPriorityFunctionalBugs || 0,
+                    po.mediumPriorityFunctionalBugs || 0,
+                    po.lowPriorityFunctionalBugs || 0,
+                    po.tlVerification,
+                    po.approvalStatus,
+                    po.approvedDate,
+                    po.rejectionDate,
+                    po.rejectionReason,
+                    po.rejectedBy
+                ])
+            ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `QA_Report_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            state.activityLog.push({ action: 'Exported QA report', user: state.currentUser.name, timestamp: Date.now() });
+        }
+
+        function renderActivityLog() {
+            document.getElementById('activity-log-list').innerHTML = state.activityLog.slice().reverse().map(log => `
+                <div class="list-item">
+                    <span>${new Date(log.timestamp).toLocaleString()} - ${log.user}: ${log.action}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderProfile() {
+            document.getElementById('profile-name').value = state.currentUser.name;
+        }
+
+        function updateProfile() {
+            const name = document.getElementById('profile-name').value.trim();
+            if (!name) return showNotification('Name cannot be empty', null, true);
+            const oldName = state.currentUser.name;
+            state.currentUser.name = name;
+            state.activityLog.push({ action: `Updated profile name from ${oldName} to ${name}`, user: state.currentUser.name, timestamp: Date.now() });
+            showNotification('Profile updated');
+            updateUserAvatar();
+            loadInitialData();
+            switchTab('dashboard');
+        }
+
+        function renderUsers() {
+            document.getElementById('users-list').innerHTML = state.users.map(u => `
+                <div class="list-item">
+                    <span>${u.name} (${u.id}) - ${u.role} - ${u.email}</span>
+                    <button class="btn-danger" onclick="deleteUser('${u.id}')">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        function showUserForm() {
+            const content = `
+                <form id="user-form">
+                    <div class="form-group">
+                        <label for="user-id" class="required">User ID</label>
+                        <input type="text" id="user-id" placeholder="e.g., u6" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-name" class="required">Name</label>
+                        <input type="text" id="user-name" placeholder="e.g., John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-email" class="required">Email</label>
+                        <input type="email" id="user-email" placeholder="e.g., john@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-role" class="required">Role</label>
+                        <select id="user-role" required>
+                            <option value="Team Lead">Team Lead</option>
+                            <option value="QA Member">QA Member</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Add User</button>
+                </form>
+            `;
+            showModal('Add User', content);
+            document.getElementById('user-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                addUser();
+            });
+        }
+
+        function addUser() {
+            const id = document.getElementById('user-id').value.trim();
+            const name = document.getElementById('user-name').value.trim();
+            const email = document.getElementById('user-email').value.trim();
+            const role = document.getElementById('user-role').value;
+            if (!id || !name || !email || !role) return showNotification('All fields are required', null, true);
+            if (state.users.some(u => u.id === id)) return showNotification('User ID already exists', null, true);
+
+            state.users.push({ id, name, role, email });
+            state.activityLog.push({ action: `Added user ${name} (${id})`, user: state.currentUser.name, timestamp: Date.now() });
+            renderUsers();
+            closeModal();
+            showNotification('User added');
+            loadInitialData();
+        }
+
+        function deleteUser(userId) {
+            if (userId === state.currentUser.id) return showNotification('Cannot delete yourself', null, true);
+            const user = state.users.find(u => u.id === userId);
+            state.users = state.users.filter(u => u.id !== userId);
+            state.activityLog.push({ action: `Deleted user ${user.name} (${userId})`, user: state.currentUser.name, timestamp: Date.now() });
+            renderUsers();
+            showNotification('User deleted');
+            loadInitialData();
+        }
+
+        function renderAssignRoles() {
+            document.getElementById('roles-list').innerHTML = state.users.map(u => `
+                <div class="list-item">
+                    <span>${u.name} (${u.id}) - ${u.email}</span>
+                    <select onchange="updateRole('${u.id}', this.value)">
+                        <option value="Team Lead" ${u.role === 'Team Lead' ? 'selected' : ''}>Team Lead</option>
+                        <option value="QA Member" ${u.role === 'QA Member' ? 'selected' : ''}>QA Member</option>
+                        <option value="Admin" ${u.role === 'Admin' ? 'selected' : ''}>Admin</option>
+                    </select>
+                </div>
+            `).join('');
+        }
+
+        function updateRole(userId, role) {
+            if (userId === state.currentUser.id && role !== state.currentUser.role) {
+                return showNotification('Cannot change your own role', null, true);
+            }
+            const user = state.users.find(u => u.id === userId);
+            const oldRole = user.role;
+            user.role = role;
+            state.activityLog.push({ action: `Changed role of ${user.name} from ${oldRole} to ${role}`, user: state.currentUser.name, timestamp: Date.now() });
+            showNotification(`Role updated for ${user.name}`);
+            renderAssignRoles();
+            setupSidebar();
+        }
+
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('collapsed');
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+            state.activityLog.push({ action: `Switched to ${document.body.classList.contains('light-mode') ? 'light' : 'dark'} theme`, user: state.currentUser.name, timestamp: Date.now() });
+        }
+
+        function logout() {
+            state.activityLog.push({ action: 'Logged out', user: state.currentUser.name, timestamp: Date.now() });
+            state.currentUser = null;
+            showNotification('Logged out');
+            showLoginModal();
+            document.getElementById('user-avatar').innerHTML = '';
+            document.getElementById('user-name').textContent = '';
+            document.getElementById('welcome-user').textContent = '';
+        }
+
+        function updateUserAvatar() {
+            const avatar = document.getElementById('user-avatar');
+            if (state.currentUser) {
+                avatar.innerHTML = state.currentUser.name.charAt(0).toUpperCase();
+            } else {
+                avatar.innerHTML = '';
+            }
+        }
+
+        function calculateDashboardStats() {
+            const stats = {};
+            state.projectCategories.forEach(category => {
+                stats[category.name] = { projects: 0, pendingApprovals: 0, completedProjects: 0 };
+            });
+
+            state.projectOverview.forEach(po => {
+                const category = po.projectCategory;
+                if (stats[category]) {
+                    stats[category].projects++;
+                    if (po.approvalStatus === 'Not Set' || po.approvalStatus === '') stats[category].pendingApprovals++;
+                    if (po.status === 'Completed') stats[category].completedProjects++;
                 }
             });
 
-            table.innerHTML = '';
-            rows.forEach(row => table.appendChild(row));
+            return stats;
         }
 
-        // Theme Toggle
-        document.getElementById('theme-toggle').addEventListener('change', (e) => {
-            const theme = e.target.value;
-            document.body.classList.toggle('light-theme', theme === 'light');
-            localStorage.setItem('theme', theme);
-        });
-
-        // Check for Due Tasks and Send Alerts
-        async function checkDueTasks() {
-            try {
-                const tasksSnap = await db.collection('tasks').where('status', '==', 'inprogress').get();
-                const tasks = tasksSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const today = new Date();
-                tasks.forEach(async task => {
-                    const dueDate = new Date(task.dueDate);
-                    if (dueDate - today < 24 * 60 * 60 * 1000 && dueDate > today && !task.alertSent) {
-                        await db.collection('tasks').doc(task.id).update({ alertSent: true });
-                        showNotification(`Task "${task.name}" is due soon! Due date: ${task.dueDate}`);
-                    }
-                });
-            } catch (error) {
-                console.error('Error checking due tasks:', error);
-            }
+        function populateProjects() {
+            state.projects = [
+                { id: 'p1', name: 'Website Redesign', bugTrackerLink: 'https://gitlab.com/p1', status: 'In Progress', projectCategory: 'General Project Categories', projectSubcategory: 'HTML' },
+                { id: 'p2', name: 'E-commerce Platform', bugTrackerLink: 'https://gitlab.com/p2', status: 'In Progress', projectCategory: 'PHP Projects (CMS-based)', projectSubcategory: 'Ecom PHP' }
+            ];
         }
 
-        // Run checkDueTasks every minute
-        setInterval(checkDueTasks, 60 * 1000);
-        checkDueTasks(); // Initial check on load
+        function populateProjectOverview() {
+            state.projectOverview = [
+                { 
+                    id: 'po1', 
+                    projectId: 'p1', 
+                    projectName: 'Website Redesign', 
+                    qaId: 'u2', 
+                    projectCategory: 'General Project Categories', 
+                    projectSubcategory: 'HTML', 
+                    currentPhase: 'HTML Comparison', 
+                    ktReceived: 'Yes', 
+                    startDate: '2025-03-01', 
+                    endDate: '', 
+                    status: 'In Progress', 
+                    totalBugs: 5, 
+                    highPriorityHtmlBugs: 1, 
+                    mediumPriorityHtmlBugs: 2, 
+                    lowPriorityHtmlBugs: 2, 
+                    highPriorityFunctionalBugs: 0, 
+                    mediumPriorityFunctionalBugs: 0, 
+                    lowPriorityFunctionalBugs: 0, 
+                    tlVerification: 'Not Requested', 
+                    approvalStatus: 'Not Set', 
+                    approvedDate: '', 
+                    rejectionDate: '', 
+                    rejectionReason: '', 
+                    rejectedBy: '' 
+                }
+            ];
+        }
+
+        function populateTasks() {
+            state.tasks = [
+                { id: 't1', name: 'Test Homepage', projectId: 'p1', phase: 'HTML Comparison', assignedTo: 'u2', status: 'To Do' },
+                { id: 't2', name: 'Checkout Flow', projectId: 'p2', phase: 'Dev Test', assignedTo: 'u4', status: 'In Progress' }
+            ];
+        }
     </script>
 </body>
 </html>
