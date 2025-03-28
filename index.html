@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -674,7 +673,7 @@
                 <div class="header-right">
                     <div class="user-avatar" id="user-avatar"></div>
                     <span id="user-name"></span>
-                    <button class="btn-primary" onclick="logout()">Logout</button>
+                    <button class="btn-primary" id="logout-btn">Logout</button>
                 </div>
             </div>
             <div class="breadcrumbs" id="breadcrumbs"></div>
@@ -953,26 +952,28 @@
     </div>
 
     <script type="module">
+        // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, updatePassword } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
 
-         const firebaseConfig = {
-    apiKey: "AIzaSyA9tjQwrIW9x3aaWh5s5c5H9v-UTDLh_sE",
-    authDomain: "qa-team-dashboard-2c77f.firebaseapp.com",
-    projectId: "qa-team-dashboard-2c77f",
-    storageBucket: "qa-team-dashboard-2c77f.firebasestorage.app",
-    messagingSenderId: "301996017630",
-    appId: "1:301996017630:web:46de7a9ecc84de37ea7f4f",
-    measurementId: "G-5D25SPVS07"
-  };
+        // Replace with your Firebase project configuration
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID",
+            measurementId: "YOUR_MEASUREMENT_ID"
+        };
 
-
-
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // Make auth and db globally accessible
         window.auth = auth;
         window.db = db;
     </script>
@@ -993,19 +994,29 @@
             sortDirection: {}
         };
 
+        // Auth state listener
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists) {
-                    state.currentUser = { id: user.uid, ...userDoc.data(), email: user.email };
-                    showNotification(`Logged in as ${state.currentUser.name}`);
-                    closeLoginModal();
-                    updateUserAvatar();
-                    setupSidebar();
-                    switchTab('dashboard');
-                    setupRealTimeListeners();
-                } else {
-                    showNotification('User profile not found. Please contact admin.', null, true);
+                try {
+                    const userDocRef = doc(db, 'users', user.uid);
+                    const userDocs = await getDocs(collection(db, 'users'));
+                    const userData = userDocs.docs.find(doc => doc.id === user.uid)?.data();
+                    if (userData) {
+                        state.currentUser = { id: user.uid, ...userData, email: user.email };
+                        showNotification(`Logged in as ${state.currentUser.name}`);
+                        closeLoginModal();
+                        updateUserAvatar();
+                        setupSidebar();
+                        switchTab('dashboard');
+                        setupRealTimeListeners();
+                    } else {
+                        showNotification('User profile not found. Please contact admin.', null, true);
+                        await signOut(auth);
+                    }
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                    showNotification('Failed to load user data', null, true);
+                    await signOut(auth);
                 }
             } else {
                 state.currentUser = null;
@@ -1017,6 +1028,7 @@
             }
         });
 
+        // Show login modal on page load
         function showLoginModal() {
             document.getElementById('login-modal').style.display = 'flex';
             document.getElementById('login-email').focus();
@@ -1026,6 +1038,7 @@
             document.getElementById('login-modal').style.display = 'none';
         }
 
+        // Handle login form submission
         async function simulateLoginFromModal(e) {
             e.preventDefault();
             const email = document.getElementById('login-email').value.trim();
@@ -1038,38 +1051,61 @@
             }
         }
 
+        // DOM Content Loaded - Attach event listeners
         document.addEventListener('DOMContentLoaded', () => {
             showLoginModal();
             document.getElementById('login-form').addEventListener('submit', simulateLoginFromModal);
-            document.getElementById('standup-form').onsubmit = e => {
+            document.getElementById('logout-btn').addEventListener('click', logout);
+            document.getElementById('standup-form').addEventListener('submit', (e) => {
                 e.preventDefault();
                 submitStandup();
-            };
-            document.getElementById('profile-form').onsubmit = e => {
+            });
+            document.getElementById('profile-form').addEventListener('submit', (e) => {
                 e.preventDefault();
                 updateProfile();
-            };
+            });
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.addEventListener('click', () => switchTab(item.getAttribute('data-tab')));
+            });
         });
+
+        function setupSidebar() {
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                const tab = item.getAttribute('data-tab');
+                if (tab === 'dashboard' || tab === 'daily-standup' || tab === 'kanban-board' || tab === 'project-overview' || tab === 'approved-projects' || tab === 'rejected-projects' || tab === 'profile') {
+                    item.style.display = 'flex';
+                } else if (tab === 'project-management' || tab === 'activity-log' || tab === 'user-management' || tab === 'assign-roles') {
+                    item.style.display = (state.currentUser.role === 'Team Lead' || state.currentUser.role === 'Admin') ? 'flex' : 'none';
+                } else if (tab === 'project-types' || tab === 'qa-report') {
+                    item.style.display = state.currentUser.role === 'Admin' ? 'flex' : 'none';
+                }
+            });
+        }
 
         function setupRealTimeListeners() {
             onSnapshot(collection(db, 'users'), (snapshot) => {
                 state.users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderUsers();
+                renderAssignRoles();
+                filterProjects();
+                renderApprovedProjects();
+                renderRejectedProjects();
+                renderReports();
             });
 
             onSnapshot(collection(db, 'tasks'), (snapshot) => {
                 state.tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderKanban();
+                renderTasks();
             });
 
             onSnapshot(collection(db, 'projects'), (snapshot) => {
                 state.projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderProjects();
             });
 
             onSnapshot(collection(db, 'projectOverview'), (snapshot) => {
                 state.projectOverview = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderProjectOverview();
+                filterProjects();
+                renderReports();
             });
 
             onSnapshot(collection(db, 'approvedProjects'), (snapshot) => {
@@ -1082,12 +1118,12 @@
                 renderRejectedProjects();
             });
 
-            onSnapshot(query(collection(db, 'activityLog'), orderBy('timestamp', 'desc'), limit(50)), (snapshot) => {
+            onSnapshot(collection(db, 'activityLog'), (snapshot) => {
                 state.activityLog = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderActivityLog();
             });
 
-            onSnapshot(collection(db, 'standupEntries'), (snapshot) => {
+            onSnapshot(query(collection(db, 'standupEntries'), orderBy('date', 'desc'), limit(50)), (snapshot) => {
                 state.standupEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderStandup();
             });
@@ -1095,127 +1131,60 @@
             onSnapshot(collection(db, 'testingPhases'), (snapshot) => {
                 state.testingPhases = snapshot.docs.map(doc => doc.data().name);
                 renderProjectTypes();
+                filterProjects();
             });
 
             onSnapshot(collection(db, 'projectTypes'), (snapshot) => {
                 state.projectTypes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderProjectTypes();
             });
-
-            loadInitialData();
         }
 
-        function setupSidebar() {
-            const role = state.currentUser?.role || '';
-            document.querySelectorAll('.sidebar-item').forEach(item => {
-                const tabId = item.getAttribute('data-tab');
-                if (role !== 'Admin') {
-                    if (['project-management', 'project-types', 'qa-report', 'activity-log', 'user-management', 'assign-roles'].includes(tabId)) {
-                        item.style.display = 'none';
-                        return;
-                    }
-                }
-                if (role === 'QA Member' && ['approved-projects', 'rejected-projects'].includes(tabId)) {
-                    item.style.display = state.projectOverview.some(po => po.qaId === state.currentUser.id && po.approvedForLive === 'Yes') ? 'block' : 'none';
-                } else {
-                    item.style.display = 'block';
-                }
-
-                item.addEventListener('click', () => switchTab(tabId));
-                item.setAttribute('tabindex', '0');
-                item.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') switchTab(tabId);
-                });
-            });
-
-            const adminControls = document.querySelector('.team-lead-admin');
-            if (adminControls) adminControls.style.display = role === 'Admin' ? 'block' : 'none';
-        }
-
-        function switchTab(tabId) {
+        function switchTab(tab) {
             document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
             document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
-            const pane = document.getElementById(tabId);
-            const item = document.querySelector(`.sidebar-item[data-tab="${tabId}"]`);
-            if (pane && item && isAuthorized(tabId)) {
-                pane.classList.add('active');
-                item.classList.add('active');
-                updateBreadcrumbs(tabId);
-                loadTabData(tabId);
+            document.getElementById(tab).classList.add('active');
+            document.querySelector(`.sidebar-item[data-tab="${tab}"]`).classList.add('active');
+            document.getElementById('breadcrumbs').innerHTML = `<a href="#" onclick="switchTab('dashboard')">Home</a> / ${tab.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`;
+            if (tab === 'dashboard') {
+                const stats = calculateDashboardStats();
+                document.getElementById('dashboard-content').innerHTML = Object.keys(stats).map(type => `
+                    <div class="widget">
+                        <h3>${type}</h3>
+                        <div class="stats">
+                            <div class="stats-number">${stats[type].projects}</div>
+                            <div>Total Projects</div>
+                        </div>
+                        <div class="stats">
+                            <div class="stats-number">${stats[type].pendingApprovals}</div>
+                            <div>Pending Approvals</div>
+                        </div>
+                        <div class="stats">
+                            <div class="stats-number">${stats[type].completedProjects}</div>
+                            <div>Completed Projects</div>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('welcome-user').textContent = state.currentUser.name;
+            } else if (tab === 'profile') {
+                renderProfile();
             }
         }
 
-        function isAuthorized(tabId) {
-            if (!state.currentUser) return false;
-            const role = state.currentUser.role;
-            if (role === 'Admin') return true;
-            return !document.getElementById(tabId).classList.contains('team-lead-only') && !document.getElementById(tabId).classList.contains('team-lead-admin');
-        }
-
-        function updateBreadcrumbs(tabId) {
-            const tabNames = {
-                'dashboard': 'Dashboard',
-                'daily-standup': 'Daily Standup',
-                'kanban-board': 'Kanban Board',
-                'project-management': 'Projects',
-                'project-overview': 'Project Overview',
-                'approved-projects': 'Approved Projects',
-                'rejected-projects': 'Rejected Projects',
-                'project-types': 'Project Types',
-                'qa-report': 'QA Report',
-                'activity-log': 'Activity Log',
-                'profile': 'Profile',
-                'user-management': 'User Management',
-                'assign-roles': 'Assign Roles'
-            };
-            document.getElementById('breadcrumbs').innerHTML = `<a href="#" onclick="switchTab('dashboard')">Dashboard</a> > ${tabNames[tabId]}`;
-        }
-
-        function loadTabData(tabId) {
-            showLoading();
+        function showNotification(message, duration = 3000, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.toggle('error-notification', isError);
+            notification.style.display = 'block';
             setTimeout(() => {
-                const loaders = {
-                    'dashboard': renderDashboard,
-                    'daily-standup': renderStandup,
-                    'kanban-board': renderKanban,
-                    'project-management': renderProjects,
-                    'project-overview': renderProjectOverview,
-                    'approved-projects': renderApprovedProjects,
-                    'rejected-projects': renderRejectedProjects,
-                    'project-types': renderProjectTypes,
-                    'qa-report': renderReports,
-                    'activity-log': renderActivityLog,
-                    'profile': renderProfile,
-                    'user-management': renderUsers,
-                    'assign-roles': renderAssignRoles
-                };
-                loaders[tabId]?.();
-                hideLoading();
-            }, 500);
-        }
-
-        function showNotification(message, userId = null, isError = false) {
-            if (!userId || userId === state.currentUser?.id) {
-                const notification = document.getElementById('notification');
-                notification.textContent = message;
-                notification.classList.toggle('error-notification', isError);
-                notification.style.display = 'block';
-                setTimeout(() => notification.style.display = 'none', 3000);
-            }
-            if (state.currentUser) {
-                addDoc(collection(db, 'activityLog'), {
-                    action: `Notified: ${message}`,
-                    user: state.currentUser.name,
-                    timestamp: Date.now()
-                });
-            }
+                notification.style.display = 'none';
+            }, duration);
         }
 
         function showModal(title, content) {
             document.getElementById('modal-title').textContent = title;
             document.getElementById('modal-body').innerHTML = content;
             document.getElementById('modal').style.display = 'flex';
-            document.querySelector('.modal-close').focus();
         }
 
         function closeModal() {
@@ -1223,156 +1192,121 @@
             document.getElementById('email-modal').style.display = 'none';
         }
 
-        function showLoading() {
-            document.getElementById('loader').style.display = 'flex';
-        }
-
-        function hideLoading() {
-            document.getElementById('loader').style.display = 'none';
-        }
-
-        function loadInitialData() {
-            if (state.currentUser) {
-                document.getElementById('user-name').textContent = `Welcome ${state.currentUser.name}`;
-                document.getElementById('welcome-user').textContent = state.currentUser.name;
-                const typeFilter = document.getElementById('report-filter-type');
-                typeFilter.innerHTML = `<option value="">Filter by Type</option>` + state.projectTypes.flatMap(type => type.subcategories.map(sub => `<option value="${sub}">${sub}</option>`)).join('');
-            }
-        }
-
-        function renderDashboardForAdmin() {
-            const stats = calculateDashboardStats();
-            const projectsByType = state.projectTypes.map(type => {
-                const typeStats = stats[type.name] || { projects: 0, pendingApprovals: 0, completedProjects: 0 };
-                return `
-                    <div class="widget">
-                        <h3>${type.name}</h3>
-                        ${typeStats.projects === 0 ? `
-                            <p>No projects yet—create one now!</p>
-                        ` : `
-                            <div class="stats">
-                                <span class="stats-number">${typeStats.projects}</span>
-                                <span>Projects</span>
-                            </div>
-                            <div class="stats-list">
-                                <div class="stats-list-item">Pending Approvals: ${typeStats.pendingApprovals}</div>
-                                <div class="stats-list-item">Completed Projects: ${typeStats.completedProjects}</div>
-                            </div>
-                        `}
-                    </div>
-                `;
-            }).join('');
-            document.getElementById('dashboard-content').innerHTML = projectsByType;
-        }
-
-        function renderDashboardForMember() {
-            const assignedProjects = state.projectOverview.filter(po => po.qaId === state.currentUser.id);
-            const projectsSummary = assignedProjects.map(po => `
-                <div class="widget">
-                    <h3>${po.projectName}</h3>
-                    <div class="stats-list">
-                        <div class="stats-list-item">Type: ${po.projectType}</div>
-                        <div class="stats-list-item">Phase: ${po.currentPhase}</div>
-                        <div class="stats-list-item">Status: ${po.status}</div>
-                        <div class="stats-list-item">Approved for Live: ${po.approvedForLive}</div>
-                    </div>
-                </div>
-            `).join('');
-            document.getElementById('dashboard-content').innerHTML = projectsSummary || `
-                <div class="widget">
-                    <h3>No Assigned Projects</h3>
-                    <p>You currently have no projects assigned.</p>
-                </div>
-            `;
-        }
-
-        function renderDashboard() {
-            if (!state.currentUser) return;
-            if (state.currentUser.role === 'Admin') renderDashboardForAdmin();
-            else renderDashboardForMember();
-        }
-
-        function renderStandup() {
-            const tbody = document.querySelector('#standup-table tbody');
-            tbody.innerHTML = '';
-            const twoWeeksAgo = new Date();
-            twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-            let filteredEntries = state.standupEntries;
-            const searchDate = document.getElementById('standup-search-date')?.value;
-            if (state.currentUser.role === 'Admin' && searchDate) {
-                filteredEntries = filteredEntries.filter(entry => entry.date === new Date(searchDate).toLocaleDateString());
-            } else {
-                filteredEntries = filteredEntries.filter(entry => new Date(entry.date) >= twoWeeksAgo);
-            }
-            if (state.currentUser.role !== 'Admin') {
-                filteredEntries = filteredEntries.filter(entry => entry.user === state.currentUser.name);
-            }
-            filteredEntries.forEach((entry, index) => {
-                const row = document.createElement('tr');
-                const isOwnEntry = entry.user === state.currentUser.name;
-                row.innerHTML = `
-                    <td>${entry.date}</td>
-                    <td>${entry.user}</td>
-                    <td>${entry.yesterday}</td>
-                    <td>${entry.today}</td>
-                    <td>${entry.blockers || 'None'}</td>
-                    <td>${isOwnEntry ? `
-                        <button class="btn-primary" onclick="editStandup('${entry.id}')">Edit</button>
-                        <button class="btn-danger" onclick="deleteStandup('${entry.id}')">Delete</button>
-                    ` : '-'}</td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
         async function submitStandup() {
             const yesterday = document.getElementById('standup-yesterday').value.trim();
             const today = document.getElementById('standup-today').value.trim();
+            const blockers = document.getElementById('standup-blockers').value.trim();
             if (!yesterday || !today) {
-                showNotification('Please fill in all required fields', null, true);
+                showNotification('Yesterday’s work and today’s plan are required', null, true);
                 return;
             }
-            const entry = {
-                yesterday,
-                today,
-                blockers: document.getElementById('standup-blockers').value.trim(),
-                user: state.currentUser.name,
-                date: new Date().toLocaleDateString(),
-                userId: state.currentUser.id
-            };
             try {
-                const docRef = await addDoc(collection(db, 'standupEntries'), entry);
+                await addDoc(collection(db, 'standupEntries'), {
+                    userId: state.currentUser.id,
+                    userName: state.currentUser.name,
+                    date: new Date().toISOString().split('T')[0],
+                    yesterday,
+                    today,
+                    blockers,
+                    timestamp: Date.now()
+                });
                 await addDoc(collection(db, 'activityLog'), {
-                    action: 'Submitted standup',
+                    action: 'Submitted daily standup',
                     user: state.currentUser.name,
                     timestamp: Date.now()
                 });
-                showNotification('Standup submitted successfully');
                 document.getElementById('standup-form').reset();
+                showNotification('Standup submitted successfully');
             } catch (error) {
                 console.error('Error submitting standup:', error);
                 showNotification('Failed to submit standup', null, true);
             }
         }
 
+        function renderStandup() {
+            const tbody = document.querySelector('#standup-table tbody');
+            tbody.innerHTML = '';
+            const dateFilter = document.getElementById('standup-search-date').value;
+            let filteredEntries = state.standupEntries;
+            if (state.currentUser.role !== 'Admin') {
+                filteredEntries = filteredEntries.filter(entry => entry.userId === state.currentUser.id);
+            }
+            if (dateFilter) {
+                filteredEntries = filteredEntries.filter(entry => entry.date === dateFilter);
+            }
+            filteredEntries.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${entry.date}</td>
+                    <td>${entry.userName}</td>
+                    <td>${entry.yesterday}</td>
+                    <td>${entry.today}</td>
+                    <td>${entry.blockers || 'None'}</td>
+                    <td>
+                        ${state.currentUser.id === entry.userId ? `
+                            <button class="btn-primary" onclick="editStandup('${entry.id}')">Edit</button>
+                            <button class="btn-danger" onclick="deleteStandup('${entry.id}')">Delete</button>
+                        ` : ''}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
         async function editStandup(id) {
             const entry = state.standupEntries.find(e => e.id === id);
             if (!entry) return;
-            document.getElementById('standup-yesterday').value = entry.yesterday;
-            document.getElementById('standup-today').value = entry.today;
-            document.getElementById('standup-blockers').value = entry.blockers || '';
-            try {
-                await deleteDoc(doc(db, 'standupEntries', id));
-                showNotification('Standup ready for edit');
-            } catch (error) {
-                console.error('Error editing standup:', error);
-                showNotification('Failed to edit standup', null, true);
-            }
+            const content = `
+                <form id="edit-standup-form">
+                    <div class="form-group">
+                        <label for="edit-yesterday" class="required">Yesterday’s Work</label>
+                        <input type="text" id="edit-yesterday" value="${entry.yesterday}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-today" class="required">Today’s Plan</label>
+                        <input type="text" id="edit-today" value="${entry.today}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-blockers">Blockers</label>
+                        <input type="text" id="edit-blockers" value="${entry.blockers || ''}">
+                    </div>
+                    <button type="submit" class="btn-primary">Update Standup</button>
+                </form>
+            `;
+            showModal('Edit Standup', content);
+            document.getElementById('edit-standup-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const yesterday = document.getElementById('edit-yesterday').value.trim();
+                const today = document.getElementById('edit-today').value.trim();
+                const blockers = document.getElementById('edit-blockers').value.trim();
+                if (!yesterday || !today) {
+                    showNotification('Yesterday’s work and today’s plan are required', null, true);
+                    return;
+                }
+                try {
+                    await updateDoc(doc(db, 'standupEntries', id), { yesterday, today, blockers });
+                    await addDoc(collection(db, 'activityLog'), {
+                        action: 'Updated standup entry',
+                        user: state.currentUser.name,
+                        timestamp: Date.now()
+                    });
+                    closeModal();
+                    showNotification('Standup updated successfully');
+                } catch (error) {
+                    console.error('Error updating standup:', error);
+                    showNotification('Failed to update standup', null, true);
+                }
+            };
         }
 
         async function deleteStandup(id) {
             try {
                 await deleteDoc(doc(db, 'standupEntries', id));
+                await addDoc(collection(db, 'activityLog'), {
+                    action: 'Deleted standup entry',
+                    user: state.currentUser.name,
+                    timestamp: Date.now()
+                });
                 showNotification('Standup deleted successfully');
             } catch (error) {
                 console.error('Error deleting standup:', error);
@@ -1381,41 +1315,31 @@
         }
 
         function exportStandupData() {
-            if (state.currentUser.role !== 'Admin') {
-                showNotification('Only Admins can export standup data', null, true);
-                return;
-            }
             const fromDate = document.getElementById('standup-export-from').value;
             const toDate = document.getElementById('standup-export-to').value;
             if (!fromDate || !toDate) {
-                showNotification('Please select both start and end dates', null, true);
+                showNotification('Please select both from and to dates', null, true);
                 return;
             }
-            const from = new Date(fromDate);
-            const to = new Date(toDate);
-            if (from > to) {
-                showNotification('Start date must be before end date', null, true);
-                return;
+            let filteredEntries = state.standupEntries.filter(entry => entry.date >= fromDate && entry.date <= toDate);
+            if (state.currentUser.role !== 'Admin') {
+                filteredEntries = filteredEntries.filter(entry => entry.userId === state.currentUser.id);
             }
-            const filteredEntries = state.standupEntries.filter(entry => {
-                const entryDate = new Date(entry.date);
-                return entryDate >= from && entryDate <= to;
-            });
             const csv = [
                 ['Date', 'User', 'Yesterday’s Work', 'Today’s Plan', 'Blockers'],
                 ...filteredEntries.map(entry => [
                     entry.date,
-                    entry.user,
-                    `"${entry.yesterday.replace(/"/g, '""')}"`,
-                    `"${entry.today.replace(/"/g, '""')}"`,
-                    `"${(entry.blockers || 'None').replace(/"/g, '""')}"`
+                    entry.userName,
+                    entry.yesterday,
+                    entry.today,
+                    entry.blockers || 'None'
                 ])
             ].map(row => row.join(',')).join('\n');
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.setAttribute('href', url);
-            a.setAttribute('download', `standup_report_${fromDate}_to_${toDate}.csv`);
+            a.setAttribute('download', `standup_${fromDate}_to_${toDate}.csv`);
             a.click();
             window.URL.revokeObjectURL(url);
             addDoc(collection(db, 'activityLog'), {
@@ -1426,87 +1350,31 @@
             showNotification('Standup data exported successfully');
         }
 
-        function renderKanban() {
-            const columns = ['to-do', 'in-progress', 'done'];
-            columns.forEach(col => {
-                const status = col.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
-                let tasks = state.tasks.filter(t => t.status === status);
-                if (!['Admin', 'Team Lead'].includes(state.currentUser.role)) {
-                    tasks = tasks.filter(t => t.assignedTo === state.currentUser.id);
-                }
-                const taskHtml = tasks.length ? tasks.map(t => `
-                    <div style="background: #34495e; padding: 14px; margin-bottom: 10px; border-radius: 4px; cursor: move; box-shadow: var(--shadow); color: var(--text-color); font-size: 16px;" draggable="true" ondragstart="drag(event, '${t.id}')">
-                        ${t.name} (Assigned to: ${state.users.find(u => u.id === t.assignedTo)?.name || 'Unassigned'})
-                    </div>
-                `).join('') : `<p>No tasks yet—click 'Add Task' to get started!</p>`;
-                document.getElementById(`${col}-tasks`).innerHTML = taskHtml;
-            });
-        }
-
-        function drag(event, taskId) {
-            event.dataTransfer.setData('taskId', taskId);
-        }
-
-        function allowDrop(event) {
-            event.preventDefault();
-        }
-
-        function dragEnter(event) {
-            event.target.classList.add('dragover');
-        }
-
-        function dragLeave(event) {
-            event.target.classList.remove('dragover');
-        }
-
-        async function drop(event, status) {
-            event.preventDefault();
-            event.target.classList.remove('dragover');
-            const taskId = event.dataTransfer.getData('taskId');
-            const task = state.tasks.find(t => t.id === taskId);
-            if (task) {
-                task.status = status;
-                try {
-                    await updateDoc(doc(db, 'tasks', taskId), { status });
-                    await addDoc(collection(db, 'activityLog'), {
-                        action: `Moved task "${task.name}" to ${status}`,
-                        user: state.currentUser.name,
-                        timestamp: Date.now()
-                    });
-                } catch (error) {
-                    console.error('Error updating task status:', error);
-                    showNotification('Failed to update task status', null, true);
-                }
-            }
-        }
-
         function showTaskForm(taskId = null) {
             const task = taskId ? state.tasks.find(t => t.id === taskId) : null;
             const content = `
                 <form id="task-form">
                     <div class="form-group">
-                        <label for="task-name" class="required">Task Name</label>
-                        <input type="text" id="task-name" value="${task ? task.name : ''}" required>
+                        <label for="task-title" class="required">Task Title</label>
+                        <input type="text" id="task-title" value="${task ? task.title : ''}" required>
                     </div>
                     <div class="form-group">
-                        <label for="task-project" class="required">Project</label>
-                        <select id="task-project" required>
-                            <option value="">Select Project</option>
-                            ${state.projects.map(p => `<option value="${p.id}" ${task && task.projectId === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                        <label for="task-description">Description</label>
+                        <textarea id="task-description">${task ? task.description : ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-assignee">Assignee</label>
+                        <select id="task-assignee">
+                            <option value="">Unassigned</option>
+                            ${state.users.map(user => `<option value="${user.id}" ${task && task.assignee === user.id ? 'selected' : ''}>${user.name}</option>`).join('')}
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="task-phase" class="required">Phase</label>
-                        <select id="task-phase" required>
-                            <option value="">Select Phase</option>
-                            ${state.testingPhases.map(phase => `<option value="${phase}" ${task && task.phase === phase ? 'selected' : ''}>${phase}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="task-assigned" class="required">Assigned To</label>
-                        <select id="task-assigned" required>
-                            <option value="">Select User</option>
-                            ${state.users.map(u => `<option value="${u.id}" ${task && task.assignedTo === u.id ? 'selected' : ''}>${u.name}</option>`).join('')}
+                        <label for="task-status" class="required">Status</label>
+                        <select id="task-status" required>
+                            <option value="To Do" ${task && task.status === 'To Do' ? 'selected' : ''}>To Do</option>
+                            <option value="In Progress" ${task && task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="Done" ${task && task.status === 'Done' ? 'selected' : ''}>Done</option>
                         </select>
                     </div>
                     <button type="submit" class="btn-primary">${task ? 'Update' : 'Add'} Task</button>
@@ -1515,72 +1383,118 @@
             showModal(`${task ? 'Edit' : 'Add'} Task`, content);
             document.getElementById('task-form').onsubmit = async (e) => {
                 e.preventDefault();
-                if (task) await updateTask(taskId);
-                else await addTask();
+                const title = document.getElementById('task-title').value.trim();
+                const description = document.getElementById('task-description').value.trim();
+                const assignee = document.getElementById('task-assignee').value;
+                const status = document.getElementById('task-status').value;
+                if (!title || !status) {
+                    showNotification('Task title and status are required', null, true);
+                    return;
+                }
+                try {
+                    if (task) {
+                        await updateDoc(doc(db, 'tasks', taskId), { title, description, assignee, status });
+                        await addDoc(collection(db, 'activityLog'), {
+                            action: `Updated task: ${title}`,
+                            user: state.currentUser.name,
+                            timestamp: Date.now()
+                        });
+                    } else {
+                        await addDoc(collection(db, 'tasks'), {
+                            title,
+                            description,
+                            assignee,
+                            status,
+                            createdBy: state.currentUser.id,
+                            createdAt: Date.now()
+                        });
+                        await addDoc(collection(db, 'activityLog'), {
+                            action: `Added task: ${title}`,
+                            user: state.currentUser.name,
+                            timestamp: Date.now()
+                        });
+                    }
+                    closeModal();
+                    showNotification('Task saved successfully');
+                } catch (error) {
+                    console.error('Error saving task:', error);
+                    showNotification('Failed to save task', null, true);
+                }
             };
         }
 
-        async function addTask() {
-            const name = document.getElementById('task-name').value.trim();
-            const projectId = document.getElementById('task-project').value;
-            const phase = document.getElementById('task-phase').value;
-            const assignedTo = document.getElementById('task-assigned').value;
-            if (!name || !projectId || !phase || !assignedTo) {
-                showNotification('All fields are required', null, true);
-                return;
-            }
-            const task = { name, projectId, phase, assignedTo, status: 'To Do' };
-            try {
-                await addDoc(collection(db, 'tasks'), task);
-                await addDoc(collection(db, 'activityLog'), {
-                    action: `Added task: ${name}`,
-                    user: state.currentUser.name,
-                    timestamp: Date.now()
-                });
-                closeModal();
-                showNotification('Task added successfully');
-            } catch (error) {
-                console.error('Error adding task:', error);
-                showNotification('Failed to add task', null, true);
-            }
-        }
-
-        async function updateTask(taskId) {
-            const task = state.tasks.find(t => t.id === taskId);
-            if (!task) return;
-            task.name = document.getElementById('task-name').value.trim();
-            task.projectId = document.getElementById('task-project').value;
-            task.phase = document.getElementById('task-phase').value;
-            task.assignedTo = document.getElementById('task-assigned').value;
-            if (!task.name || !task.projectId || !task.phase || !task.assignedTo) {
-                showNotification('All fields are required', null, true);
-                return;
-            }
-            try {
-                await updateDoc(doc(db, 'tasks', taskId), task);
-                await addDoc(collection(db, 'activityLog'), {
-                    action: `Updated task: ${task.name}`,
-                    user: state.currentUser.name,
-                    timestamp: Date.now()
-                });
-                closeModal();
-                showNotification('Task updated successfully');
-            } catch (error) {
-                console.error('Error updating task:', error);
-                showNotification('Failed to update task', null, true);
-            }
-        }
-
-        function renderProjects() {
-            document.getElementById('projects-list').innerHTML = state.projects.map(p => `
-                <div class="list-item">
-                    <span>${p.name} (${p.projectType}) - ${p.status}</span>
+        function renderTasks() {
+            const toDo = document.getElementById('to-do-tasks');
+            const inProgress = document.getElementById('in-progress-tasks');
+            const done = document.getElementById('done-tasks');
+            toDo.innerHTML = '';
+            inProgress.innerHTML = '';
+            done.innerHTML = '';
+            state.tasks.forEach(task => {
+                if (state.currentUser.role !== 'Admin' && task.createdBy !== state.currentUser.id && task.assignee !== state.currentUser.id) return;
+                const taskElement = document.createElement('div');
+                taskElement.className = 'list-item';
+                taskElement.draggable = true;
+                taskElement.ondragstart = (e) => drag(e, task.id);
+                taskElement.innerHTML = `
+                    <span>${task.title} (${state.users.find(u => u.id === task.assignee)?.name || 'Unassigned'})</span>
                     <div>
-                        <button class="btn-primary" onclick="editProject('${p.id}')">Edit</button>
-                        <button class="btn-danger" onclick="deleteProject('${p.id}')">Delete</button>
+                        <button class="btn-primary" onclick="showTaskForm('${task.id}')">Edit</button>
+                        <button class="btn-danger" onclick="deleteTask('${task.id}')">Delete</button>
                     </div>
-                </div>
-            `).join('') || '<p>No projects yet—click "Create Project" to start!</p>';
+                `;
+                if (task.status === 'To Do') toDo.appendChild(taskElement);
+                else if (task.status === 'In Progress') inProgress.appendChild(taskElement);
+                else if (task.status === 'Done') done.appendChild(taskElement);
+            });
+        }
+
+        function drag(e, taskId) {
+            e.dataTransfer.setData('text/plain', taskId);
+        }
+
+        function allowDrop(e) {
+            e.preventDefault();
+        }
+
+        function dragEnter(e) {
+            e.target.classList.add('dragover');
+        }
+
+        function dragLeave(e) {
+            e.target.classList.remove('dragover');
+        }
+
+        async function drop(e, status) {
+            e.preventDefault();
+            e.target.classList.remove('dragover');
+            const taskId = e.dataTransfer.getData('text/plain');
+            try {
+                await updateDoc(doc(db, 'tasks', taskId), { status });
+                await addDoc(collection(db, 'activityLog'), {
+                    action: `Moved task to ${status}`,
+                    user: state.currentUser.name,
+                    timestamp: Date.now()
+                });
+            } catch (error) {
+                console.error('Error updating task status:', error);
+                showNotification('Failed to update task status', null, true);
+            }
+        }
+
+        async function deleteTask(taskId) {
+            try {
+                await deleteDoc(doc(db, 'tasks', taskId));
+                await addDoc(collection(db, 'activityLog'), {
+                    action: 'Deleted task',
+                    user: state.currentUser.name,
+                    timestamp: Date.now()
+                });
+                showNotification('Task deleted successfully');
+            } catch (error) {
+                console.error('Error deleting task:', error);
+                showNotification('Failed to delete task', null, true);
+            }
         }
 
         function showProjectForm(projectId = null) {
@@ -1589,20 +1503,40 @@
                 <form id="project-form">
                     <div class="form-group">
                         <label for="project-name" class="required">Project Name</label>
-                        <input type="text" id="project-name" value="${project ? project.name : ''}" placeholder="e.g., Website Redesign" required>
+                        <input type="text" id="project-name" value="${project ? project.name : ''}" required>
                     </div>
                     <div class="form-group">
                         <label for="project-type" class="required">Project Type</label>
                         <select id="project-type" required>
-                            <option value="">Select Type</option>
-                            ${state.projectTypes.flatMap(type => type.subcategories.map(sub => `
-                                <option value="${sub}" ${project && project.projectType === sub ? 'selected' : ''}>${sub}</option>
-                            `)).join('')}
+                            ${state.projectTypes.map(type => type.subcategories.map(sub => `
+                                <option value="${sub}" ${project && project.type === sub ? 'selected' : ''}>${sub}</option>
+                            `).join('')).join('')}
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="bug-tracker-link">GitLab Link</label>
-                        <input type="url" id="bug-tracker-link" value="${project ? project.bugTrackerLink : ''}" placeholder="e.g., https://gitlab.com/...">
+                        <label for="project-qa" class="required">Assign QA</label>
+                        <select id="project-qa" required>
+                            <option value="">Select QA</option>
+                            ${state.users.filter(u => u.role === 'QA Member').map(user => `
+                                <option value="${user.id}" ${project && project.qaId === user.id ? 'selected' : ''}>${user.name}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-start-date" class="required">Start Date</label>
+                        <input type="date" id="project-start-date" value="${project ? project.startDate : ''}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-end-date">End Date</label>
+                        <input type="date" id="project-end-date" value="${project ? project.endDate : ''}">
+                    </div>
+                    <div class="form-group">
+                        <label for="project-status" class="required">Status</label>
+                        <select id="project-status" required>
+                            <option value="Not Started" ${project && project.status === 'Not Started' ? 'selected' : ''}>Not Started</option>
+                            <option value="In Progress" ${project && project.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="Completed" ${project && project.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                        </select>
                     </div>
                     <button type="submit" class="btn-primary">${project ? 'Update' : 'Create'} Project</button>
                 </form>
@@ -1610,218 +1544,128 @@
             showModal(`${project ? 'Edit' : 'Create'} Project`, content);
             document.getElementById('project-form').onsubmit = async (e) => {
                 e.preventDefault();
-                if (project) await updateProject(projectId);
-                else await createProject();
+                const name = document.getElementById('project-name').value.trim();
+                const type = document.getElementById('project-type').value;
+                const qaId = document.getElementById('project-qa').value;
+                const startDate = document.getElementById('project-start-date').value;
+                const endDate = document.getElementById('project-end-date').value;
+                const status = document.getElementById('project-status').value;
+                if (!name || !type || !qaId || !startDate || !status) {
+                    showNotification('Please fill all required fields', null, true);
+                    return;
+                }
+                try {
+                    if (project) {
+                        await updateDoc(doc(db, 'projects', projectId), { name, type, qaId, startDate, endDate, status });
+                        await updateDoc(doc(db, 'projectOverview', projectId), {
+                            projectName: name,
+                            projectType: type,
+                            qaId,
+                            startDate,
+                            endDate,
+                            status
+                        });
+                        await addDoc(collection(db, 'activityLog'), {
+                            action: `Updated project: ${name}`,
+                            user: state.currentUser.name,
+                            timestamp: Date.now()
+                        });
+                    } else {
+                        const projectRef = await addDoc(collection(db, 'projects'), {
+                            name,
+                            type,
+                            qaId,
+                            startDate,
+                            endDate,
+                            status,
+                            createdBy: state.currentUser.id,
+                            createdAt: Date.now()
+                        });
+                        await addDoc(collection(db, 'projectOverview'), {
+                            projectId: projectRef.id,
+                            projectName: name,
+                            projectType: type,
+                            qaId,
+                            startDate,
+                            endDate,
+                            status,
+                            currentPhase: state.testingPhases[0] || 'Not Started',
+                            ktReceived: 'No',
+                            tlApproval: 'Pending',
+                            approvedForLive: 'No'
+                        });
+                        await addDoc(collection(db, 'activityLog'), {
+                            action: `Created project: ${name}`,
+                            user: state.currentUser.name,
+                            timestamp: Date.now()
+                        });
+                    }
+                    closeModal();
+                    showNotification('Project saved successfully');
+                } catch (error) {
+                    console.error('Error saving project:', error);
+                    showNotification('Failed to save project', null, true);
+                }
             };
         }
 
-        async function createProject() {
-            const name = document.getElementById('project-name').value.trim();
-            const projectType = document.getElementById('project-type').value;
-            const bugTrackerLink = document.getElementById('bug-tracker-link').value.trim();
-            if (!name || !projectType) {
-                showNotification('Project name and type are required', null, true);
-                return;
-            }
-            const project = { name, projectType, bugTrackerLink, status: 'Not Started' };
-            try {
-                const docRef = await addDoc(collection(db, 'projects'), project);
-                await addDoc(collection(db, 'projectOverview'), {
-                    projectId: docRef.id,
-                    projectName: name,
-                    qaId: null,
-                    projectType,
-                    currentPhase: state.testingPhases[0] || 'Not Started',
-                    ktReceived: 'No',
-                    startDate: new Date().toISOString().split('T')[0],
-                    endDate: '',
-                    status: 'Not Started',
-                    approvedForLive: 'No',
-                    approvedDate: '',
-                    rejectionDate: '',
-                    rejectionReason: '',
-                    rejectedBy: '',
-                    tlApproval: 'Pending'
-                });
-                await addDoc(collection(db, 'activityLog'), {
-                    action: `Created project: ${name}`,
-                    user: state.currentUser.name,
-                    timestamp: Date.now()
-                });
-                closeModal();
-                showNotification('Project created successfully');
-            } catch (error) {
-                console.error('Error creating project:', error);
-                showNotification('Failed to create project', null, true);
-            }
-        }
-
-        async function updateProject(projectId) {
-            const project = state.projects.find(p => p.id === projectId);
-            if (!project) return;
-            const name = document.getElementById('project-name').value.trim();
-            const projectType = document.getElementById('project-type').value;
-            const bugTrackerLink = document.getElementById('bug-tracker-link').value.trim();
-            if (!name || !projectType) {
-                showNotification('Project name and type are required', null, true);
-                return;
-            }
-            project.name = name;
-            project.projectType = projectType;
-            project.bugTrackerLink = bugTrackerLink;
-            try {
-                await updateDoc(doc(db, 'projects', projectId), project);
-                const poDoc = state.projectOverview.find(po => po.projectId === projectId);
-                if (poDoc) {
-                    await updateDoc(doc(db, 'projectOverview', poDoc.id), {
-                        projectName: name,
-                        projectType
-                    });
-                }
-                await addDoc(collection(db, 'activityLog'), {
-                    action: `Updated project: ${name}`,
-                    user: state.currentUser.name,
-                    timestamp: Date.now()
-                });
-                closeModal();
-                showNotification('Project updated successfully');
-            } catch (error) {
-                console.error('Error updating project:', error);
-                showNotification('Failed to update project', null, true);
-            }
-        }
-
-        function editProject(projectId) {
-            showProjectForm(projectId);
-        }
-
-        async function deleteProject(projectId) {
-            try {
-                await deleteDoc(doc(db, 'projects', projectId));
-                const poDoc = state.projectOverview.find(po => po.projectId === projectId);
-                if (poDoc) await deleteDoc(doc(db, 'projectOverview', poDoc.id));
-                await addDoc(collection(db, 'activityLog'), {
-                    action: `Deleted project: ${state.projects.find(p => p.id === projectId)?.name}`,
-                    user: state.currentUser.name,
-                    timestamp: Date.now()
-                });
-                showNotification('Project deleted successfully');
-            } catch (error) {
-                console.error('Error deleting project:', error);
-                showNotification('Failed to delete project', null, true);
-            }
-        }
-
-        function renderProjectOverview() {
-            const tbody = document.getElementById('project-overview-table');
-            tbody.innerHTML = '';
-            let filteredProjects = state.projectOverview;
-            if (state.currentUser.role !== 'Admin') {
-                filteredProjects = filteredProjects.filter(po => po.qaId === state.currentUser.id);
-            }
-            filteredProjects.forEach(po => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${po.projectName}</td>
-                    <td>${state.users.find(u => u.id === po.qaId)?.name || 'Unassigned'}</td>
-                    <td>${po.projectType}</td>
-                    <td>
-                        <select onchange="updatePhase('${po.id}', this.value)">
-                            ${state.testingPhases.map(phase => `<option value="${phase}" ${po.currentPhase === phase ? 'selected' : ''}>${phase}</option>`).join('')}
-                        </select>
-                    </td>
-                    <td>
-                        <select onchange="updateKT('${po.id}', this.value)">
-                            <option value="Yes" ${po.ktReceived === 'Yes' ? 'selected' : ''}>Yes</option>
-                            <option value="No" ${po.ktReceived === 'No' ? 'selected' : ''}>No</option>
-                        </select>
-                    </td>
-                    <td>${po.startDate}</td>
-                    <td>${po.endDate || 'N/A'}</td>
-                    <td>${po.status}</td>
-                    <td>${po.tlApproval === 'Pending' ? `
-                        <button class="btn-primary" onclick="submitForTLApproval('${po.id}')">Submit for TL Approval</button>
-                    ` : po.tlApproval}</td>
-                    <td>${po.tlApproval === 'Approved' && state.currentUser.role === 'Admin' ? `
-                        <select onchange="updateApproval('${po.id}', this.value)">
-                            <option value="Yes" ${po.approvedForLive === 'Yes' ? 'selected' : ''}>Yes</option>
-                            <option value="No" ${po.approvedForLive === 'No' ? 'selected' : ''}>No</option>
-                            <option value="Rejected" ${po.approvedForLive === 'Rejected' ? 'selected' : ''}>Reject</option>
-                        </select>
-                    ` : po.tlApproval === 'Approved' ? po.approvedForLive : 'N/A'}</td>
-                    <td>${po.tlApproval === 'Approved' && state.currentUser.role === 'Admin' ? `
-                        <button class="btn-primary" onclick="sendEmail('${po.projectId}')">Send Email</button>
-                    ` : ''}</td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
         async function updatePhase(projectOverviewId, phase) {
-            const projectEntry = state.projectOverview.find(po => po.id === projectOverviewId);
-            if (projectEntry) {
-                try {
-                    await updateDoc(doc(db, 'projectOverview', projectOverviewId), { currentPhase: phase });
-                    await addDoc(collection(db, 'activityLog'), {
-                        action: `Updated phase to ${phase} for ${projectEntry.projectName}`,
-                        user: state.currentUser.name,
-                        timestamp: Date.now()
-                    });
-                } catch (error) {
-                    console.error('Error updating phase:', error);
-                    showNotification('Failed to update phase', null, true);
-                }
+            try {
+                await updateDoc(doc(db, 'projectOverview', projectOverviewId), { currentPhase: phase });
+                await addDoc(collection(db, 'activityLog'), {
+                    action: `Updated phase of project to ${phase}`,
+                    user: state.currentUser.name,
+                    timestamp: Date.now()
+                });
+                showNotification('Phase updated successfully');
+            } catch (error) {
+                console.error('Error updating phase:', error);
+                showNotification('Failed to update phase', null, true);
             }
         }
 
         async function updateKT(projectOverviewId, ktReceived) {
-            const projectEntry = state.projectOverview.find(po => po.id === projectOverviewId);
-            if (projectEntry) {
-                try {
-                    await updateDoc(doc(db, 'projectOverview', projectOverviewId), { ktReceived });
-                    await addDoc(collection(db, 'activityLog'), {
-                        action: `Updated KT to ${ktReceived} for ${projectEntry.projectName}`,
-                        user: state.currentUser.name,
-                        timestamp: Date.now()
-                    });
-                } catch (error) {
-                    console.error('Error updating KT:', error);
-                    showNotification('Failed to update KT', null, true);
-                }
+            try {
+                await updateDoc(doc(db, 'projectOverview', projectOverviewId), { ktReceived });
+                await addDoc(collection(db, 'activityLog'), {
+                    action: `Updated KT status to ${ktReceived}`,
+                    user: state.currentUser.name,
+                    timestamp: Date.now()
+                });
+                showNotification('KT status updated successfully');
+            } catch (error) {
+                console.error('Error updating KT status:', error);
+                showNotification('Failed to update KT status', null, true);
             }
         }
 
         async function submitForTLApproval(projectOverviewId) {
-            const projectEntry = state.projectOverview.find(po => po.id === projectOverviewId);
-            if (projectEntry) {
-                try {
-                    await updateDoc(doc(db, 'projectOverview', projectOverviewId), { tlApproval: 'Approved' });
-                    await addDoc(collection(db, 'activityLog'), {
-                        action: `Submitted ${projectEntry.projectName} for TL approval`,
-                        user: state.currentUser.name,
-                        timestamp: Date.now()
-                    });
-                    showNotification('Project submitted for TL approval');
-                } catch (error) {
-                    console.error('Error submitting for TL approval:', error);
-                    showNotification('Failed to submit for TL approval', null, true);
-                }
+            try {
+                await updateDoc(doc(db, 'projectOverview', projectOverviewId), { tlApproval: 'Awaiting Approval' });
+                await addDoc(collection(db, 'activityLog'), {
+                    action: `Submitted project for TL approval`,
+                    user: state.currentUser.name,
+                    timestamp: Date.now()
+                });
+                showNotification('Project submitted for TL approval');
+            } catch (error) {
+                console.error('Error submitting for TL approval:', error);
+                showNotification('Failed to submit for TL approval', null, true);
             }
         }
 
-        async function updateApproval(projectOverviewId, approval) {
+        async function updateApproval(projectOverviewId, approvedForLive) {
             const projectEntry = state.projectOverview.find(po => po.id === projectOverviewId);
             if (!projectEntry) return;
-            const currentDate = new Date().toISOString().split('T')[0];
             try {
-                if (approval === 'Yes') {
-                    await updateDoc(doc(db, 'projectOverview', projectOverviewId), {
+                if (approvedForLive === 'Yes') {
+                    await updateDoc(doc(db, 'projectOverview', projectOverviewId), { approvedForLive: 'Yes' });
+                    const approvedDoc = await addDoc(collection(db, 'approvedProjects'), {
+                        ...projectEntry,
                         approvedForLive: 'Yes',
-                        approvedDate: currentDate,
-                        status: 'Completed',
-                        endDate: currentDate
+                        approvedDate: new Date().toISOString().split('T')[0],
+                        approvedBy: state.currentUser.name
                     });
-                    const approvedDoc = await addDoc(collection(db, 'approvedProjects'), { ...projectEntry, approvedForLive: 'Yes', approvedDate: currentDate });
                     await deleteDoc(doc(db, 'projectOverview', projectOverviewId));
                     await addDoc(collection(db, 'activityLog'), {
                         action: `Approved ${projectEntry.projectName} for live`,
@@ -1829,15 +1673,10 @@
                         timestamp: Date.now()
                     });
                     showNotification('Project approved for live');
-                } else if (approval === 'Rejected') {
-                    const reason = prompt('Enter rejection reason:');
+                } else if (approvedForLive === 'Rejected') {
+                    const reason = prompt('Please provide a reason for rejection:');
+                    const currentDate = new Date().toISOString().split('T')[0];
                     if (reason) {
-                        await updateDoc(doc(db, 'projectOverview', projectOverviewId), {
-                            approvedForLive: 'Rejected',
-                            rejectionDate: currentDate,
-                            rejectionReason: reason,
-                            rejectedBy: state.currentUser.name
-                        });
                         const rejectedDoc = await addDoc(collection(db, 'rejectedProjects'), {
                             ...projectEntry,
                             approvedForLive: 'Rejected',
@@ -1854,9 +1693,16 @@
                         showNotification('Project rejected');
                     } else {
                         showNotification('Rejection reason is required', null, true);
+                        return;
                     }
                 } else {
                     await updateDoc(doc(db, 'projectOverview', projectOverviewId), { approvedForLive: 'No' });
+                    await addDoc(collection(db, 'activityLog'), {
+                        action: `Set ${projectEntry.projectName} approval to No`,
+                        user: state.currentUser.name,
+                        timestamp: Date.now()
+                    });
+                    showNotification('Project approval updated');
                 }
             } catch (error) {
                 console.error('Error updating approval:', error);
@@ -1864,25 +1710,151 @@
             }
         }
 
+        function sendEmail(projectId) {
+            const project = state.projects.find(p => p.id === projectId);
+            if (!project) return;
+            const content = `
+                <form id="email-form">
+                    <div class="form-group">
+                        <label for="email-to" class="required">To</label>
+                        <input type="email" id="email-to" value="client@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email-subject" class="required">Subject</label>
+                        <input type="text" id="email-subject" value="Project Approval: ${project.name}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email-body" class="required">Body</label>
+                        <textarea id="email-body" required>Dear Client,\n\nWe are pleased to inform you that the project "${project.name}" has been approved for live deployment.\n\nBest regards,\n${state.currentUser.name}</textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">Send Email</button>
+                </form>
+            `;
+            document.getElementById('email-modal').style.display = 'flex';
+            document.getElementById('email-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const to = document.getElementById('email-to').value.trim();
+                const subject = document.getElementById('email-subject').value.trim();
+                const body = document.getElementById('email-body').value.trim();
+                if (!to || !subject || !body) {
+                    showNotification('All email fields are required', null, true);
+                    return;
+                }
+                try {
+                    // Note: Firebase does not directly support sending emails. You would typically use a backend service like Firebase Functions with a service like SendGrid or Nodemailer to send emails.
+                    // For this example, we'll log the email details and simulate sending.
+                    console.log('Sending email:', { to, subject, body });
+                    await addDoc(collection(db, 'activityLog'), {
+                        action: `Sent email to ${to} with subject: ${subject}`,
+                        user: state.currentUser.name,
+                        timestamp: Date.now()
+                    });
+                    closeModal();
+                    showNotification('Email sent successfully (simulated)');
+                } catch (error) {
+                    console.error('Error sending email:', error);
+                    showNotification('Failed to send email', null, true);
+                }
+            };
+        }
+
+        function filterProjects() {
+            const search = document.getElementById('project-search')?.value.toLowerCase() || '';
+            const tbody = document.getElementById('project-overview-table');
+            tbody.innerHTML = '';
+            let filteredProjects = state.projectOverview;
+            if (state.currentUser.role === 'QA Member') {
+                filteredProjects = filteredProjects.filter(p => p.qaId === state.currentUser.id);
+            }
+            filteredProjects = filteredProjects.filter(p =>
+                p.projectName.toLowerCase().includes(search) ||
+                p.projectType.toLowerCase().includes(search) ||
+                p.status.toLowerCase().includes(search)
+            );
+            filteredProjects.forEach(project => {
+                const qa = state.users.find(u => u.id === project.qaId);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${project.projectName}</td>
+                    <td>${qa ? qa.name : 'Unassigned'}</td>
+                    <td>${project.projectType}</td>
+                    <td>
+                        <select onchange="updatePhase('${project.id}', this.value)">
+                            ${state.testingPhases.map(phase => `
+                                <option value="${phase}" ${project.currentPhase === phase ? 'selected' : ''}>${phase}</option>
+                            `).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <select onchange="updateKT('${project.id}', this.value)">
+                            <option value="Yes" ${project.ktReceived === 'Yes' ? 'selected' : ''}>Yes</option>
+                            <option value="No" ${project.ktReceived === 'No' ? 'selected' : ''}>No</option>
+                        </select>
+                    </td>
+                    <td>${project.startDate}</td>
+                    <td>${project.endDate || 'N/A'}</td>
+                    <td>${project.status}</td>
+                    <td>
+                        ${project.tlApproval === 'Pending' && state.currentUser.role !== 'Admin' ? `
+                            <button class="btn-primary" onclick="submitForTLApproval('${project.id}')">Submit for Approval</button>
+                        ` : project.tlApproval}
+                    </td>
+                    <td>
+                        ${project.tlApproval === 'Awaiting Approval' && (state.currentUser.role === 'Team Lead' || state.currentUser.role === 'Admin') ? `
+                            <select onchange="updateApproval('${project.id}', this.value)">
+                                <option value="No" ${project.approvedForLive === 'No' ? 'selected' : ''}>No</option>
+                                <option value="Yes">Yes</option>
+                                <option value="Rejected">Reject</option>
+                            </select>
+                        ` : project.approvedForLive}
+                    </td>
+                    <td>
+                        ${state.currentUser.role !== 'QA Member' ? `
+                            <button class="btn-primary" onclick="showProjectForm('${project.projectId}')">Edit</button>
+                            <button class="btn-danger" onclick="deleteProject('${project.projectId}', '${project.id}')">Delete</button>
+                        ` : ''}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function deleteProject(projectId, projectOverviewId) {
+            try {
+                await deleteDoc(doc(db, 'projects', projectId));
+                await deleteDoc(doc(db, 'projectOverview', projectOverviewId));
+                await addDoc(collection(db, 'activityLog'), {
+                    action: `Deleted project: ${projectId}`,
+                    user: state.currentUser.name,
+                    timestamp: Date.now()
+                });
+                showNotification('Project deleted successfully');
+            } catch (error) {
+                console.error('Error deleting project:', error);
+                showNotification('Failed to delete project', null, true);
+            }
+        }
+
         function renderApprovedProjects() {
             const tbody = document.getElementById('approved-projects-table');
             tbody.innerHTML = '';
             let filteredProjects = state.approvedProjects;
-            if (state.currentUser.role !== 'Admin') {
-                filteredProjects = filteredProjects.filter(ap => ap.qaId === state.currentUser.id);
+            if (state.currentUser.role === 'QA Member') {
+                filteredProjects = filteredProjects.filter(p => p.qaId === state.currentUser.id);
             }
-            filteredProjects.forEach(ap => {
+            filteredProjects.forEach(project => {
+                const qa = state.users.find(u => u.id === project.qaId);
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${ap.projectName}</td>
-                    <td>${state.users.find(u => u.id === ap.qaId)?.name || 'Unassigned'}</td>
-                    <td>${ap.projectType}</td>
-                    <td>${ap.currentPhase}</td>
-                    <td>${ap.ktReceived}</td>
-                    <td>${ap.startDate}</td>
-                    <td>${ap.endDate || 'N/A'}</td>
-                    <td>${ap.status}</td>
-                    <td>${ap.approvedDate}</td>
+                    <td>${project.projectName}</td>
+                    <td>${qa ? qa.name : 'Unassigned'}</td>
+                    <td>${project.projectType}</td>
+                    <td>${project.currentPhase}</td>
+                    <td>${project.ktReceived}</td>
+                    <td>${project.startDate}</td>
+                    <td>${project.endDate || 'N/A'}</td>
+                    <td>${project.status}</td>
+                    <td>${project.approvedDate}</td>
                 `;
                 tbody.appendChild(row);
             });
@@ -1892,108 +1864,31 @@
             const tbody = document.getElementById('rejected-projects-table');
             tbody.innerHTML = '';
             let filteredProjects = state.rejectedProjects;
-            if (state.currentUser.role !== 'Admin') {
-                filteredProjects = filteredProjects.filter(rp => rp.qaId === state.currentUser.id);
+            if (state.currentUser.role === 'QA Member') {
+                filteredProjects = filteredProjects.filter(p => p.qaId === state.currentUser.id);
             }
-            filteredProjects.forEach(rp => {
+            filteredProjects.forEach(project => {
+                const qa = state.users.find(u => u.id === project.qaId);
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${rp.projectName}</td>
-                    <td>${state.users.find(u => u.id === rp.qaId)?.name || 'Unassigned'}</td>
-                    <td>${rp.projectType}</td>
-                    <td>${rp.currentPhase}</td>
-                    <td>${rp.ktReceived}</td>
-                    <td>${rp.startDate}</td>
-                    <td>${rp.endDate || 'N/A'}</td>
-                    <td>${rp.status}</td>
-                    <td>${rp.rejectionDate}</td>
-                    <td>${rp.rejectionReason}</td>
-                    <td>${rp.rejectedBy}</td>
+                    <td>${project.projectName}</td>
+                    <td>${qa ? qa.name : 'Unassigned'}</td>
+                    <td>${project.projectType}</td>
+                    <td>${project.currentPhase}</td>
+                    <td>${project.ktReceived}</td>
+                    <td>${project.startDate}</td>
+                    <td>${project.endDate || 'N/A'}</td>
+                    <td>${project.status}</td>
+                    <td>${project.rejectionDate}</td>
+                    <td>${project.rejectionReason}</td>
+                    <td>${project.rejectedBy}</td>
                 `;
                 tbody.appendChild(row);
             });
         }
 
-        function sendEmail(projectId) {
-            const projectEntry = state.projects.find(p => p.id === projectId);
-            if (!projectEntry) return;
-            const projectOverview = state.projectOverview.find(po => po.projectId === projectId);
-            const qaName = state.users.find(u => u.id === projectOverview?.qaId)?.name || 'Unassigned';
-            const content = `
-                <form id="email-form">
-                    <div class="form-group">
-                        <label for="email-to" class="required">To</label>
-                        <input type="email" id="email-to" value="" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="email-subject" class="required">Subject</label>
-                        <input type="text" id="email-subject" value="Project ${projectEntry.name} Approved for Live" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="email-body" class="required">Body</label>
-                        <textarea id="email-body" required>Hello,\n\nThe project "${projectEntry.name}" (Type: ${projectEntry.projectType}) has been approved for live deployment.\n\nQA: ${qaName}\nPhase: ${projectOverview?.currentPhase}\nApproval Date: ${new Date().toLocaleDateString()}\n\nRegards,\n${state.currentUser.name}</textarea>
-                    </div>
-                    <button type="submit" class="btn-primary">Send Email</button>
-                </form>
-            `;
-            document.getElementById('email-modal').style.display = 'flex';
-            document.getElementById('modal-body').innerHTML = content;
-            document.getElementById('email-form').onsubmit = async (e) => {
-                e.preventDefault();
-                const to = document.getElementById('email-to').value.trim();
-                const subject = document.getElementById('email-subject').value.trim();
-                const body = document.getElementById('email-body').value.trim();
-                if (!to || !subject || !body) {
-                    showNotification('All fields are required', null, true);
-                    return;
-                }
-                try {
-                    await addDoc(collection(db, 'activityLog'), {
-                        action: `Sent email for project: ${projectEntry.name}`,
-                        user: state.currentUser.name,
-                        timestamp: Date.now()
-                    });
-                    showNotification('Email draft prepared (Note: Actual email sending requires backend integration)');
-                    closeModal();
-                    window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                } catch (error) {
-                    console.error('Error preparing email:', error);
-                    showNotification('Failed to prepare email', null, true);
-                }
-            };
-        }
-
-        function renderProjectTypes() {
-            const categoriesList = document.getElementById('project-types-list');
-            categoriesList.innerHTML = state.projectTypes.map(type => `
-                <div class="category-item">
-                    <span>${type.name}</span>
-                    <div>
-                        <button class="btn-primary" onclick="editCategory('${type.id}')">Edit</button>
-                        <button class="btn-danger" onclick="deleteCategory('${type.id}')">Delete</button>
-                    </div>
-                </div>
-                <div class="subcategory-list">
-                    ${type.subcategories.map(sub => `
-                        <div class="subcategory-item">
-                            <span>${sub}</span>
-                            <button class="btn-danger" onclick="deleteSubcategory('${type.id}', '${sub}')">Delete</button>
-                        </div>
-                    `).join('')}
-                </div>
-            `).join('') || '<p>No categories yet—click "Add Category" to start!</p>';
-
-            const phasesList = document.getElementById('testing-phases-list');
-            phasesList.innerHTML = state.testingPhases.map(phase => `
-                <div class="list-item">
-                    <span>${phase}</span>
-                    <button class="btn-danger" onclick="deletePhase('${phase}')">Delete</button>
-                </div>
-            `).join('') || '<p>No testing phases yet—click "Add Testing Phase" to start!</p>';
-        }
-
         function showCategoryForm(categoryId = null) {
-            const category = categoryId ? state.projectTypes.find(t => t.id === categoryId) : null;
+            const category = categoryId ? state.projectTypes.find(c => c.id === categoryId) : null;
             const content = `
                 <form id="category-form">
                     <div class="form-group">
@@ -2001,8 +1896,8 @@
                         <input type="text" id="category-name" value="${category ? category.name : ''}" required>
                     </div>
                     <div class="form-group">
-                        <label for="subcategory-name">Subcategory (optional, comma-separated)</label>
-                        <input type="text" id="subcategory-name" value="${category ? category.subcategories.join(', ') : ''}" placeholder="e.g., Web, Mobile">
+                        <label for="subcategories">Subcategories (comma-separated)</label>
+                        <input type="text" id="subcategories" value="${category ? category.subcategories.join(', ') : ''}">
                     </div>
                     <button type="submit" class="btn-primary">${category ? 'Update' : 'Add'} Category</button>
                 </form>
@@ -2010,69 +1905,117 @@
             showModal(`${category ? 'Edit' : 'Add'} Category`, content);
             document.getElementById('category-form').onsubmit = async (e) => {
                 e.preventDefault();
-                if (category) await updateCategory(categoryId);
-                else await addCategory();
+                const name = document.getElementById('category-name').value.trim();
+                const subcategories = document.getElementById('subcategories').value.split(',').map(s => s.trim()).filter(s => s);
+                if (!name) {
+                    showNotification('Category name is required', null, true);
+                    return;
+                }
+                try {
+                    if (category) {
+                        await updateDoc(doc(db, 'projectTypes', categoryId), { name, subcategories });
+                        await addDoc(collection(db, 'activityLog'), {
+                            action: `Updated category: ${name}`,
+                            user: state.currentUser.name,
+                            timestamp: Date.now()
+                        });
+                    } else {
+                        await addDoc(collection(db, 'projectTypes'), { name, subcategories });
+                        await addDoc(collection(db, 'activityLog'), {
+                            action: `Added category: ${name}`,
+                            user: state.currentUser.name,
+                            timestamp: Date.now()
+                        });
+                    }
+                    closeModal();
+                    showNotification('Category saved successfully');
+                } catch (error) {
+                    console.error('Error saving category:', error);
+                    showNotification('Failed to save category', null, true);
+                }
             };
         }
 
-        async function addCategory() {
-            const name = document.getElementById('category-name').value.trim();
-            const subcategoriesInput = document.getElementById('subcategory-name').value.trim();
-            const subcategories = subcategoriesInput ? subcategoriesInput.split(',').map(s => s.trim()).filter(s => s) : [];
-            if (!name) {
-                showNotification('Category name is required', null, true);
-                return;
-            }
-            try {
-                await addDoc(collection(db, 'projectTypes'), { name, subcategories });
-                await addDoc(collection(db, 'activityLog'), {
-                    action: `Added category: ${name}`,
-                    user: state.currentUser.name,
-                    timestamp: Date.now()
-                });
-                closeModal();
-                showNotification('Category added successfully');
-            } catch (error) {
-                console.error('Error adding category:', error);
-                showNotification('Failed to add category', null, true);
-            }
+        function showPhaseForm(phase = null) {
+            const content = `
+                <form id="phase-form">
+                    <div class="form-group">
+                        <label for="phase-name" class="required">Phase Name</label>
+                        <input type="text" id="phase-name" value="${phase || ''}" required>
+                    </div>
+                    <button type="submit" class="btn-primary">${phase ? 'Update' : 'Add'} Phase</button>
+                </form>
+            `;
+            showModal(`${phase ? 'Edit' : 'Add'} Testing Phase`, content);
+            document.getElementById('phase-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('phase-name').value.trim();
+                if (!name) {
+                    showNotification('Phase name is required', null, true);
+                    return;
+                }
+                try {
+                    if (phase) {
+                        const phaseDoc = state.testingPhases.find(p => p === phase);
+                        await updateDoc(doc(db, 'testingPhases', phaseDoc.id), { name });
+                        await addDoc(collection(db, 'activityLog'), {
+                            action: `Updated testing phase: ${name}`,
+                            user: state.currentUser.name,
+                            timestamp: Date.now()
+                        });
+                    } else {
+                        await addDoc(collection(db, 'testingPhases'), { name });
+                        await addDoc(collection(db, 'activityLog'), {
+                            action: `Added testing phase: ${name}`,
+                            user: state.currentUser.name,
+                            timestamp: Date.now()
+                        });
+                    }
+                    closeModal();
+                    showNotification('Testing phase saved successfully');
+                } catch (error) {
+                    console.error('Error saving testing phase:', error);
+                    showNotification('Failed to save testing phase', null, true);
+                }
+            };
         }
 
-        async function updateCategory(categoryId) {
-            const category = state.projectTypes.find(t => t.id === categoryId);
-            if (!category) return;
-            category.name = document.getElementById('category-name').value.trim();
-            const subcategoriesInput = document.getElementById('subcategory-name').value.trim();
-            category.subcategories = subcategoriesInput ? subcategoriesInput.split(',').map(s => s.trim()).filter(s => s) : [];
-            if (!category.name) {
-                showNotification('Category name is required', null, true);
-                return;
-            }
-            try {
-                await updateDoc(doc(db, 'projectTypes', categoryId), category);
-                await addDoc(collection(db, 'activityLog'), {
-                    action: `Updated category: ${category.name}`,
-                    user: state.currentUser.name,
-                    timestamp: Date.now()
-                });
-                closeModal();
-                showNotification('Category updated successfully');
-            } catch (error) {
-                console.error('Error updating category:', error);
-                showNotification('Failed to update category', null, true);
-            }
-        }
+        function renderProjectTypes() {
+            const typesList = document.getElementById('project-types-list');
+            typesList.innerHTML = state.projectTypes.map(category => `
+                <div class="category-item">
+                    <span>${category.name}</span>
+                    <div>
+                        <button class="btn-primary" onclick="showCategoryForm('${category.id}')">Edit</button>
+                        <button class="btn-danger" onclick="deleteCategory('${category.id}')">Delete</button>
+                    </div>
+                </div>
+                <div class="subcategory-list">
+                    ${category.subcategories.map(sub => `
+                        <div class="subcategory-item">
+                            <span>${sub}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
 
-        function editCategory(categoryId) {
-            showCategoryForm(categoryId);
+            const phasesList = document.getElementById('testing-phases-list');
+            phasesList.innerHTML = state.testingPhases.map(phase => `
+                <div class="list-item">
+                    <span>${phase}</span>
+                    <div>
+                        <button class="btn-primary" onclick="showPhaseForm('${phase}')">Edit</button>
+                        <button class="btn-danger" onclick="deletePhase('${phase}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
         async function deleteCategory(categoryId) {
             try {
-                const category = state.projectTypes.find(t => t.id === categoryId);
                 await deleteDoc(doc(db, 'projectTypes', categoryId));
                 await addDoc(collection(db, 'activityLog'), {
-                    action: `Deleted category: ${category.name}`,
+                    action: `Deleted category: ${categoryId}`,
                     user: state.currentUser.name,
                     timestamp: Date.now()
                 });
@@ -2083,69 +2026,9 @@
             }
         }
 
-        async function deleteSubcategory(categoryId, subcategory) {
-            const category = state.projectTypes.find(t => t.id === categoryId);
-            if (!category) return;
-            category.subcategories = category.subcategories.filter(s => s !== subcategory);
-            try {
-                await updateDoc(doc(db, 'projectTypes', categoryId), { subcategories: category.subcategories });
-                await addDoc(collection(db, 'activityLog'), {
-                    action: `Deleted subcategory "${subcategory}" from ${category.name}`,
-                    user: state.currentUser.name,
-                    timestamp: Date.now()
-                });
-                showNotification('Subcategory deleted successfully');
-            } catch (error) {
-                console.error('Error deleting subcategory:', error);
-                showNotification('Failed to delete subcategory', null, true);
-            }
-        }
-
-        function showPhaseForm() {
-            const content = `
-                <form id="phase-form">
-                    <div class="form-group">
-                        <label for="phase-name" class="required">Testing Phase Name</label>
-                        <input type="text" id="phase-name" required>
-                    </div>
-                    <button type="submit" class="btn-primary">Add Phase</button>
-                </form>
-            `;
-            showModal('Add Testing Phase', content);
-            document.getElementById('phase-form').onsubmit = async (e) => {
-                e.preventDefault();
-                await addPhase();
-            };
-        }
-
-        async function addPhase() {
-            const name = document.getElementById('phase-name').value.trim();
-            if (!name) {
-                showNotification('Phase name is required', null, true);
-                return;
-            }
-            if (state.testingPhases.includes(name)) {
-                showNotification('This phase already exists', null, true);
-                return;
-            }
-            try {
-                await addDoc(collection(db, 'testingPhases'), { name });
-                await addDoc(collection(db, 'activityLog'), {
-                    action: `Added testing phase: ${name}`,
-                    user: state.currentUser.name,
-                    timestamp: Date.now()
-                });
-                closeModal();
-                showNotification('Testing phase added successfully');
-            } catch (error) {
-                console.error('Error adding phase:', error);
-                showNotification('Failed to add phase', null, true);
-            }
-        }
-
         async function deletePhase(phase) {
             try {
-                const phaseDoc = (await getDocs(query(collection(db, 'testingPhases'), where('name', '==', phase)))).docs[0];
+                const phaseDoc = state.testingPhases.find(p => p === phase);
                 await deleteDoc(doc(db, 'testingPhases', phaseDoc.id));
                 await addDoc(collection(db, 'activityLog'), {
                     action: `Deleted testing phase: ${phase}`,
@@ -2154,61 +2037,67 @@
                 });
                 showNotification('Testing phase deleted successfully');
             } catch (error) {
-                console.error('Error deleting phase:', error);
-                showNotification('Failed to delete phase', null, true);
+                console.error('Error deleting testing phase:', error);
+                showNotification('Failed to delete testing phase', null, true);
             }
         }
 
         function renderReports() {
-            const tbody = document.querySelector('#reports-list tbody');
-            tbody.innerHTML = '';
             const dateFilter = document.getElementById('report-filter-date').value;
             const qaFilter = document.getElementById('report-filter-qa').value;
             const projectFilter = document.getElementById('report-filter-project').value;
             const typeFilter = document.getElementById('report-filter-type').value;
-            let filteredProjects = state.projectOverview;
-            if (dateFilter) filteredProjects = filteredProjects.filter(p => p.startDate === dateFilter);
-            if (qaFilter) filteredProjects = filteredProjects.filter(p => p.qaId === qaFilter);
-            if (projectFilter) filteredProjects = filteredProjects.filter(p => p.projectId === projectFilter);
-            if (typeFilter) filteredProjects = filteredProjects.filter(p => p.projectType === typeFilter);
-            filteredProjects.forEach(p => {
+
+            const qaSelect = document.getElementById('report-filter-qa');
+            qaSelect.innerHTML = `<option value="">All QAs</option>` + state.users.filter(u => u.role === 'QA Member').map(user => `
+                <option value="${user.id}" ${qaFilter === user.id ? 'selected' : ''}>${user.name}</option>
+            `).join('');
+
+            const projectSelect = document.getElementById('report-filter-project');
+            projectSelect.innerHTML = `<option value="">All Projects</option>` + state.projectOverview.map(project => `
+                <option value="${project.id}" ${projectFilter === project.id ? 'selected' : ''}>${project.projectName}</option>
+            `).join('');
+
+            const typeSelect = document.getElementById('report-filter-type');
+            typeSelect.innerHTML = `<option value="">All Types</option>` + [...new Set(state.projectTypes.flatMap(t => t.subcategories))].map(type => `
+                <option value="${type}" ${typeFilter === type ? 'selected' : ''}>${type}</option>
+            `).join('');
+
+            const tbody = document.querySelector('#reports-list tbody');
+            tbody.innerHTML = '';
+            let filteredReports = state.projectOverview;
+            if (dateFilter) {
+                filteredReports = filteredReports.filter(r => r.startDate <= dateFilter && (!r.endDate || r.endDate >= dateFilter));
+            }
+            if (qaFilter) {
+                filteredReports = filteredReports.filter(r => r.qaId === qaFilter);
+            }
+            if (projectFilter) {
+                filteredReports = filteredReports.filter(r => r.id === projectFilter);
+            }
+            if (typeFilter) {
+                filteredReports = filteredReports.filter(r => r.projectType === typeFilter);
+            }
+            filteredReports.forEach(report => {
+                const qa = state.users.find(u => u.id === report.qaId);
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${p.projectName}</td>
-                    <td>${state.users.find(u => u.id === p.qaId)?.name || 'Unassigned'}</td>
-                    <td>${p.projectType}</td>
-                    <td>${p.currentPhase}</td>
-                    <td>${p.status}</td>
-                    <td>${p.approvedForLive}</td>
+                    <td>${report.projectName}</td>
+                    <td>${qa ? qa.name : 'Unassigned'}</td>
+                    <td>${report.projectType}</td>
+                    <td>${report.currentPhase}</td>
+                    <td>${report.status}</td>
+                    <td>${report.approvedForLive}</td>
                 `;
                 tbody.appendChild(row);
             });
-            const qaSelect = document.getElementById('report-filter-qa');
-            qaSelect.innerHTML = `<option value="">Filter by QA</option>` + state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
-            const projectSelect = document.getElementById('report-filter-project');
-            projectSelect.innerHTML = `<option value="">Filter by Project</option>` + state.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
         }
 
         function exportReport() {
-            const dateFilter = document.getElementById('report-filter-date').value;
-            const qaFilter = document.getElementById('report-filter-qa').value;
-            const projectFilter = document.getElementById('report-filter-project').value;
-            const typeFilter = document.getElementById('report-filter-type').value;
-            let filteredProjects = state.projectOverview;
-            if (dateFilter) filteredProjects = filteredProjects.filter(p => p.startDate === dateFilter);
-            if (qaFilter) filteredProjects = filteredProjects.filter(p => p.qaId === qaFilter);
-            if (projectFilter) filteredProjects = filteredProjects.filter(p => p.projectId === projectFilter);
-            if (typeFilter) filteredProjects = filteredProjects.filter(p => p.projectType === typeFilter);
+            const filteredReports = Array.from(document.querySelector('#reports-list tbody').children).map(row => Array.from(row.children).map(cell => cell.textContent));
             const csv = [
                 ['Project Name', 'QA', 'Type', 'Phase', 'Status', 'Approved?'],
-                ...filteredProjects.map(p => [
-                    p.projectName,
-                    state.users.find(u => u.id === p.qaId)?.name || 'Unassigned',
-                    p.projectType,
-                    p.currentPhase,
-                    p.status,
-                    p.approvedForLive
-                ])
+                ...filteredReports
             ].map(row => row.join(',')).join('\n');
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
@@ -2222,36 +2111,35 @@
                 user: state.currentUser.name,
                 timestamp: Date.now()
             });
-            showNotification('QA report exported successfully');
+            showNotification('Report exported successfully');
         }
 
         function renderActivityLog() {
-            document.getElementById('activity-log-list').innerHTML = state.activityLog.map(log => `
+            const list = document.getElementById('activity-log-list');
+            list.innerHTML = state.activityLog.map(log => `
                 <div class="list-item">
-                    <span>${new Date(log.timestamp).toLocaleString()} - ${log.user}: ${log.action}</span>
+                    <span>${new Date(log.timestamp).toLocaleString()} - ${log.user} ${log.action}</span>
                 </div>
-            `).join('') || '<p>No activity yet.</p>';
+            `).join('');
         }
 
         function renderProfile() {
             document.getElementById('profile-name').value = state.currentUser.name;
             document.getElementById('profile-email').value = state.currentUser.email;
-            document.getElementById('profile-password').value = '';
         }
 
         async function updateProfile() {
             const name = document.getElementById('profile-name').value.trim();
             const email = document.getElementById('profile-email').value.trim();
-            const password = document.getElementById('profile-password').value;
+            const password = document.getElementById('profile-password').value.trim();
             if (!name || !email) {
                 showNotification('Name and email are required', null, true);
                 return;
             }
             try {
-                const userDoc = doc(db, 'users', state.currentUser.id);
-                await updateDoc(userDoc, { name, email });
+                await updateDoc(doc(db, 'users', state.currentUser.id), { name, email });
                 if (password) {
-                    await auth.currentUser.updatePassword(password);
+                    await updatePassword(auth.currentUser, password);
                 }
                 state.currentUser.name = name;
                 state.currentUser.email = email;
@@ -2268,18 +2156,6 @@
             }
         }
 
-        function renderUsers() {
-            document.getElementById('users-list').innerHTML = state.users.map(u => `
-                <div class="list-item">
-                    <span>${u.name} (${u.email}) - ${u.role}</span>
-                    <div>
-                        <button class="btn-primary" onclick="editUser('${u.id}')">Edit</button>
-                        <button class="btn-danger" onclick="deleteUser('${u.id}')">Delete</button>
-                    </div>
-                </div>
-            `).join('') || '<p>No users yet—click "Add User" to start!</p>';
-        }
-
         function showUserForm(userId = null) {
             const user = userId ? state.users.find(u => u.id === userId) : null;
             const content = `
@@ -2293,8 +2169,8 @@
                         <input type="email" id="user-email" value="${user ? user.email : ''}" required>
                     </div>
                     <div class="form-group">
-                        <label for="user-password" class="${user ? '' : 'required'}">Password</label>
-                        <input type="password" id="user-password" ${user ? '' : 'required'} placeholder="${user ? 'Leave blank to keep current' : ''}">
+                        <label for="user-password" class="required">Password</label>
+                        <input type="password" id="user-password" placeholder="${user ? 'Leave blank to keep current' : 'Enter password'}" ${user ? '' : 'required'}>
                     </div>
                     <div class="form-group">
                         <label for="user-role" class="required">Role</label>
@@ -2310,76 +2186,72 @@
             showModal(`${user ? 'Edit' : 'Add'} User`, content);
             document.getElementById('user-form').onsubmit = async (e) => {
                 e.preventDefault();
-                if (user) await updateUser(userId);
-                else await addUser();
+                const name = document.getElementById('user-name').value.trim();
+                const email = document.getElementById('user-email').value.trim();
+                const password = document.getElementById('user-password').value.trim();
+                const role = document.getElementById('user-role').value;
+                if (!name || !email || !role || (!user && !password)) {
+                    showNotification('All fields are required for new users', null, true);
+                    return;
+                }
+                try {
+                    if (user) {
+                        if (password) {
+                            const userCredential = await signInWithEmailAndPassword(auth, user.email, prompt('Please enter current password to update user:'));
+                            await updatePassword(userCredential.user, password);
+                        }
+                        await updateDoc(doc(db, 'users', userId), { name, email, role });
+                        await addDoc(collection(db, 'activityLog'), {
+                            action: `Updated user: ${name}`,
+                            user: state.currentUser.name,
+                            timestamp: Date.now()
+                        });
+                    } else {
+                        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                        await addDoc(collection(db, 'users'), {
+                            id: userCredential.user.uid,
+                            name,
+                            email,
+                            role
+                        });
+                        await addDoc(collection(db, 'activityLog'), {
+                            action: `Added user: ${name}`,
+                            user: state.currentUser.name,
+                            timestamp: Date.now()
+                        });
+                    }
+                    closeModal();
+                    showNotification('User saved successfully');
+                } catch (error) {
+                    console.error('Error saving user:', error);
+                    showNotification('Failed to save user: ' + error.message, null, true);
+                }
             };
         }
 
-        async function addUser() {
-            const name = document.getElementById('user-name').value.trim();
-            const email = document.getElementById('user-email').value.trim();
-            const password = document.getElementById('user-password').value;
-            const role = document.getElementById('user-role').value;
-            if (!name || !email || !password || !role) {
-                showNotification('All fields are required', null, true);
-                return;
-            }
-            try {
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const userId = userCredential.user.uid;
-                await addDoc(collection(db, 'users'), { id: userId, name, email, role });
-                await addDoc(collection(db, 'activityLog'), {
-                    action: `Added user: ${name}`,
-                    user: state.currentUser.name,
-                    timestamp: Date.now()
-                });
-                closeModal();
-                showNotification('User added successfully');
-            } catch (error) {
-                console.error('Error adding user:', error);
-                showNotification('Failed to add user: ' + error.message, null, true);
-            }
-        }
-
-        async function updateUser(userId) {
-            const user = state.users.find(u => u.id === userId);
-            if (!user) return;
-            const name = document.getElementById('user-name').value.trim();
-            const email = document.getElementById('user-email').value.trim();
-            const password = document.getElementById('user-password').value;
-            const role = document.getElementById('user-role').value;
-            if (!name || !email || !role) {
-                showNotification('Name, email, and role are required', null, true);
-                return;
-            }
-            try {
-                await updateDoc(doc(db, 'users', userId), { name, email, role });
-                if (password) {
-                    const userCredential = await signInWithEmailAndPassword(auth, user.email, prompt('Enter current password to update:'));
-                    await userCredential.user.updatePassword(password);
-                }
-                await addDoc(collection(db, 'activityLog'), {
-                    action: `Updated user: ${name}`,
-                    user: state.currentUser.name,
-                    timestamp: Date.now()
-                });
-                closeModal();
-                showNotification('User updated successfully');
-            } catch (error) {
-                console.error('Error updating user:', error);
-                showNotification('Failed to update user', null, true);
-            }
-        }
-
-        function editUser(userId) {
-            showUserForm(userId);
+        function renderUsers() {
+            const list = document.getElementById('users-list');
+            list.innerHTML = state.users.map(user => `
+                <div class="list-item">
+                    <span>${user.name} (${user.email}) - ${user.role}</span>
+                    <div>
+                        <button class="btn-primary" onclick="showUserForm('${user.id}')">Edit</button>
+                        <button class="btn-danger" onclick="deleteUser('${user.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
         async function deleteUser(userId) {
+            if (userId === state.currentUser.id) {
+                showNotification('You cannot delete yourself', null, true);
+                return;
+            }
             try {
                 await deleteDoc(doc(db, 'users', userId));
+                // Note: You would typically also delete the user from Firebase Authentication, but this requires a backend function.
                 await addDoc(collection(db, 'activityLog'), {
-                    action: `Deleted user: ${state.users.find(u => u.id === userId)?.name}`,
+                    action: `Deleted user: ${userId}`,
                     user: state.currentUser.name,
                     timestamp: Date.now()
                 });
@@ -2391,50 +2263,64 @@
         }
 
         function renderAssignRoles() {
-            document.getElementById('roles-list').innerHTML = state.projectOverview.map(po => `
+            const list = document.getElementById('roles-list');
+            list.innerHTML = state.users.map(user => `
                 <div class="list-item">
-                    <span>${po.projectName} - Assigned QA: ${state.users.find(u => u.id === po.qaId)?.name || 'Unassigned'}</span>
-                    <select onchange="assignQA('${po.id}', this.value)">
-                        <option value="">Unassign</option>
-                        ${state.users.filter(u => u.role === 'QA Member').map(u => `
-                            <option value="${u.id}" ${po.qaId === u.id ? 'selected' : ''}>${u.name}</option>
-                        `).join('')}
+                    <span>${user.name} (${user.email})</span>
+                    <select onchange="updateRole('${user.id}', this.value)">
+                        <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option>
+                        <option value="Team Lead" ${user.role === 'Team Lead' ? 'selected' : ''}>Team Lead</option>
+                        <option value="QA Member" ${user.role === 'QA Member' ? 'selected' : ''}>QA Member</option>
                     </select>
                 </div>
-            `).join('') || '<p>No projects available for role assignment.</p>';
+            `).join('');
         }
 
-        async function assignQA(projectOverviewId, qaId) {
-            const projectEntry = state.projectOverview.find(po => po.id === projectOverviewId);
-            if (!projectEntry) return;
+        async function updateRole(userId, role) {
+            if (userId === state.currentUser.id && role !== state.currentUser.role) {
+                showNotification('You cannot change your own role', null, true);
+                return;
+            }
             try {
-                await updateDoc(doc(db, 'projectOverview', projectOverviewId), { qaId: qaId || null });
+                await updateDoc(doc(db, 'users', userId), { role });
                 await addDoc(collection(db, 'activityLog'), {
-                    action: `Assigned QA ${state.users.find(u => u.id === qaId)?.name || 'Unassigned'} to ${projectEntry.projectName}`,
+                    action: `Updated role of user ${userId} to ${role}`,
                     user: state.currentUser.name,
                     timestamp: Date.now()
                 });
-                showNotification('QA assigned successfully');
+                showNotification('Role updated successfully');
             } catch (error) {
-                console.error('Error assigning QA:', error);
-                showNotification('Failed to assign QA', null, true);
+                console.error('Error updating role:', error);
+                showNotification('Failed to update role', null, true);
             }
+        }
+
+        function calculateDashboardStats() {
+            const stats = {};
+            state.projectTypes.forEach(type => {
+                type.subcategories.forEach(sub => {
+                    stats[sub] = {
+                        projects: state.projectOverview.filter(p => p.projectType === sub).length,
+                        pendingApprovals: state.projectOverview.filter(p => p.projectType === sub && p.tlApproval === 'Awaiting Approval').length,
+                        completedProjects: state.projectOverview.filter(p => p.projectType === sub && p.status === 'Completed').length
+                    };
+                });
+            });
+            return stats;
+        }
+
+        function updateUserAvatar() {
+            document.getElementById('user-name').textContent = state.currentUser.name;
+            document.getElementById('user-avatar').textContent = state.currentUser.name.charAt(0).toUpperCase();
         }
 
         function toggleSidebar() {
             document.querySelector('.sidebar').classList.toggle('collapsed');
         }
 
-        function updateUserAvatar() {
-            const avatar = document.getElementById('user-avatar');
-            const name = state.currentUser?.name || '';
-            avatar.textContent = name.split(' ').map(w => w[0]).join('').toUpperCase();
-            document.getElementById('user-name').textContent = name;
-        }
-
         async function logout() {
             try {
-                await signOut(auth);
+                await signOut(window.auth);
                 showNotification('Logged out successfully');
             } catch (error) {
                 console.error('Logout error:', error);
@@ -2442,95 +2328,19 @@
             }
         }
 
-        function filterProjects() {
-            const search = document.getElementById('project-search').value.toLowerCase();
-            const tbody = document.getElementById('project-overview-table');
-            tbody.innerHTML = '';
-            let filteredProjects = state.projectOverview;
-            if (state.currentUser.role !== 'Admin') {
-                filteredProjects = filteredProjects.filter(po => po.qaId === state.currentUser.id);
-            }
-            filteredProjects = filteredProjects.filter(po =>
-                po.projectName.toLowerCase().includes(search) ||
-                po.projectType.toLowerCase().includes(search) ||
-                po.status.toLowerCase().includes(search)
-            );
-            filteredProjects.forEach(po => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${po.projectName}</td>
-                    <td>${state.users.find(u => u.id === po.qaId)?.name || 'Unassigned'}</td>
-                    <td>${po.projectType}</td>
-                    <td>
-                        <select onchange="updatePhase('${po.id}', this.value)">
-                            ${state.testingPhases.map(phase => `<option value="${phase}" ${po.currentPhase === phase ? 'selected' : ''}>${phase}</option>`).join('')}
-                        </select>
-                    </td>
-                    <td>
-                        <select onchange="updateKT('${po.id}', this.value)">
-                            <option value="Yes" ${po.ktReceived === 'Yes' ? 'selected' : ''}>Yes</option>
-                            <option value="No" ${po.ktReceived === 'No' ? 'selected' : ''}>No</option>
-                        </select>
-                    </td>
-                    <td>${po.startDate}</td>
-                    <td>${po.endDate || 'N/A'}</td>
-                    <td>${po.status}</td>
-                    <td>${po.tlApproval === 'Pending' ? `
-                        <button class="btn-primary" onclick="submitForTLApproval('${po.id}')">Submit for TL Approval</button>
-                    ` : po.tlApproval}</td>
-                    <td>${po.tlApproval === 'Approved' && state.currentUser.role === 'Admin' ? `
-                        <select onchange="updateApproval('${po.id}', this.value)">
-                            <option value="Yes" ${po.approvedForLive === 'Yes' ? 'selected' : ''}>Yes</option>
-                            <option value="No" ${po.approvedForLive === 'No' ? 'selected' : ''}>No</option>
-                            <option value="Rejected" ${po.approvedForLive === 'Rejected' ? 'selected' : ''}>Reject</option>
-                        </select>
-                    ` : po.tlApproval === 'Approved' ? po.approvedForLive : 'N/A'}</td>
-                    <td>${po.tlApproval === 'Approved' && state.currentUser.role === 'Admin' ? `
-                        <button class="btn-primary" onclick="sendEmail('${po.projectId}')">Send Email</button>
-                    ` : ''}</td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
         function sortTable(columnIndex) {
             const table = document.querySelector('#project-overview-table').closest('table');
             const tbody = table.querySelector('tbody');
             const rows = Array.from(tbody.querySelectorAll('tr'));
-            const isAscending = !state.sortDirection[columnIndex];
-            state.sortDirection[columnIndex] = isAscending;
+            const direction = state.sortDirection[columnIndex] === 'asc' ? 'desc' : 'asc';
+            state.sortDirection[columnIndex] = direction;
             rows.sort((a, b) => {
                 const aValue = a.cells[columnIndex].textContent.trim();
                 const bValue = b.cells[columnIndex].textContent.trim();
-                return isAscendin
-g ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+                return direction === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
             });
             tbody.innerHTML = '';
             rows.forEach(row => tbody.appendChild(row));
-            table.querySelectorAll('th').forEach((th, i) => {
-                th.textContent = th.textContent.replace(/[↑↓]/g, '');
-                if (i === columnIndex) th.textContent += isAscending ? '↑' : '↓';
-            });
-        }
-
-        function calculateDashboardStats() {
-            const stats = {};
-            state.projectTypes.forEach(type => {
-                stats[type.name] = {
-                    projects: 0,
-                    pendingApprovals: 0,
-                    completedProjects: 0
-                };
-            });
-            state.projectOverview.forEach(po => {
-                const type = state.projectTypes.find(t => t.subcategories.includes(po.projectType))?.name;
-                if (type && stats[type]) {
-                    stats[type].projects++;
-                    if (po.tlApproval === 'Pending') stats[type].pendingApprovals++;
-                    if (po.approvedForLive === 'Yes') stats[type].completedProjects++;
-                }
-            });
-            return stats;
         }
     </script>
 </body>
