@@ -1332,12 +1332,7 @@
         }
 
         function showProjectForm(projectId = null) {
-            if (state.currentUser.role !== 'Admin') {
-                showNotification('Only Admins can create/edit projects', 3000, true);
-                return;
-            }
             const project = projectId ? state.projects.find(p => p.id === projectId) : null;
-            const overview = projectId ? state.projectOverview.find(p => p.projectId === projectId) : null;
             const content = `
                 <form id="project-form">
                     <div class="form-group">
@@ -1345,193 +1340,78 @@
                         <input type="text" id="project-name" value="${project ? project.name : ''}" required>
                     </div>
                     <div class="form-group">
-                        <label for="project-type" class="required">Project Type</label>
-                        <select id="project-type" required>
-                            ${state.projectTypes.map(type => type.subcategories.map(sub => `
-                                <option value="${sub}" ${project && project.type === sub ? 'selected' : ''}>${sub}</option>
-                            `).join('')).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="project-qa" class="required">Assign QA</label>
-                        <select id="project-qa" required>
-                            <option value="">Select QA</option>
-                            ${state.users.filter(u => u.role === 'QA Member').map(user => `
-                                <option value="${user.id}" ${project && project.qaId === user.id ? 'selected' : ''}>${user.name}</option>
+                        <label for="project-category" class="required">Project Category</label>
+                        <select id="project-category" required onchange="populateSubcategories()">
+                            <option value="">Select Category</option>
+                            ${state.projectTypes.map(category => `
+                                <option value="${category.name}" ${project && project.category === category.name ? 'selected' : ''}>${category.name}</option>
                             `).join('')}
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="project-start-date" class="required">Start Date</label>
-                        <input type="date" id="project-start-date" value="${project ? project.startDate : ''}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="project-end-date">End Date</label>
-                        <input type="date" id="project-end-date" value="${project ? project.endDate : ''}">
-                    </div>
-                    <div class="form-group">
-                        <label for="project-status" class="required">Status</label>
-                        <select id="project-status" required>
-                            <option value="Not Started" ${project && project.status === 'Not Started' ? 'selected' : ''}>Not Started</option>
-                            <option value="In Progress" ${project && project.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
-                            <option value="Completed" ${project && project.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                        <label for="project-subcategory" class="required">Project Subcategory</label>
+                        <select id="project-subcategory" required>
+                            <option value="">Select Subcategory</option>
+                            ${project ? state.projectTypes.find(c => c.name === project.category)?.subcategories.map(sub => `
+                                <option value="${sub}" ${project.subcategory === sub ? 'selected' : ''}>${sub}</option>
+                            `).join('') : ''}
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="total-bugs">Total Bugs</label>
-                        <input type="number" id="total-bugs" value="${overview ? overview.totalBugs || 0 : 0}" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="html-bugs">HTML Bugs</label>
-                        <input type="number" id="html-bugs" value="${overview ? overview.htmlBugs || 0 : 0}" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="p0-html-bugs">P0 HTML Bugs</label>
-                        <input type="number" id="p0-html-bugs" value="${overview ? overview.p0HtmlBugs || 0 : 0}" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="p1-html-bugs">P1 HTML Bugs</label>
-                        <input type="number" id="p1-html-bugs" value="${overview ? overview.p1HtmlBugs || 0 : 0}" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="p2-html-bugs">P2 HTML Bugs</label>
-                        <input type="number" id="p2-html-bugs" value="${overview ? overview.p2HtmlBugs || 0 : 0}" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="p3-html-bugs">P3 HTML Bugs</label>
-                        <input type="number" id="p3-html-bugs" value="${overview ? overview.p3HtmlBugs || 0 : 0}" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="p4-html-bugs">P4 HTML Bugs</label>
-                        <input type="number" id="p4-html-bugs" value="${overview ? overview.p4HtmlBugs || 0 : 0}" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="functional-bugs">Functional Bugs</label>
-                        <input type="number" id="functional-bugs" value="${overview ? overview.functionalBugs || 0 : 0}" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="p0-functional-bugs">P0 Functional Bugs</label>
-                        <input type="number" id="p0-functional-bugs" value="${overview ? overview.p0FunctionalBugs || 0 : 0}" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="p1-functional-bugs">P1 Functional Bugs</label>
-                        <input type="number" id="p1-functional-bugs" value="${overview ? overview.p1FunctionalBugs || 0 : 0}" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="p2-functional-bugs">P2 Functional Bugs</label>
-                        <input type="number" id="p2-functional-bugs" value="${overview ? overview.p2FunctionalBugs || 0 : 0}" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="p3-functional-bugs">P3 Functional Bugs</label>
-                        <input type="number" id="p3-functional-bugs" value="${overview ? overview.p3FunctionalBugs || 0 : 0}" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="p4-functional-bugs">P4 Functional Bugs</label>
-                        <input type="number" id="p4-functional-bugs" value="${overview ? overview.p4FunctionalBugs || 0 : 0}" min="0">
+                        <label for="project-link" class="required">GitLab/Bugtracker Link</label>
+                        <input type="url" id="project-link" value="${project ? project.link : ''}" required>
                     </div>
                     <button type="submit" class="btn-primary">${project ? 'Update' : 'Create'} Project</button>
                 </form>
             `;
             showModal(`${project ? 'Edit' : 'Create'} Project`, content);
+
             document.getElementById('project-form').onsubmit = (e) => {
                 e.preventDefault();
                 const name = document.getElementById('project-name').value.trim();
-                const type = document.getElementById('project-type').value;
-                const qaId = document.getElementById('project-qa').value;
-                const startDate = document.getElementById('project-start-date').value;
-                const endDate = document.getElementById('project-end-date').value;
-                const status = document.getElementById('project-status').value;
-                const totalBugs = parseInt(document.getElementById('total-bugs').value) || 0;
-                const htmlBugs = parseInt(document.getElementById('html-bugs').value) || 0;
-                const p0HtmlBugs = parseInt(document.getElementById('p0-html-bugs').value) || 0;
-                const p1HtmlBugs = parseInt(document.getElementById('p1-html-bugs').value) || 0;
-                const p2HtmlBugs = parseInt(document.getElementById('p2-html-bugs').value) || 0;
-                const p3HtmlBugs = parseInt(document.getElementById('p3-html-bugs').value) || 0;
-                const p4HtmlBugs = parseInt(document.getElementById('p4-html-bugs').value) || 0;
-                const functionalBugs = parseInt(document.getElementById('functional-bugs').value) || 0;
-                const p0FunctionalBugs = parseInt(document.getElementById('p0-functional-bugs').value) || 0;
-                const p1FunctionalBugs = parseInt(document.getElementById('p1-functional-bugs').value) || 0;
-                const p2FunctionalBugs = parseInt(document.getElementById('p2-functional-bugs').value) || 0;
-                const p3FunctionalBugs = parseInt(document.getElementById('p3-functional-bugs').value) || 0;
-                const p4FunctionalBugs = parseInt(document.getElementById('p4-functional-bugs').value) || 0;
-                if (!name || !type || !qaId || !startDate || !status) {
-                    showNotification('Please fill all required fields', 3000, true);
+                const category = document.getElementById('project-category').value;
+                const subcategory = document.getElementById('project-subcategory').value;
+                const link = document.getElementById('project-link').value.trim();
+
+                if (!name || !category || !subcategory || !link) {
+                    showNotification('All fields are required', 3000, true);
                     return;
                 }
+
                 if (project) {
-                    const projectIndex = state.projects.findIndex(p => p.id === projectId);
-                    state.projects[projectIndex] = { ...project, name, type, qaId, startDate, endDate, status };
-                    const overviewIndex = state.projectOverview.findIndex(p => p.projectId === projectId);
-                    state.projectOverview[overviewIndex] = {
-                        ...state.projectOverview[overviewIndex],
-                        projectName: name,
-                        projectType: type,
-                        qaId,
-                        startDate,
-                        endDate,
-                        status,
-                        totalBugs,
-                        htmlBugs,
-                        p0HtmlBugs,
-                        p1HtmlBugs,
-                        p2HtmlBugs,
-                        p3HtmlBugs,
-                        p4HtmlBugs,
-                        functionalBugs,
-                        p0FunctionalBugs,
-                        p1FunctionalBugs,
-                        p2FunctionalBugs,
-                        p3FunctionalBugs,
-                        p4FunctionalBugs
-                    };
+                    const index = state.projects.findIndex(p => p.id === projectId);
+                    state.projects[index] = { ...project, name, category, subcategory, link };
                     logActivity(`Updated project: ${name}`);
                 } else {
-                    const newId = Date.now().toString();
                     state.projects.push({
-                        id: newId,
+                        id: Date.now().toString(),
                         name,
-                        type,
-                        qaId,
-                        startDate,
-                        endDate,
-                        status,
+                        category,
+                        subcategory,
+                        link,
                         createdBy: state.currentUser.id,
                         createdAt: Date.now()
                     });
-                    state.projectOverview.push({
-                        projectId: newId,
-                        projectName: name,
-                        projectType: type,
-                        qaId,
-                        startDate,
-                        endDate,
-                        status,
-                        currentPhase: 'Not Started',
-                        ktReceived: 'No',
-                        tlApproval: 'Pending',
-                        approvedForLive: 'No',
-                        totalBugs,
-                        htmlBugs,
-                        p0HtmlBugs,
-                        p1HtmlBugs,
-                        p2HtmlBugs,
-                        p3HtmlBugs,
-                        p4HtmlBugs,
-                        functionalBugs,
-                        p0FunctionalBugs,
-                        p1FunctionalBugs,
-                        p2FunctionalBugs,
-                        p3FunctionalBugs,
-                        p4FunctionalBugs
-                    });
                     logActivity(`Created project: ${name}`);
                 }
+
                 saveState('projects', state.projects);
-                saveState('projectOverview', state.projectOverview);
                 closeModal();
                 showNotification('Project saved successfully');
-                filterProjects();
+                renderProjects();
             };
+        }
+
+        function populateSubcategories() {
+            const category = document.getElementById('project-category').value;
+            const subcategoryDropdown = document.getElementById('project-subcategory');
+            subcategoryDropdown.innerHTML = '<option value="">Select Subcategory</option>';
+            const selectedCategory = state.projectTypes.find(c => c.name === category);
+            if (selectedCategory) {
+                subcategoryDropdown.innerHTML += selectedCategory.subcategories.map(sub => `
+                    <option value="${sub}">${sub}</option>
+                `).join('');
+            }
         }
 
         function addNewPhase(projectId) {
