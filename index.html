@@ -387,8 +387,8 @@
 
         .modal-close {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 15px;
+            right: 15px;
             cursor: pointer;
             font-size: 24px;
             color: var(--text-color);
@@ -442,7 +442,7 @@
             font-size: 12px;
             width: 100%;
             background-color: #fff;
-            color: #10698f;
+            color: #333;
         }
 
         input:focus, select:focus, textarea:focus {
@@ -466,7 +466,6 @@
             justify-content: space-between;
             align-items: center;
             font-size: 14px;
-            border: 1px solid var(--secondary-color); /* Added border for each task */
         }
 
         h2 {
@@ -540,7 +539,6 @@
             <div class="sidebar-item" data-tab="profile"><span>👤 Profile</span></div>
             <div class="sidebar-item" data-tab="user-management"><span>👥 User Management</span></div>
             <div class="sidebar-item" data-tab="assign-roles"><span>🔑 Assign Roles</span></div>
-            <div class="sidebar-item" data-tab="testing-phases"><span>🧪 Testing Phases</span></div>
         </div>
         <div class="main-content">
             <div class="header">
@@ -587,7 +585,7 @@
                     </div>
                     <button type="submit" class="btn-primary">Submit Standup</button>
                 </form>
-                <div class="widget" style="margin-top: 25px;">
+                <div class="widget">
                     <h3>Recent Standups (Last 2 Weeks)</h3>
                     <div class="table-container">
                         <table id="standup-table">
@@ -776,11 +774,6 @@
                 <h2>Assign Roles</h2>
                 <div id="roles-list"></div>
             </div>
-            <div id="testing-phases" class="tab-pane">
-                <h2>Testing Phases</h2>
-                <button class="btn-primary" onclick="showPhaseForm()" style="margin-bottom: 25px;">Add Phase</button>
-                <div id="testing-phases-list"></div>
-            </div>
         </div>
     </div>
     <div id="login-modal" class="modal" style="display: flex;">
@@ -847,10 +840,9 @@
         // Initialize predefined users if not already present
         if (!state.users || state.users.length === 0) {
             state.users = [
-                { id: '1', name: 'Admin User', email: 'qaadmin@intersmart.in', password: 'admin123', role: 'Admin' },
-                { id: '2', name: 'Abhiram', email: 'abhiram@intersmart.in', password: 'lead123', role: 'Team Lead' },
-                { id: '3', name: 'Aswathi', email: 'aswathi@intersmart.in', password: 'qa123', role: 'QA Member' },
-                { id: '3', name: 'Minnu', email: 'minnu@intersmart.in', password: 'qa123', role: 'QA Member' }
+                { id: '1', name: 'Admin User', email: 'admin@example.com', password: 'admin123', role: 'Admin' },
+                { id: '2', name: 'Team Lead', email: 'lead@example.com', password: 'lead123', role: 'Team Lead' },
+                { id: '3', name: 'QA Member', email: 'qa@example.com', password: 'qa123', role: 'QA Member' }
             ];
             localStorage.setItem('users', JSON.stringify(state.users));
         }
@@ -873,10 +865,9 @@
         // Add sample login IDs and passwords
         if (!state.users || state.users.length === 0) {
             state.users = [
-            { id: '1', name: 'Admin User', email: 'qaadmin@intersmart.in', password: 'admin123', role: 'Admin' },
-                { id: '2', name: 'Team Lead', email: 'abhiram@intersmart.in', password: 'lead123', role: 'Team Lead' },
-                { id: '3', name: 'Aswathi', email: 'aswathi@intersmart.in', password: 'qa123', role: 'QA Member' },
-                { id: '3', name: 'Minnu', email: 'minnu@intersmart.in', password: 'qa123', role: 'QA Member' }
+                { id: '1', name: 'Admin User', email: 'admin@example.com', password: 'admin123', role: 'Admin' },
+                { id: '2', name: 'Team Lead', email: 'lead@example.com', password: 'lead123', role: 'Team Lead' },
+                { id: '3', name: 'QA Member', email: 'qa@example.com', password: 'qa123', role: 'QA Member' }
             ];
             saveState('users', state.users);
         }
@@ -1026,8 +1017,6 @@
             renderTasks();
             renderStandup();
             renderActivityLog();
-            renderTestingPhases();
-            renderProjects();
         }
 
         function switchTab(tab) {
@@ -1135,12 +1124,9 @@
             const tbody = document.querySelector('#standup-table tbody');
             tbody.innerHTML = '';
             let filteredEntries = state.standupEntries;
-
-            // Allow TL and Admin to see all standups, while members see only their own
-            if (state.currentUser.role === 'QA Member') {
+            if (state.currentUser.role !== 'Admin') {
                 filteredEntries = filteredEntries.filter(entry => entry.userId === state.currentUser.id);
             }
-
             filteredEntries.forEach(entry => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -1209,6 +1195,10 @@
         }
 
         function showTaskForm(taskId = null) {
+            if (state.currentUser.role === 'QA Member' && taskId === null) {
+                showNotification('Only Admins or Team Leads can create tasks', 3000, true);
+                return;
+            }
             const task = taskId ? state.tasks.find(t => t.id === taskId) : null;
             const content = `
                 <form id="task-form">
@@ -1217,30 +1207,14 @@
                         <input type="text" id="task-title" value="${task ? task.title : ''}" required>
                     </div>
                     <div class="form-group">
-                        <label for="task-project" class="required">Project</label>
-                        <select id="task-project" required>
-                            <option value="">Select Project</option>
-                            ${state.projects.map(project => `
-                                <option value="${project.id}" ${task && task.projectId === project.id ? 'selected' : ''}>${project.name}</option>
-                            `).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="task-phase" class="required">Phase</label>
-                        <select id="task-phase" required>
-                            <option value="">Select Phase</option>
-                            <option value="HTML Comparison" ${task && task.phase === 'HTML Comparison' ? 'selected' : ''}>HTML Comparison</option>
-                            <option value="Dev Testing" ${task && task.phase === 'Dev Testing' ? 'selected' : ''}>Dev Testing</option>
-                            <option value="Regression" ${task && task.phase === 'Regression' ? 'selected' : ''}>Regression</option>
-                        </select>
+                        <label for="task-description">Description</label>
+                        <textarea id="task-description">${task ? task.description : ''}</textarea>
                     </div>
                     <div class="form-group">
                         <label for="task-assignee">Assignee</label>
                         <select id="task-assignee">
                             <option value="">Unassigned</option>
-                            ${state.users.map(user => `
-                                <option value="${user.id}" ${task && task.assignee === user.id ? 'selected' : ''}>${user.name}</option>
-                            `).join('')}
+                            ${state.users.map(user => `<option value="${user.id}" ${task && task.assignee === user.id ? 'selected' : ''}>${user.name}</option>`).join('')}
                         </select>
                     </div>
                     <div class="form-group">
@@ -1258,24 +1232,22 @@
             document.getElementById('task-form').onsubmit = (e) => {
                 e.preventDefault();
                 const title = document.getElementById('task-title').value.trim();
-                const projectId = document.getElementById('task-project').value;
-                const phase = document.getElementById('task-phase').value;
+                const description = document.getElementById('task-description').value.trim();
                 const assignee = document.getElementById('task-assignee').value;
                 const status = document.getElementById('task-status').value;
-                if (!title || !projectId || !phase || !status) {
-                    showNotification('All fields are required', 3000, true);
+                if (!title || !status) {
+                    showNotification('Task title and status are required', 3000, true);
                     return;
                 }
                 if (task) {
                     const index = state.tasks.findIndex(t => t.id === taskId);
-                    state.tasks[index] = { ...task, title, projectId, phase, assignee, status };
+                    state.tasks[index] = { ...task, title, description, assignee, status };
                     logActivity(`Updated task: ${title}`);
                 } else {
                     state.tasks.push({
                         id: Date.now().toString(),
                         title,
-                        projectId,
-                        phase,
+                        description,
                         assignee,
                         status,
                         createdBy: state.currentUser.id,
@@ -1304,28 +1276,14 @@
                 taskElement.innerHTML = `
                     <span>${task.title} (${state.users.find(u => u.id === task.assignee)?.name || 'Unassigned'})</span>
                     <div>
-                        ${(state.currentUser.role === 'Admin' || state.currentUser.role === 'Team Lead') ? `
-                            <button class="btn-primary" onclick="showTaskForm('${task.id}')">Edit</button>
-                            <button class="btn-danger" onclick="deleteTask('${task.id}')">Delete</button>
-                        ` : ''}
+                        <button class="btn-primary" onclick="showTaskForm('${task.id}')">Edit</button>
+                        <button class="btn-danger" onclick="deleteTask('${task.id}')">Delete</button>
                     </div>
                 `;
                 if (task.status === 'To Do') toDo.appendChild(taskElement);
-                else if (task.status === 'In Progress') {
-                    inProgress.appendChild(taskElement);
-                    updateProjectOverview(task);
-                }
+                else if (task.status === 'In Progress') inProgress.appendChild(taskElement);
                 else if (task.status === 'Done') done.appendChild(taskElement);
             });
-        }
-
-        function updateProjectOverview(task) {
-            const project = state.projectOverview.find(p => p.projectId === task.projectId);
-            if (project) {
-                project.currentPhase = task.phase;
-                project.status = 'In Progress';
-                saveState('projectOverview', state.projectOverview);
-            }
         }
 
         function drag(e, taskId) {
@@ -1793,7 +1751,6 @@
                     <span>${category.name} (${category.subcategories.join(', ')})</span>
                     <div>
                         <button class="btn-primary" onclick="showCategoryForm('${category.id}')">Edit</button>
-                        <button class="btn-primary" onclick="showCategoryForm('${category.id}')">Edit</button>
                         <button class="btn-danger" onclick="deleteCategory('${category.id}')">Delete</button>
                     </div>
                 </div>
@@ -2034,9 +1991,9 @@
                 <div class="list-item">
                     <span>${user.name} (${user.email})</span>
                     <select onchange="updateRole('${user.id}', this.value)">
-                        <option value="QA Member" ${user.role === 'QA Member' ? 'selected' : ''}>${user.name}</option>
-                        <option value="Team Lead" ${user.role === 'Team Lead' ? 'selected' : ''}>${user.name}</option>
-                        <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>${user.name}</option>
+                        <option value="QA Member" ${user.role === 'QA Member' ? 'selected' : ''}>QA Member</option>
+                        <option value="Team Lead" ${user.role === 'Team Lead' ? 'selected' : ''}>Team Lead</option>
+                        <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option>
                     </select>
                 </div>
             `).join('');
@@ -2080,101 +2037,7 @@
             logActivity('Toggled sidebar');
         }
 
-        function showPhaseForm() {
-            const content = `
-                <form id="phase-form">
-                    <div class="form-group">
-                        <label for="phase-name" class="required">Phase Name</label>
-                        <input type="text" id="phase-name" placeholder="Enter phase name" required>
-                    </div>
-                    <button type="submit" class="btn-primary">Add Phase</button>
-                </form>
-            `;
-            showModal('Add Phase', content);
-            document.getElementById('phase-form').onsubmit = (e) => {
-                e.preventDefault();
-                const phaseName = document.getElementById('phase-name').value.trim();
-                if (!phaseName) {
-                    showNotification('Phase name is required', 3000, true);
-                    return;
-                }
-                state.projectTypes.push({ id: Date.now().toString(), name: phaseName, subcategories: [] });
-                saveState('projectTypes', state.projectTypes);
-                logActivity(`Added new phase: ${phaseName}`);
-                closeModal();
-                showNotification('Phase added successfully');
-                renderTestingPhases();
-            };
-        }
-
-        function renderTestingPhases() {
-            const list = document.getElementById('testing-phases-list');
-            list.innerHTML = state.projectTypes.map(phase => `
-                <div class="list-item">
-                    <span>${phase.name}</span>
-                    <div>
-                        <button class="btn-danger" onclick="deletePhase('${phase.id}')">Delete</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function deletePhase(phaseId) {
-            state.projectTypes = state.projectTypes.filter(phase => phase.id !== phaseId);
-            saveState('projectTypes', state.projectTypes);
-            logActivity('Deleted phase');
-            showNotification('Phase deleted successfully');
-            renderTestingPhases();
-        }
-
-        function renderProjects() {
-            const list = document.getElementById('projects-list');
-            list.innerHTML = state.projects.map(project => `
-                <div class="list-item">
-                    <span>${project.name} (${project.category} - ${project.subcategory})</span>
-                    <div>
-                        <button class="btn-primary" onclick="showProjectForm('${project.id}')">Edit</button>
-                        <button class="btn-danger" onclick="deleteProject('${project.id}')">Delete</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Call render functions on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            renderTestingPhases();
-            renderProjects();
-        });
-
         renderProjectTypes();
-    </script>
-    <script>
-        function allowDrop(event) {
-            event.preventDefault();
-        }
-
-        function drag(event, taskId) {
-            event.dataTransfer.setData('text/plain', taskId);
-        }
-
-        function drop(event, status) {
-            event.preventDefault();
-            const taskId = event.dataTransfer.getData('text/plain');
-            const task = state.tasks.find(t => t.id === taskId);
-            if (task) {
-                task.status = status;
-                saveState('tasks', state.tasks);
-                renderTasks();
-            }
-        }
-
-        function dragEnter(event) {
-            event.target.classList.add('dragover');
-        }
-
-        function dragLeave(event) {
-            event.target.classList.remove('dragover');
-        }
     </script>
 </body>
 </html>
