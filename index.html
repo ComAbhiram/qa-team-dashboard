@@ -44,10 +44,11 @@
 
         .sidebar {
             width: 250px;
-            background-color: var(--background-color);
+            background-color: var(--widget-background);
             padding: 20px;
             box-shadow: var(--shadow);
             transition: width 0.3s;
+            position: relative;
         }
 
         .sidebar.collapsed {
@@ -174,7 +175,7 @@
 
         .loader-container {
             --uib-size: 40px;
-            --uib-color: white;
+            --uib-color: var(--primary-color);
             --uib-speed: .9s;
             position: fixed;
             top: 50%;
@@ -279,10 +280,12 @@
         .kanban-board {
             display: flex;
             gap: 25px;
+            overflow-x: auto;
         }
 
         .kanban-column {
             flex: 1;
+            min-width: 300px;
             background-color: var(--widget-background);
             padding: 25px;
             border-radius: var(--border-radius);
@@ -383,12 +386,13 @@
             width: 450px;
             max-width: 90%;
             color: var(--text-color);
+            position: relative;
         }
 
         .modal-close {
             position: absolute;
-            top: 15px;
-            right: 15px;
+            top: 10px;
+            right: 10px;
             cursor: pointer;
             font-size: 24px;
             color: var(--text-color);
@@ -466,6 +470,7 @@
             justify-content: space-between;
             align-items: center;
             font-size: 14px;
+            border: 1px solid var(--secondary-color);
         }
 
         h2 {
@@ -539,6 +544,7 @@
             <div class="sidebar-item" data-tab="profile"><span>👤 Profile</span></div>
             <div class="sidebar-item" data-tab="user-management"><span>👥 User Management</span></div>
             <div class="sidebar-item" data-tab="assign-roles"><span>🔑 Assign Roles</span></div>
+            <div class="sidebar-item" data-tab="testing-phases"><span>🧪 Testing Phases</span></div>
         </div>
         <div class="main-content">
             <div class="header">
@@ -585,7 +591,7 @@
                     </div>
                     <button type="submit" class="btn-primary">Submit Standup</button>
                 </form>
-                <div class="widget">
+                <div class="widget" style="margin-top: 25px;">
                     <h3>Recent Standups (Last 2 Weeks)</h3>
                     <div class="table-container">
                         <table id="standup-table">
@@ -630,7 +636,7 @@
             <div id="project-overview" class="tab-pane">
                 <h2>Project Overview</h2>
                 <div class="search-bar">
-                    <input type="text" id="project-search" placeholder="Search by project name, type, or status" onkeyup="filterProjects()">
+                    <input type="text" id="project-search" placeholder="Search by project name, type, status, or QA" onkeyup="filterProjects()">
                 </div>
                 <div class="table-container">
                     <table>
@@ -774,6 +780,11 @@
                 <h2>Assign Roles</h2>
                 <div id="roles-list"></div>
             </div>
+            <div id="testing-phases" class="tab-pane">
+                <h2>Testing Phases</h2>
+                <button class="btn-primary" onclick="showPhaseForm()" style="margin-bottom: 25px;">Add Phase</button>
+                <div id="testing-phases-list"></div>
+            </div>
         </div>
     </div>
     <div id="login-modal" class="modal" style="display: flex;">
@@ -792,7 +803,6 @@
                 <button type="submit" class="btn-primary">Login</button>
             </form>
         </div>
-    </div>
     </div>
     <div id="modal" class="modal">
         <div class="modal-content">
@@ -835,21 +845,27 @@
             activityLog: JSON.parse(localStorage.getItem('activityLog')) || [],
             standupEntries: JSON.parse(localStorage.getItem('standupEntries')) || [],
             projectTypes: JSON.parse(localStorage.getItem('projectTypes')) || [],
+            testingPhases: JSON.parse(localStorage.getItem('testingPhases')) || []
         };
 
-        // Initialize predefined users if not already present
-        if (!state.users || state.users.length === 0) {
+        // Initialize predefined users with unique IDs
+        if (!state.users.length) {
             state.users = [
-                { id: '1', name: 'Admin User', email: 'admin@example.com', password: 'admin123', role: 'Admin' },
-                { id: '2', name: 'Team Lead', email: 'lead@example.com', password: 'lead123', role: 'Team Lead' },
-                { id: '3', name: 'QA Member', email: 'qa@example.com', password: 'qa123', role: 'QA Member' }
+                { id: '1', name: 'Admin User', email: 'qaadmin@intersmart.in', password: 'admin123', role: 'Admin' },
+                { id: '2', name: 'Abhiram', email: 'abhiram@intersmart.in', password: 'lead123', role: 'Team Lead' },
+                { id: '3', name: 'Aswathi', email: 'aswathi@intersmart.in', password: 'qa123', role: 'QA Member' },
+                { id: '4', name: 'Minnu', email: 'minnu@intersmart.in', password: 'qa123', role: 'QA Member' }
             ];
-            localStorage.setItem('users', JSON.stringify(state.users));
+            saveState('users', state.users);
         }
 
         function saveState(key, data) {
-            localStorage.setItem(key, JSON.stringify(data));
-            state[key] = data;
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+                state[key] = data;
+            } catch (e) {
+                showNotification('LocalStorage error: ' + e.message, 3000, true);
+            }
         }
 
         function logActivity(action) {
@@ -860,110 +876,61 @@
                 timestamp: Date.now()
             });
             saveState('activityLog', state.activityLog.slice(0, 100));
-        }
-
-        // Add sample login IDs and passwords
-        if (!state.users || state.users.length === 0) {
-            state.users = [
-                { id: '1', name: 'Admin User', email: 'admin@example.com', password: 'admin123', role: 'Admin' },
-                { id: '2', name: 'Team Lead', email: 'lead@example.com', password: 'lead123', role: 'Team Lead' },
-                { id: '3', name: 'QA Member', email: 'qa@example.com', password: 'qa123', role: 'QA Member' }
-            ];
-            saveState('users', state.users);
+            renderActivityLog();
         }
 
         function login(e) {
             e.preventDefault();
+            showLoader(true);
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value;
 
-            // Ensure users array is not empty
-            if (!state.users || state.users.length === 0) {
-                showNotification('No users found. Please register users first.', 3000, true);
-                return;
-            }
-
-            // Find user
             const user = state.users.find(u => u.email === email && u.password === password);
-
             if (user) {
-                // Successful login
                 state.currentUser = user;
                 saveState('currentUser', user);
-
-                // Close the modal and redirect to the dashboard
-                const loginModal = document.getElementById('login-modal');
-                const dashboardContainer = document.querySelector('.container');
-
-                if (loginModal) loginModal.style.display = 'none';
-                if (dashboardContainer) dashboardContainer.style.display = 'flex'; // Show dashboard container
-
-                switchTab('dashboard'); // Redirect to the dashboard tab
-
-                // Show success notification
+                document.getElementById('login-modal').style.display = 'none';
+                document.querySelector('.container').style.display = 'flex';
+                switchTab('dashboard');
                 showNotification('Login successful!');
-
-                // Update UI for logged-in user
                 document.getElementById('welcome-user').textContent = user.name;
                 updateUserAvatar();
                 setupSidebar();
-
-                // Clear the form
                 document.getElementById('login-form').reset();
-
                 logActivity('User logged in');
             } else {
-                // Failed login
                 showNotification('Invalid email or password', 3000, true);
             }
+            showLoader(false);
         }
 
-        function showNotification(message, duration = 3000, isError = false) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.classList.toggle('error-notification', isError);
-            notification.style.display = 'block';
-            clearTimeout(notification.timeout);
-            notification.timeout = setTimeout(() => {
-                notification.style.display = 'none';
-            }, duration);
+        function showLoader(show) {
+            document.getElementById('loader').style.display = show ? 'flex' : 'none';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Load the current user from localStorage
             state.currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
-
             if (!state.currentUser) {
-                document.getElementById('login-modal').style.display = 'flex'; // Show login modal
-                document.querySelector('.container').style.display = 'none'; // Hide dashboard container
+                document.getElementById('login-modal').style.display = 'flex';
+                document.querySelector('.container').style.display = 'none';
             } else {
-                document.getElementById('login-modal').style.display = 'none'; // Hide login modal
-                document.querySelector('.container').style.display = 'flex'; // Show dashboard container
+                document.getElementById('login-modal').style.display = 'none';
+                document.querySelector('.container').style.display = 'flex';
                 updateUserAvatar();
                 setupSidebar();
-                switchTab('dashboard'); // Redirect to the dashboard tab
+                switchTab('dashboard');
                 renderAll();
             }
 
-            // Attach event listener to the login form
-            const loginForm = document.getElementById('login-form');
-            if (loginForm) {
-                loginForm.addEventListener('submit', login);
-            }
-
+            document.getElementById('login-form').addEventListener('submit', login);
             document.getElementById('logout-btn').addEventListener('click', logout);
             document.getElementById('theme-toggle').addEventListener('click', () => {
                 document.body.classList.toggle('light-theme');
                 logActivity('Toggled theme');
             });
-
             document.querySelectorAll('.sidebar-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const tab = item.getAttribute('data-tab');
-                    switchTab(tab);
-                });
+                item.addEventListener('click', () => switchTab(item.getAttribute('data-tab')));
             });
-
             document.getElementById('standup-form').addEventListener('submit', submitStandup);
             document.getElementById('profile-form').addEventListener('submit', updateProfile);
             document.querySelector('.sidebar-toggle').addEventListener('click', toggleSidebar);
@@ -988,11 +955,9 @@
 
         function logout() {
             state.currentUser = null;
-            localStorage.removeItem('currentUser'); // Remove the logged-in user from localStorage
+            localStorage.clear();
             showNotification('Logged out successfully');
             updateUserAvatar();
-            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
-            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
             document.querySelector('.container').style.display = 'none';
             document.getElementById('login-modal').style.display = 'flex';
         }
@@ -1017,57 +982,31 @@
             renderTasks();
             renderStandup();
             renderActivityLog();
+            renderTestingPhases();
+            renderProjects();
+            renderDashboard();
         }
 
         function switchTab(tab) {
-            // Hide all tabs
-            const tabs = document.querySelectorAll('.tab-pane');
-            tabs.forEach(t => t.classList.remove('active'));
-
-            // Show selected tab
+            document.querySelectorAll('.tab-pane').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
             const selectedTab = document.getElementById(tab);
-            if (selectedTab) {
-                selectedTab.classList.add('active');
-            }
-
-            // Update active sidebar item
-            const sidebarItems = document.querySelectorAll('.sidebar-item');
-            sidebarItems.forEach(item => {
-                if (item.getAttribute('data-tab') === tab) {
-                    item.classList.add('active');
-                } else {
-                    item.classList.remove('active');
-                }
-            });
-
-            // Handle specific tab logic
-            if (tab === 'dashboard') {
-                renderDashboard();
-            }
+            if (selectedTab) selectedTab.classList.add('active');
+            document.querySelector(`.sidebar-item[data-tab="${tab}"]`)?.classList.add('active');
+            document.getElementById('breadcrumbs').innerHTML = `<a href="#" onclick="switchTab('dashboard')">Home</a> / ${tab.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`;
+            if (tab === 'dashboard') renderDashboard();
         }
 
         function renderDashboard() {
-            // Update dashboard content
             if (state.currentUser) {
                 document.getElementById('welcome-user').textContent = state.currentUser.name;
-
-                // Example: Render dashboard stats
                 const stats = calculateDashboardStats();
                 document.getElementById('dashboard-content').innerHTML = Object.keys(stats).map(type => `
                     <div class="widget">
                         <h3>${type}</h3>
-                        <div class="stats">
-                            <div class="stats-number">${stats[type].projects}</div>
-                            <div>Total Projects</div>
-                        </div>
-                        <div class="stats">
-                            <div class="stats-number">${stats[type].pendingApprovals}</div>
-                            <div>Pending Approvals</div>
-                        </div>
-                        <div class="stats">
-                            <div class="stats-number">${stats[type].completedProjects}</div>
-                            <div>Completed Projects</div>
-                        </div>
+                        <div class="stats"><div class="stats-number">${stats[type].projects}</div><div>Total Projects</div></div>
+                        <div class="stats"><div class="stats-number">${stats[type].pendingApprovals}</div><div>Pending Approvals</div></div>
+                        <div class="stats"><div class="stats-number">${stats[type].completedProjects}</div><div>Completed Projects</div></div>
                     </div>
                 `).join('');
             }
@@ -1095,11 +1034,13 @@
 
         function submitStandup(e) {
             e.preventDefault();
+            showLoader(true);
             const yesterday = document.getElementById('standup-yesterday').value.trim();
             const today = document.getElementById('standup-today').value.trim();
             const blockers = document.getElementById('standup-blockers').value.trim();
             if (!yesterday || !today) {
                 showNotification('Yesterday’s work and today’s plan are required', 3000, true);
+                showLoader(false);
                 return;
             }
             const entry = {
@@ -1118,13 +1059,16 @@
             document.getElementById('standup-form').reset();
             showNotification('Standup submitted successfully');
             renderStandup();
+            showLoader(false);
         }
 
         function renderStandup() {
             const tbody = document.querySelector('#standup-table tbody');
             tbody.innerHTML = '';
-            let filteredEntries = state.standupEntries;
-            if (state.currentUser.role !== 'Admin') {
+            let filteredEntries = state.standupEntries.filter(entry => 
+                new Date().getTime() - new Date(entry.date).getTime() <= 14 * 24 * 60 * 60 * 1000
+            );
+            if (state.currentUser.role === 'QA Member') {
                 filteredEntries = filteredEntries.filter(entry => entry.userId === state.currentUser.id);
             }
             filteredEntries.forEach(entry => {
@@ -1136,7 +1080,7 @@
                     <td>${entry.today}</td>
                     <td>${entry.blockers || 'None'}</td>
                     <td>
-                        ${state.currentUser.id === entry.userId ? `
+                        ${(state.currentUser.id === entry.userId || state.currentUser.role === 'Team Lead' || state.currentUser.role === 'Admin') ? `
                             <button class="btn-primary" onclick="editStandup('${entry.id}')">Edit</button>
                             <button class="btn-danger" onclick="deleteStandup('${entry.id}')">Delete</button>
                         ` : ''}
@@ -1148,7 +1092,7 @@
 
         function editStandup(id) {
             const entry = state.standupEntries.find(e => e.id === id);
-            if (!entry) return;
+            if (!entry || (state.currentUser.id !== entry.userId && state.currentUser.role !== 'Team Lead' && state.currentUser.role !== 'Admin')) return;
             const content = `
                 <form id="edit-standup-form">
                     <div class="form-group">
@@ -1187,6 +1131,11 @@
         }
 
         function deleteStandup(id) {
+            const entry = state.standupEntries.find(e => e.id === id);
+            if (!entry || (state.currentUser.id !== entry.userId && state.currentUser.role !== 'Team Lead' && state.currentUser.role !== 'Admin')) {
+                showNotification('You cannot delete this standup', 3000, true);
+                return;
+            }
             state.standupEntries = state.standupEntries.filter(e => e.id !== id);
             saveState('standupEntries', state.standupEntries);
             logActivity('Deleted standup entry');
@@ -1195,11 +1144,11 @@
         }
 
         function showTaskForm(taskId = null) {
-            if (state.currentUser.role === 'QA Member' && taskId === null) {
-                showNotification('Only Admins or Team Leads can create tasks', 3000, true);
+            const task = taskId ? state.tasks.find(t => t.id === taskId) : null;
+            if (task && state.currentUser.role === 'QA Member' && task.createdBy !== state.currentUser.id) {
+                showNotification('You cannot edit this task', 3000, true);
                 return;
             }
-            const task = taskId ? state.tasks.find(t => t.id === taskId) : null;
             const content = `
                 <form id="task-form">
                     <div class="form-group">
@@ -1207,14 +1156,30 @@
                         <input type="text" id="task-title" value="${task ? task.title : ''}" required>
                     </div>
                     <div class="form-group">
-                        <label for="task-description">Description</label>
-                        <textarea id="task-description">${task ? task.description : ''}</textarea>
+                        <label for="task-project" class="required">Project</label>
+                        <select id="task-project" required>
+                            <option value="">Select Project</option>
+                            ${state.projects.map(project => `
+                                <option value="${project.id}" ${task && task.projectId === project.id ? 'selected' : ''}>${project.name}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-phase" class="required">Phase</label>
+                        <select id="task-phase" required>
+                            <option value="">Select Phase</option>
+                            ${state.testingPhases.map(phase => `
+                                <option value="${phase.name}" ${task && task.phase === phase.name ? 'selected' : ''}>${phase.name}</option>
+                            `).join('')}
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="task-assignee">Assignee</label>
                         <select id="task-assignee">
                             <option value="">Unassigned</option>
-                            ${state.users.map(user => `<option value="${user.id}" ${task && task.assignee === user.id ? 'selected' : ''}>${user.name}</option>`).join('')}
+                            ${state.users.map(user => `
+                                <option value="${user.id}" ${task && task.assignee === user.id ? 'selected' : ''}>${user.name}</option>
+                            `).join('')}
                         </select>
                     </div>
                     <div class="form-group">
@@ -1232,22 +1197,24 @@
             document.getElementById('task-form').onsubmit = (e) => {
                 e.preventDefault();
                 const title = document.getElementById('task-title').value.trim();
-                const description = document.getElementById('task-description').value.trim();
+                const projectId = document.getElementById('task-project').value;
+                const phase = document.getElementById('task-phase').value;
                 const assignee = document.getElementById('task-assignee').value;
                 const status = document.getElementById('task-status').value;
-                if (!title || !status) {
-                    showNotification('Task title and status are required', 3000, true);
+                if (!title || !projectId || !phase || !status) {
+                    showNotification('All required fields must be filled', 3000, true);
                     return;
                 }
                 if (task) {
                     const index = state.tasks.findIndex(t => t.id === taskId);
-                    state.tasks[index] = { ...task, title, description, assignee, status };
+                    state.tasks[index] = { ...task, title, projectId, phase, assignee, status };
                     logActivity(`Updated task: ${title}`);
                 } else {
                     state.tasks.push({
                         id: Date.now().toString(),
                         title,
-                        description,
+                        projectId,
+                        phase,
                         assignee,
                         status,
                         createdBy: state.currentUser.id,
@@ -1256,9 +1223,11 @@
                     logActivity(`Added task: ${title}`);
                 }
                 saveState('tasks', state.tasks);
+                updateProjectOverview({ projectId, phase, status });
                 closeModal();
                 showNotification('Task saved successfully');
                 renderTasks();
+                filterProjects();
             };
         }
 
@@ -1268,7 +1237,7 @@
             const done = document.getElementById('done-tasks');
             toDo.innerHTML = inProgress.innerHTML = done.innerHTML = '';
             state.tasks.forEach(task => {
-                if (state.currentUser.role !== 'Admin' && task.createdBy !== state.currentUser.id && task.assignee !== state.currentUser.id) return;
+                if (state.currentUser.role === 'QA Member' && task.assignee !== state.currentUser.id && task.createdBy !== state.currentUser.id) return;
                 const taskElement = document.createElement('div');
                 taskElement.className = 'list-item';
                 taskElement.draggable = true;
@@ -1276,14 +1245,55 @@
                 taskElement.innerHTML = `
                     <span>${task.title} (${state.users.find(u => u.id === task.assignee)?.name || 'Unassigned'})</span>
                     <div>
-                        <button class="btn-primary" onclick="showTaskForm('${task.id}')">Edit</button>
-                        <button class="btn-danger" onclick="deleteTask('${task.id}')">Delete</button>
+                        ${(state.currentUser.role === 'Admin' || state.currentUser.role === 'Team Lead' || task.createdBy === state.currentUser.id) ? `
+                            <button class="btn-primary" onclick="showTaskForm('${task.id}')">Edit</button>
+                            <button class="btn-danger" onclick="deleteTask('${task.id}')">Delete</button>
+                        ` : ''}
                     </div>
                 `;
                 if (task.status === 'To Do') toDo.appendChild(taskElement);
                 else if (task.status === 'In Progress') inProgress.appendChild(taskElement);
                 else if (task.status === 'Done') done.appendChild(taskElement);
             });
+        }
+
+        function updateProjectOverview(task) {
+            const projectIndex = state.projectOverview.findIndex(p => p.projectId === task.projectId);
+            if (projectIndex === -1) {
+                const project = state.projects.find(p => p.id === task.projectId);
+                if (project) {
+                    state.projectOverview.push({
+                        projectId: project.id,
+                        projectName: project.name,
+                        qaId: task.assignee || '',
+                        projectType: project.category,
+                        currentPhase: task.phase,
+                        ktReceived: 'No',
+                        startDate: new Date().toISOString().split('T')[0],
+                        endDate: '',
+                        status: task.status === 'Done' ? 'Completed' : 'In Progress',
+                        totalBugs: 0,
+                        htmlBugs: 0,
+                        p0HtmlBugs: 0,
+                        p1HtmlBugs: 0,
+                        p2HtmlBugs: 0,
+                        p3HtmlBugs: 0,
+                        p4HtmlBugs: 0,
+                        functionalBugs: 0,
+                        p0FunctionalBugs: 0,
+                        p1FunctionalBugs: 0,
+                        p2FunctionalBugs: 0,
+                        p3FunctionalBugs: 0,
+                        p4FunctionalBugs: 0,
+                        tlApproval: 'No'
+                    });
+                }
+            } else {
+                state.projectOverview[projectIndex].currentPhase = task.phase;
+                state.projectOverview[projectIndex].status = task.status === 'Done' ? 'Completed' : 'In Progress';
+                if (task.assignee) state.projectOverview[projectIndex].qaId = task.assignee;
+            }
+            saveState('projectOverview', state.projectOverview);
         }
 
         function drag(e, taskId) {
@@ -1307,7 +1317,7 @@
             e.target.classList.remove('dragover');
             const taskId = e.dataTransfer.getData('text/plain');
             const task = state.tasks.find(t => t.id === taskId);
-            if (state.currentUser.role === 'QA Member' && task.createdBy !== state.currentUser.id && task.assignee !== state.currentUser.id) {
+            if (!task || (state.currentUser.role === 'QA Member' && task.createdBy !== state.currentUser.id && task.assignee !== state.currentUser.id)) {
                 showNotification('You cannot move this task', 3000, true);
                 return;
             }
@@ -1315,24 +1325,31 @@
             state.tasks[index].status = status;
             logActivity(`Moved task "${task.title}" to ${status}`);
             saveState('tasks', state.tasks);
+            updateProjectOverview(task);
             renderTasks();
+            filterProjects();
         }
 
         function deleteTask(taskId) {
             const task = state.tasks.find(t => t.id === taskId);
-            if (state.currentUser.role === 'QA Member' && task.createdBy !== state.currentUser.id) {
+            if (!task || (state.currentUser.role === 'QA Member' && task.createdBy !== state.currentUser.id)) {
                 showNotification('You cannot delete this task', 3000, true);
                 return;
             }
             state.tasks = state.tasks.filter(t => t.id !== taskId);
-            logActivity('Deleted task');
+            logActivity(`Deleted task: ${task.title}`);
             saveState('tasks', state.tasks);
             showNotification('Task deleted successfully');
             renderTasks();
+            filterProjects();
         }
 
         function showProjectForm(projectId = null) {
             const project = projectId ? state.projects.find(p => p.id === projectId) : null;
+            if (project && state.currentUser.role !== 'Admin' && state.currentUser.role !== 'Team Lead') {
+                showNotification('Only Admins or Team Leads can edit projects', 3000, true);
+                return;
+            }
             const content = `
                 <form id="project-form">
                     <div class="form-group">
@@ -1365,19 +1382,16 @@
                 </form>
             `;
             showModal(`${project ? 'Edit' : 'Create'} Project`, content);
-
             document.getElementById('project-form').onsubmit = (e) => {
                 e.preventDefault();
                 const name = document.getElementById('project-name').value.trim();
                 const category = document.getElementById('project-category').value;
                 const subcategory = document.getElementById('project-subcategory').value;
                 const link = document.getElementById('project-link').value.trim();
-
                 if (!name || !category || !subcategory || !link) {
                     showNotification('All fields are required', 3000, true);
                     return;
                 }
-
                 if (project) {
                     const index = state.projects.findIndex(p => p.id === projectId);
                     state.projects[index] = { ...project, name, category, subcategory, link };
@@ -1394,11 +1408,11 @@
                     });
                     logActivity(`Created project: ${name}`);
                 }
-
                 saveState('projects', state.projects);
                 closeModal();
                 showNotification('Project saved successfully');
                 renderProjects();
+                filterProjects();
             };
         }
 
@@ -1415,18 +1429,43 @@
         }
 
         function addNewPhase(projectId) {
-            if (state.currentUser.role === 'QA Member') {
+            const project = state.projects.find(p => p.id === projectId);
+            if (!project || state.currentUser.role !== 'QA Member') {
                 showNotification('Only QA Members can add new phases', 3000, true);
                 return;
             }
-            const project = state.projectOverview.find(p => p.projectId === projectId);
-            if (!project) return;
-            const newPhase = prompt('Enter new testing phase (e.g., Dev Testing):');
-            if (newPhase) {
+            const content = `
+                <form id="phase-form">
+                    <div class="form-group">
+                        <label for="new-phase" class="required">New Phase</label>
+                        <select id="new-phase" required>
+                            <option value="">Select Phase</option>
+                            ${state.testingPhases.map(phase => `<option value="${phase.name}">${phase.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Add Phase</button>
+                </form>
+            `;
+            showModal('Add New Phase', content);
+            document.getElementById('phase-form').onsubmit = (e) => {
+                e.preventDefault();
+                const newPhase = document.getElementById('new-phase').value;
+                if (!newPhase) {
+                    showNotification('Phase is required', 3000, true);
+                    return;
+                }
+                const existing = state.projectOverview.find(p => p.projectId === projectId && p.currentPhase === newPhase);
+                if (existing) {
+                    showNotification('This phase already exists for the project', 3000, true);
+                    return;
+                }
                 state.projectOverview.push({
-                    ...project,
-                    projectId: Date.now().toString(),
+                    projectId,
+                    projectName: project.name,
+                    qaId: state.currentUser.id,
+                    projectType: project.category,
                     currentPhase: newPhase,
+                    ktReceived: 'No',
                     startDate: new Date().toISOString().split('T')[0],
                     endDate: '',
                     status: 'In Progress',
@@ -1442,16 +1481,20 @@
                     p1FunctionalBugs: 0,
                     p2FunctionalBugs: 0,
                     p3FunctionalBugs: 0,
-                    p4FunctionalBugs: 0
+                    p4FunctionalBugs: 0,
+                    tlApproval: 'No'
                 });
-                logActivity(`Started new phase "${newPhase}" for project "${project.projectName}"`);
+                logActivity(`Started new phase "${newPhase}" for project "${project.name}"`);
                 saveState('projectOverview', state.projectOverview);
+                closeModal();
+                showNotification('Phase added successfully');
                 filterProjects();
-            }
+            };
         }
 
         function updatePhase(projectId, phase) {
             const index = state.projectOverview.findIndex(p => p.projectId === projectId);
+            if (index === -1) return;
             state.projectOverview[index].currentPhase = phase;
             logActivity(`Updated phase of project "${state.projectOverview[index].projectName}" to ${phase}`);
             saveState('projectOverview', state.projectOverview);
@@ -1461,6 +1504,7 @@
 
         function updateKT(projectId, ktReceived) {
             const index = state.projectOverview.findIndex(p => p.projectId === projectId);
+            if (index === -1) return;
             state.projectOverview[index].ktReceived = ktReceived;
             logActivity(`Updated KT status of "${state.projectOverview[index].projectName}" to ${ktReceived}`);
             saveState('projectOverview', state.projectOverview);
@@ -1470,6 +1514,10 @@
 
         function submitForTLApproval(projectId) {
             const index = state.projectOverview.findIndex(p => p.projectId === projectId);
+            if (index === -1 || state.currentUser.role !== 'QA Member') {
+                showNotification('Only QA Members can submit for approval', 3000, true);
+                return;
+            }
             state.projectOverview[index].tlApproval = 'Awaiting Approval';
             logActivity(`Submitted project "${state.projectOverview[index].projectName}" for TL approval`);
             saveState('projectOverview', state.projectOverview);
@@ -1479,14 +1527,18 @@
 
         function updateApproval(projectId, approvedForLive) {
             const index = state.projectOverview.findIndex(p => p.projectId === projectId);
+            if (index === -1 || (state.currentUser.role !== 'Team Lead' && state.currentUser.role !== 'Admin')) {
+                showNotification('Only Team Leads or Admins can approve projects', 3000, true);
+                return;
+            }
             const project = state.projectOverview[index];
-            if (!project) return;
             if (approvedForLive === 'Yes') {
                 state.approvedProjects.push({
                     ...project,
                     approvedForLive: 'Yes',
                     approvedDate: new Date().toISOString().split('T')[0],
-                    approvedBy: state.currentUser.name
+                    approvedBy: state.currentUser.name,
+                    endDate: project.endDate || new Date().toISOString().split('T')[0]
                 });
                 state.projectOverview.splice(index, 1);
                 logActivity(`Approved "${project.projectName}" for live`);
@@ -1494,24 +1546,24 @@
                 sendEmail(project.projectId, 'Approved');
             } else if (approvedForLive === 'Rejected') {
                 const reason = prompt('Please provide a reason for rejection:');
-                if (reason) {
-                    state.rejectedProjects.push({
-                        ...project,
-                        approvedForLive: 'Rejected',
-                        rejectionDate: new Date().toISOString().split('T')[0],
-                        rejectionReason: reason,
-                        rejectedBy: state.currentUser.name
-                    });
-                    state.projectOverview.splice(index, 1);
-                    logActivity(`Rejected "${project.projectName}" - Reason: ${reason}`);
-                    saveState('rejectedProjects', state.rejectedProjects);
-                    sendEmail(project.projectId, 'Rejected', reason);
-                } else {
+                if (!reason) {
                     showNotification('Rejection reason is required', 3000, true);
                     return;
                 }
+                state.rejectedProjects.push({
+                    ...project,
+                    approvedForLive: 'Rejected',
+                    rejectionDate: new Date().toISOString().split('T')[0],
+                    rejectionReason: reason,
+                    rejectedBy: state.currentUser.name,
+                    endDate: project.endDate || new Date().toISOString().split('T')[0]
+                });
+                state.projectOverview.splice(index, 1);
+                logActivity(`Rejected "${project.projectName}" - Reason: ${reason}`);
+                saveState('rejectedProjects', state.rejectedProjects);
+                sendEmail(project.projectId, 'Rejected', reason);
             } else {
-                state.projectOverview[index].approvedForLive = 'No';
+                state.projectOverview[index].tlApproval = 'No';
                 logActivity(`Set "${project.projectName}" approval to No`);
                 showNotification('Project approval updated');
             }
@@ -1568,7 +1620,8 @@
             filteredProjects = filteredProjects.filter(p =>
                 p.projectName.toLowerCase().includes(search) ||
                 p.projectType.toLowerCase().includes(search) ||
-                p.status.toLowerCase().includes(search)
+                p.status.toLowerCase().includes(search) ||
+                (state.users.find(u => u.id === p.qaId)?.name || '').toLowerCase().includes(search)
             );
             filteredProjects.forEach(project => {
                 const qa = state.users.find(u => u.id === project.qaId);
@@ -1580,9 +1633,9 @@
                     <td>
                         <select onchange="updatePhase('${project.projectId}', this.value)">
                             <option value="Not Started" ${project.currentPhase === 'Not Started' ? 'selected' : ''}>Not Started</option>
-                            <option value="HTML Comparison" ${project.currentPhase === 'HTML Comparison' ? 'selected' : ''}>HTML Comparison</option>
-                            <option value="Dev Testing" ${project.currentPhase === 'Dev Testing' ? 'selected' : ''}>Dev Testing</option>
-                            <option value="Regression" ${project.currentPhase === 'Regression' ? 'selected' : ''}>Regression</option>
+                            ${state.testingPhases.map(phase => `
+                                <option value="${phase.name}" ${project.currentPhase === phase.name ? 'selected' : ''}>${phase.name}</option>
+                            `).join('')}
                         </select>
                     </td>
                     <td>
@@ -1610,18 +1663,18 @@
                     <td>
                         ${project.tlApproval === 'Awaiting Approval' && (state.currentUser.role === 'Team Lead' || state.currentUser.role === 'Admin') ? `
                             <select onchange="updateApproval('${project.projectId}', this.value)">
-                                <option value="No" ${project.approvedForLive === 'No' ? 'selected' : ''}>No</option>
+                                <option value="No" ${project.tlApproval === 'No' ? 'selected' : ''}>No</option>
                                 <option value="Yes">Yes</option>
                                 <option value="Rejected">Reject</option>
                             </select>
-                        ` : project.approvedForLive}
+                        ` : project.tlApproval}
                     </td>
                     <td>
                         ${state.currentUser.role === 'Admin' ? `
                             <button class="btn-primary" onclick="showProjectForm('${project.projectId}')">Edit</button>
                             <button class="btn-danger" onclick="deleteProject('${project.projectId}')">Delete</button>
                         ` : ''}
-                        ${state.currentUser.role === 'QA Member' ? `
+                        ${state.currentUser.role === 'QA Member' && project.qaId === state.currentUser.id ? `
                             <button class="btn-primary" onclick="addNewPhase('${project.projectId}')">New Phase</button>
                             <button class="btn-primary" onclick="submitForTLApproval('${project.projectId}')">Submit for Approval</button>
                         ` : ''}
@@ -1636,13 +1689,18 @@
                 showNotification('Only Admins can delete projects', 3000, true);
                 return;
             }
+            const project = state.projects.find(p => p.id === projectId);
             state.projects = state.projects.filter(p => p.id !== projectId);
             state.projectOverview = state.projectOverview.filter(p => p.projectId !== projectId);
-            logActivity(`Deleted project: ${projectId}`);
+            state.tasks = state.tasks.filter(t => t.projectId !== projectId);
+            logActivity(`Deleted project: ${project.name}`);
             saveState('projects', state.projects);
             saveState('projectOverview', state.projectOverview);
+            saveState('tasks', state.tasks);
             showNotification('Project deleted successfully');
+            renderProjects();
             filterProjects();
+            renderTasks();
         }
 
         function renderApprovedProjects() {
@@ -1726,16 +1784,23 @@
                     return;
                 }
                 if (category) {
+                    javascript
+
+Collapse
+
+Wrap
+
+Copy
                     const index = state.projectTypes.findIndex(c => c.id === categoryId);
                     state.projectTypes[index] = { ...category, name, subcategories };
-                    logActivity(`Updated category: ${name}`);
+                    logActivity(`Updated project category: ${name}`);
                 } else {
                     state.projectTypes.push({
                         id: Date.now().toString(),
                         name,
                         subcategories
                     });
-                    logActivity(`Added category: ${name}`);
+                    logActivity(`Added project category: ${name}`);
                 }
                 saveState('projectTypes', state.projectTypes);
                 closeModal();
@@ -1746,15 +1811,21 @@
 
         function renderProjectTypes() {
             const list = document.getElementById('project-types-list');
-            list.innerHTML = state.projectTypes.map(category => `
-                <div class="list-item">
+            list.innerHTML = '';
+            state.projectTypes.forEach(category => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
                     <span>${category.name} (${category.subcategories.join(', ')})</span>
-                    <div>
-                        <button class="btn-primary" onclick="showCategoryForm('${category.id}')">Edit</button>
-                        <button class="btn-danger" onclick="deleteCategory('${category.id}')">Delete</button>
-                    </div>
-                </div>
-            `).join('');
+                    ${(state.currentUser.role === 'Admin' || state.currentUser.role === 'Team Lead') ? `
+                        <div>
+                            <button class="btn-primary" onclick="showCategoryForm('${category.id}')">Edit</button>
+                            <button class="btn-danger" onclick="deleteCategory('${category.id}')">Delete</button>
+                        </div>
+                    ` : ''}
+                `;
+                list.appendChild(item);
+            });
         }
 
         function deleteCategory(categoryId) {
@@ -1762,24 +1833,105 @@
                 showNotification('Only Admins or Team Leads can delete categories', 3000, true);
                 return;
             }
+            const category = state.projectTypes.find(c => c.id === categoryId);
             state.projectTypes = state.projectTypes.filter(c => c.id !== categoryId);
-            logActivity('Deleted project category');
+            logActivity(`Deleted project category: ${category.name}`);
             saveState('projectTypes', state.projectTypes);
             showNotification('Category deleted successfully');
             renderProjectTypes();
         }
 
+        function showPhaseForm(phaseId = null) {
+            if (state.currentUser.role !== 'Admin' && state.currentUser.role !== 'Team Lead') {
+                showNotification('Only Admins or Team Leads can manage testing phases', 3000, true);
+                return;
+            }
+            const phase = phaseId ? state.testingPhases.find(p => p.id === phaseId) : null;
+            const content = `
+                <form id="phase-form">
+                    <div class="form-group">
+                        <label for="phase-name" class="required">Phase Name</label>
+                        <input type="text" id="phase-name" value="${phase ? phase.name : ''}" required>
+                    </div>
+                    <button type="submit" class="btn-primary">${phase ? 'Update' : 'Add'} Phase</button>
+                </form>
+            `;
+            showModal(`${phase ? 'Edit' : 'Add'} Phase`, content);
+            document.getElementById('phase-form').onsubmit = (e) => {
+                e.preventDefault();
+                const name = document.getElementById('phase-name').value.trim();
+                if (!name) {
+                    showNotification('Phase name is required', 3000, true);
+                    return;
+                }
+                if (phase) {
+                    const index = state.testingPhases.findIndex(p => p.id === phaseId);
+                    state.testingPhases[index] = { ...phase, name };
+                    logActivity(`Updated testing phase: ${name}`);
+                } else {
+                    state.testingPhases.push({
+                        id: Date.now().toString(),
+                        name
+                    });
+                    logActivity(`Added testing phase: ${name}`);
+                }
+                saveState('testingPhases', state.testingPhases);
+                closeModal();
+                showNotification('Phase saved successfully');
+                renderTestingPhases();
+            };
+        }
+
+        function renderTestingPhases() {
+            const list = document.getElementById('testing-phases-list');
+            list.innerHTML = '';
+            state.testingPhases.forEach(phase => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
+                    <span>${phase.name}</span>
+                    ${(state.currentUser.role === 'Admin' || state.currentUser.role === 'Team Lead') ? `
+                        <div>
+                            <button class="btn-primary" onclick="showPhaseForm('${phase.id}')">Edit</button>
+                            <button class="btn-danger" onclick="deletePhase('${phase.id}')">Delete</button>
+                        </div>
+                    ` : ''}
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function deletePhase(phaseId) {
+            if (state.currentUser.role !== 'Admin' && state.currentUser.role !== 'Team Lead') {
+                showNotification('Only Admins or Team Leads can delete phases', 3000, true);
+                return;
+            }
+            const phase = state.testingPhases.find(p => p.id === phaseId);
+            state.testingPhases = state.testingPhases.filter(p => p.id !== phaseId);
+            logActivity(`Deleted testing phase: ${phase.name}`);
+            saveState('testingPhases', state.testingPhases);
+            showNotification('Phase deleted successfully');
+            renderTestingPhases();
+        }
+
         function renderReports() {
+            const monthFilter = document.getElementById('report-filter-month')?.value || '';
+            const qaFilter = document.getElementById('report-filter-qa')?.value || '';
             const tbody = document.querySelector('#reports-list tbody');
-            const monthFilter = document.getElementById('report-filter-month').value;
-            const qaFilter = document.getElementById('report-filter-qa').value;
             tbody.innerHTML = '';
-            let filteredProjects = state.projectOverview.concat(state.approvedProjects, state.rejectedProjects);
+
+            // Populate QA filter dropdown
+            const qaSelect = document.getElementById('report-filter-qa');
+            qaSelect.innerHTML = '<option value="">All QAs</option>' + state.users
+                .filter(u => u.role === 'QA Member' || u.role === 'Team Lead')
+                .map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+
+            let filteredProjects = [...state.projectOverview, ...state.approvedProjects, ...state.rejectedProjects];
             if (monthFilter) {
                 const [year, month] = monthFilter.split('-');
                 filteredProjects = filteredProjects.filter(p => {
-                    const startDate = new Date(p.startDate);
-                    return startDate.getFullYear() === parseInt(year) && startDate.getMonth() === parseInt(month) - 1;
+                    const date = p.startDate || p.approvedDate || p.rejectionDate;
+                    return date.startsWith(`${year}-${month}`);
                 });
             }
             if (qaFilter) {
@@ -1788,106 +1940,57 @@
             if (state.currentUser.role === 'QA Member') {
                 filteredProjects = filteredProjects.filter(p => p.qaId === state.currentUser.id);
             }
+
             filteredProjects.forEach(project => {
-                const qa = state.users.find(u => u.id === project.qaId);
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${project.projectName}</td>
-                    <td>${qa ? qa.name : 'Unassigned'}</td>
+                    <td>${state.users.find(u => u.id === project.qaId)?.name || 'Unassigned'}</td>
                     <td>${project.projectType}</td>
                     <td>${project.currentPhase}</td>
                     <td>${project.status}</td>
                     <td>${project.totalBugs || 0}</td>
-                    <td>${project.approvedForLive}</td>
+                    <td>${project.approvedForLive || 'No'}</td>
                 `;
                 tbody.appendChild(row);
             });
-            const qaSelect = document.getElementById('report-filter-qa');
-            qaSelect.innerHTML = `<option value="">All QAs</option>` + state.users
-                .filter(u => u.role === 'QA Member')
-                .map(u => `<option value="${u.id}">${u.name}</option>`).join('');
         }
 
         function exportReport() {
-            const monthFilter = document.getElementById('report-filter-month').value;
-            const qaFilter = document.getElementById('report-filter-qa').value;
-            let filteredProjects = state.projectOverview.concat(state.approvedProjects, state.rejectedProjects);
-            if (monthFilter) {
-                const [year, month] = monthFilter.split('-');
-                filteredProjects = filteredProjects.filter(p => {
-                    const startDate = new Date(p.startDate);
-                    return startDate.getFullYear() === parseInt(year) && startDate.getMonth() === parseInt(month) - 1;
-                });
-            }
-            if (qaFilter) {
-                filteredProjects = filteredProjects.filter(p => p.qaId === qaFilter);
-            }
-            if (state.currentUser.role === 'QA Member') {
-                filteredProjects = filteredProjects.filter(p => p.qaId === state.currentUser.id);
-            }
-            const csv = [
-                ['Project Name', 'QA', 'Type', 'Phase', 'Status', 'Total Bugs', 'Approved?'],
-                ...filteredProjects.map(p => [
-                    p.projectName,
-                    state.users.find(u => u.id === p.qaId)?.name || 'Unassigned',
-                    p.projectType,
-                    p.currentPhase,
-                    p.status,
-                    p.totalBugs || 0,
-                    p.approvedForLive
-                ])
-            ].map(row => row.join(',')).join('\n');
+            const monthFilter = document.getElementById('report-filter-month')?.value || 'All Time';
+            const qaFilter = document.getElementById('report-filter-qa')?.value;
+            const qaName = qaFilter ? state.users.find(u => u.id === qaFilter)?.name : 'All QAs';
+            let csv = 'Project Name,QA,Type,Phase,Status,Total Bugs,Approved?\n';
+            const filteredProjects = [...state.projectOverview, ...state.approvedProjects, ...state.rejectedProjects]
+                .filter(p => (!monthFilter || p.startDate?.startsWith(monthFilter)) && (!qaFilter || p.qaId === qaFilter))
+                .filter(p => state.currentUser.role !== 'QA Member' || p.qaId === state.currentUser.id);
+            csv += filteredProjects.map(p => 
+                `${p.projectName},${state.users.find(u => u.id === p.qaId)?.name || 'Unassigned'},${p.projectType},${p.currentPhase},${p.status},${p.totalBugs || 0},${p.approvedForLive || 'No'}`
+            ).join('\n');
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `qa_report_${monthFilter || 'all'}_${qaFilter || 'all'}.csv`;
+            a.download = `QA_Report_${monthFilter}_${qaName}.csv`;
             a.click();
             URL.revokeObjectURL(url);
-            const aDuplicate = document.createElement('a');
-            aDuplicate.href = url;
-            aDuplicate.download = `qa_report_${monthFilter || 'all'}_${qaFilter || 'all'}.csv`;
-            aDuplicate.click();
-            URL.revokeObjectURL(url);
-            logActivity('Exported QA report');
+            logActivity(`Exported QA report for ${monthFilter} - ${qaName}`);
         }
 
         function renderActivityLog() {
             const list = document.getElementById('activity-log-list');
-            list.innerHTML = state.activityLog.map(log => `
-                <div class="list-item">
-                    <span>${new Date(log.timestamp).toLocaleString()} - ${log.user}: ${log.action}</span>
-                </div>
-            `).join('');
-        }
-
-
-        function updateProfile(e) {
-            e.preventDefault();
-            const name = document.getElementById('profile-name').value.trim();
-            const email = document.getElementById('profile-email').value.trim();
-            const password = document.getElementById('profile-password').value;
-            if (!name || !email) {
-                showNotification('Name and email are required', 3000, true);
-                return;
-            }
-            const index = state.users.findIndex(u => u.id === state.currentUser.id);
-            state.users[index] = {
-                ...state.users[index],
-                name,
-                email,
-                password: password || state.users[index].password
-            };
-            state.currentUser = { ...state.users[index] };
-            saveState('users', state.users);
-            logActivity('Updated profile');
-            showNotification('Profile updated successfully');
-            updateUserAvatar();
+            list.innerHTML = '';
+            state.activityLog.forEach(log => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `<span>${new Date(log.timestamp).toLocaleString()} - ${log.user}: ${log.action}</span>`;
+                list.appendChild(item);
+            });
         }
 
         function showUserForm(userId = null) {
-            if (state.currentUser.role !== 'Admin' && state.currentUser.role !== 'Team Lead') {
-                showNotification('Only Admins or Team Leads can manage users', 3000, true);
+            if (state.currentUser.role !== 'Admin') {
+                showNotification('Only Admins can manage users', 3000, true);
                 return;
             }
             const user = userId ? state.users.find(u => u.id === userId) : null;
@@ -1903,14 +2006,14 @@
                     </div>
                     <div class="form-group">
                         <label for="user-password" class="required">Password</label>
-                        <input type="text" id="user-password" value="${user ? user.password : ''}" required>
+                        <input type="password" id="user-password" value="${user ? user.password : ''}" required>
                     </div>
                     <div class="form-group">
                         <label for="user-role" class="required">Role</label>
                         <select id="user-role" required>
-                            <option value="QA Member" ${user && user.role === 'QA Member' ? 'selected' : ''}>QA Member</option>
-                            <option value="Team Lead" ${user && user.role === 'Team Lead' ? 'selected' : ''}>Team Lead</option>
                             <option value="Admin" ${user && user.role === 'Admin' ? 'selected' : ''}>Admin</option>
+                            <option value="Team Lead" ${user && user.role === 'Team Lead' ? 'selected' : ''}>Team Lead</option>
+                            <option value="QA Member" ${user && user.role === 'QA Member' ? 'selected' : ''}>QA Member</option>
                         </select>
                     </div>
                     <button type="submit" class="btn-primary">${user ? 'Update' : 'Add'} User</button>
@@ -1934,7 +2037,6 @@
                 if (user) {
                     const index = state.users.findIndex(u => u.id === userId);
                     state.users[index] = { ...user, name, email, password, role };
-                    if (state.currentUser.id === userId) state.currentUser = { ...state.users[index] };
                     logActivity(`Updated user: ${name}`);
                 } else {
                     state.users.push({
@@ -1950,94 +2052,170 @@
                 closeModal();
                 showNotification('User saved successfully');
                 renderUsers();
-                updateUserAvatar();
                 setupSidebar();
             };
         }
 
         function renderUsers() {
             const list = document.getElementById('users-list');
-            list.innerHTML = state.users.map(user => `
-                <div class="list-item">
+            list.innerHTML = '';
+            state.users.forEach(user => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
                     <span>${user.name} (${user.email}) - ${user.role}</span>
-                    <div>
-                        <button class="btn-primary" onclick="showUserForm('${user.id}')">Edit</button>
-                        <button class="btn-danger" onclick="deleteUser('${user.id}')">Delete</button>
-                    </div>
-                </div>
-            `).join('');
+                    ${state.currentUser.role === 'Admin' && user.id !== state.currentUser.id ? `
+                        <div>
+                            <button class="btn-primary" onclick="showUserForm('${user.id}')">Edit</button>
+                            <button class="btn-danger" onclick="deleteUser('${user.id}')">Delete</button>
+                        </div>
+                    ` : ''}
+                `;
+                list.appendChild(item);
+            });
         }
 
         function deleteUser(userId) {
-            if (state.currentUser.role !== 'Admin' && state.currentUser.role !== 'Team Lead') {
-                showNotification('Only Admins or Team Leads can delete users', 3000, true);
+            if (state.currentUser.role !== 'Admin') {
+                showNotification('Only Admins can delete users', 3000, true);
                 return;
             }
-            if (state.currentUser.id === userId) {
+            if (userId === state.currentUser.id) {
                 showNotification('You cannot delete yourself', 3000, true);
                 return;
             }
+            const user = state.users.find(u => u.id === userId);
             state.users = state.users.filter(u => u.id !== userId);
-            logActivity('Deleted user');
+            state.tasks = state.tasks.map(t => t.assignee === userId ? { ...t, assignee: '' } : t);
+            state.projectOverview = state.projectOverview.map(p => p.qaId === userId ? { ...p, qaId: '' } : p);
+            logActivity(`Deleted user: ${user.name}`);
             saveState('users', state.users);
+            saveState('tasks', state.tasks);
+            saveState('projectOverview', state.projectOverview);
             showNotification('User deleted successfully');
             renderUsers();
-            setupSidebar();
+            renderTasks();
+            filterProjects();
         }
 
         function renderAssignRoles() {
             const list = document.getElementById('roles-list');
-            list.innerHTML = state.users.map(user => `
-                <div class="list-item">
+            list.innerHTML = '';
+            state.users.forEach(user => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
                     <span>${user.name} (${user.email})</span>
-                    <select onchange="updateRole('${user.id}', this.value)">
-                        <option value="QA Member" ${user.role === 'QA Member' ? 'selected' : ''}>QA Member</option>
-                        <option value="Team Lead" ${user.role === 'Team Lead' ? 'selected' : ''}>Team Lead</option>
-                        <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option>
-                    </select>
-                </div>
-            `).join('');
+                    ${state.currentUser.role === 'Admin' ? `
+                        <select onchange="updateRole('${user.id}', this.value)">
+                            <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option>
+                            <option value="Team Lead" ${user.role === 'Team Lead' ? 'selected' : ''}>Team Lead</option>
+                            <option value="QA Member" ${user.role === 'QA Member' ? 'selected' : ''}>QA Member</option>
+                        </select>
+                    ` : `<span>${user.role}</span>`}
+                `;
+                list.appendChild(item);
+            });
         }
 
         function updateRole(userId, role) {
-            if (state.currentUser.role !== 'Admin' && state.currentUser.role !== 'Team Lead') {
-                showNotification('Only Admins or Team Leads can assign roles', 3000, true);
+            if (state.currentUser.role !== 'Admin') {
+                showNotification('Only Admins can assign roles', 3000, true);
                 return;
             }
             const index = state.users.findIndex(u => u.id === userId);
+            const user = state.users[index];
             state.users[index].role = role;
-            if (state.currentUser.id === userId) state.currentUser.role = role;
-            logActivity(`Updated role of ${state.users[index].name} to ${role}`);
+            logActivity(`Updated role of ${user.name} to ${role}`);
             saveState('users', state.users);
             showNotification('Role updated successfully');
             renderAssignRoles();
             setupSidebar();
         }
 
+        function renderProjects() {
+            const list = document.getElementById('projects-list');
+            list.innerHTML = '';
+            state.projects.forEach(project => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
+                    <span>${project.name} (${project.category} - ${project.subcategory}) <a href="${project.link}" target="_blank">Link</a></span>
+                    ${(state.currentUser.role === 'Admin' || state.currentUser.role === 'Team Lead') ? `
+                        <div>
+                            <button class="btn-primary" onclick="showProjectForm('${project.id}')">Edit</button>
+                            <button class="btn-danger" onclick="deleteProject('${project.id}')">Delete</button>
+                        </div>
+                    ` : ''}
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function updateProfile(e) {
+            e.preventDefault();
+            const name = document.getElementById('profile-name').value.trim();
+            const email = document.getElementById('profile-email').value.trim();
+            const password = document.getElementById('profile-password').value;
+            if (!name || !email) {
+                showNotification('Name and email are required', 3000, true);
+                return;
+            }
+            if (state.users.some(u => u.email === email && u.id !== state.currentUser.id)) {
+                showNotification('Email already exists', 3000, true);
+                return;
+            }
+            const index = state.users.findIndex(u => u.id === state.currentUser.id);
+            state.users[index] = {
+                ...state.users[index],
+                name,
+                email,
+                password: password || state.users[index].password
+            };
+            state.currentUser = state.users[index];
+            saveState('users', state.users);
+            saveState('currentUser', state.currentUser);
+            logActivity('Updated profile');
+            showNotification('Profile updated successfully');
+            updateUserAvatar();
+            document.getElementById('welcome-user').textContent = name;
+            renderAll();
+        }
+
         function calculateDashboardStats() {
             const stats = {
-                'My Projects': { projects: 0, pendingApprovals: 0, completedProjects: 0 },
-                'Team Projects': { projects: 0, pendingApprovals: 0, completedProjects: 0 }
+                'My Stats': { projects: 0, pendingApprovals: 0, completedProjects: 0 }
             };
+            if (state.currentUser.role === 'Team Lead' || state.currentUser.role === 'Admin') {
+                stats['Team Stats'] = { projects: 0, pendingApprovals: 0, completedProjects: 0 };
+            }
+
             state.projectOverview.forEach(project => {
-                if (project.qaId === state.currentUser.id) {
-                    stats['My Projects'].projects++;
-                    if (project.tlApproval === 'Awaiting Approval') stats['My Projects'].pendingApprovals++;
-                    if (project.status === 'Completed') stats['My Projects'].completedProjects++;
+                if (project.qaId === state.currentUser.id || state.currentUser.role !== 'QA Member') {
+                    stats['My Stats'].projects++;
+                    if (project.tlApproval === 'Awaiting Approval') stats['My Stats'].pendingApprovals++;
                 }
-                stats['Team Projects'].projects++;
-                if (project.tlApproval === 'Awaiting Approval') stats['Team Projects'].pendingApprovals++;
-                if (project.status === 'Completed') stats['Team Projects'].completedProjects++;
+                if (stats['Team Stats']) {
+                    stats['Team Stats'].projects++;
+                    if (project.tlApproval === 'Awaiting Approval') stats['Team Stats'].pendingApprovals++;
+                }
             });
+
+            state.approvedProjects.forEach(project => {
+                if (project.qaId === state.currentUser.id || state.currentUser.role !== 'QA Member') {
+                    stats['My Stats'].completedProjects++;
+                }
+                if (stats['Team Stats']) {
+                    stats['Team Stats'].completedProjects++;
+                }
+            });
+
             return stats;
         }
 
         function toggleSidebar() {
             document.querySelector('.sidebar').classList.toggle('collapsed');
-            logActivity('Toggled sidebar');
         }
-
-        renderProjectTypes();
     </script>
 </body>
 </html>
