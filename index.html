@@ -1409,6 +1409,18 @@
         .task-info p:last-child {
             margin-bottom: 8px;
         }
+
+        /* Add styles for project links */
+        .project-link {
+            color: #ffffff;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .project-link:hover {
+            color: #e0e0e0;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -2678,18 +2690,13 @@
             
             let filteredProjects = state.projectOverview;
 
-            // For QA Members, only show their assigned projects
             if (state.currentUser.role === 'QA Member') {
                 filteredProjects = filteredProjects.filter(p => p.qaId === state.currentUser.id);
             }
 
-            // Apply search filter
             if (search) {
                 filteredProjects = filteredProjects.filter(p =>
-                    p.projectName?.toLowerCase().includes(search) ||
-                    p.projectType?.toLowerCase().includes(search) ||
-                    p.status?.toLowerCase().includes(search) ||
-                    state.users.find(u => u.id === p.qaId)?.name.toLowerCase().includes(search)
+                    p.projectName.toLowerCase().includes(search)
                 );
             }
 
@@ -2697,36 +2704,32 @@
             if (htmlSort || functionalSort) {
                 filteredProjects.sort((a, b) => {
                     let comparison = 0;
-                    
                     if (htmlSort) {
-                        const htmlFields = ['p0HtmlBugs', 'p1HtmlBugs', 'p2HtmlBugs', 'p3HtmlBugs', 'p4HtmlBugs'];
-                        if (htmlSort === 'low-to-high') htmlFields.reverse();
-                        
-                        for (const field of htmlFields) {
-                            comparison = (b[field] || 0) - (a[field] || 0);
-                            if (comparison !== 0) return comparison;
+                        if (htmlSort === 'high-to-low') {
+                            comparison = (b.htmlBugs || 0) - (a.htmlBugs || 0);
+                        } else {
+                            comparison = (a.htmlBugs || 0) - (b.htmlBugs || 0);
                         }
+                        if (comparison !== 0) return comparison;
                     }
-                    
                     if (functionalSort) {
-                        const functionalFields = ['p0FunctionalBugs', 'p1FunctionalBugs', 'p2FunctionalBugs', 'p3FunctionalBugs', 'p4FunctionalBugs'];
-                        if (functionalSort === 'low-to-high') functionalFields.reverse();
-                        
-                        for (const field of functionalFields) {
-                            comparison = (b[field] || 0) - (a[field] || 0);
-                            if (comparison !== 0) return comparison;
+                        if (functionalSort === 'high-to-low') {
+                            comparison = (b.functionalBugs || 0) - (a.functionalBugs || 0);
+                        } else {
+                            comparison = (a.functionalBugs || 0) - (b.functionalBugs || 0);
                         }
+                        if (comparison !== 0) return comparison;
                     }
-                    
                     return comparison;
                 });
             }
 
             filteredProjects.forEach(project => {
                 const qa = state.users.find(u => u.id === project.qaId);
+                const originalProject = state.projects.find(p => p.id === project.projectId);
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${project.projectName}</td>
+                    <td><a href="${originalProject?.link}" target="_blank" class="project-link">${project.projectName}</a></td>
                     <td>${project.currentPhase}</td>
                     <td>${qa ? qa.name : 'Unassigned'}</td>
                     <td>${project.startDate || 'Not Started'}</td>
@@ -2740,56 +2743,18 @@
                             ${state.currentUser.role === 'QA Member' && project.qaId !== state.currentUser.id ? 'disabled' : ''}>
                     </td>
                     <td>
-                        <input type="number" value="${project.functionalBugs || 0}" 
-                            onclick="showBugCountModal('${project.projectId}', 'functionalBugs')" 
-                            readonly 
+                        <input type="number" value="${project.functionalBugs || 0}"
+                            onclick="showBugCountModal('${project.projectId}', 'functionalBugs')"
+                            readonly
                             style="cursor: pointer;"
                             ${state.currentUser.role === 'QA Member' && project.qaId !== state.currentUser.id ? 'disabled' : ''}>
                     </td>
                     <td>
-                        ${(() => {
-                            if (state.currentUser.role === 'Team Lead' && project.tlApproval === 'Awaiting Approval') {
-                                return `
-                                    <select onchange="updateApproval('${project.projectId}', this.value)">
-                                        <option value="No">No</option>
-                                        <option value="Yes">Approve</option>
-                                        <option value="Rejected">Reject</option>
-                                    </select>
-                                `;
-                            } else if (project.tlApproval === 'Awaiting Approval') {
-                                return 'Waiting for TL Approval';
-                            } else if (project.tlApproval === 'Approved') {
-                                if (project.approvedForLive === 'Yes') {
-                                    return `Approved for Live by ${project.approvedBy || 'TL'}`;
-                                } else {
-                                    return 'Approved by TL';
-                                }
-                            } else if (project.approvedForLive === 'Rejected') {
-                                return `Rejected by ${project.rejectedBy || 'TL'}`;
-                            } else {
-                                return project.approvedForLive || 'No';
-                            }
-                        })()}
-                    </td>
-                    <td>
-                        ${(() => {
-                            if (state.currentUser.role === 'QA Member' && project.qaId === state.currentUser.id && !project.rejectionRequested) {
-                                return `<button class="btn-danger" onclick="requestProjectRejection('${project.projectId}')">Reject Project</button>`;
-                            } else if (project.rejectionRequested) {
-                                if (state.currentUser.role === 'Team Lead') {
-                                    return `
-                                        <select onchange="handleRejectionApproval('${project.projectId}', this.value)">
-                                            <option value="">Approve Rejection</option>
-                                            <option value="approve">Approve</option>
-                                            <option value="reject">Reject</option>
-                                        </select>
-                                    `;
-                                } else {
-                                    return 'Rejection Pending TL Approval';
-                                }
-                            }
-                            return '';
-                        })()}
+                        ${project.status !== 'Rejected' && state.currentUser.role === 'QA Member' ? `
+                            <button class="reject-btn" onclick="requestProjectRejection('${project.projectId}')">
+                                Reject Project
+                            </button>
+                        ` : project.status === 'Rejected' ? 'Rejected' : ''}
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -3030,7 +2995,6 @@
             if (!tbody) return;
             tbody.innerHTML = '';
             
-            // Only show projects that are marked as approved for live
             let filteredProjects = state.projectOverview.filter(p => p.approvedForLive === 'Yes');
             
             if (state.currentUser.role === 'QA Member') {
@@ -3039,9 +3003,10 @@
             
             filteredProjects.forEach(project => {
                 const qa = state.users.find(u => u.id === project.qaId);
+                const originalProject = state.projects.find(p => p.id === project.projectId);
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${project.projectName}</td>
+                    <td><a href="${originalProject?.link}" target="_blank" class="project-link">${project.projectName}</a></td>
                     <td>${qa ? qa.name : 'Unassigned'}</td>
                     <td>${project.projectType}</td>
                     <td>${project.currentPhase}</td>
@@ -3065,9 +3030,10 @@
             }
             filteredProjects.forEach(project => {
                 const qa = state.users.find(u => u.id === project.qaId);
+                const originalProject = state.projects.find(p => p.id === project.projectId);
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${project.projectName}</td>
+                    <td><a href="${originalProject?.link}" target="_blank" class="project-link">${project.projectName}</a></td>
                     <td>${qa ? qa.name : 'Unassigned'}</td>
                     <td>${project.projectType}</td>
                     <td>${project.currentPhase}</td>
@@ -3075,9 +3041,6 @@
                     <td>${project.startDate}</td>
                     <td>${project.endDate || 'N/A'}</td>
                     <td>${project.status}</td>
-                    <td>${project.rejectionDate}</td>
-                    <td>${project.rejectionReason}</td>
-                    <td>${project.rejectedBy}</td>
                 `;
                 tbody.appendChild(row);
             });
@@ -3527,7 +3490,6 @@
             const projectsList = document.getElementById('projects-list');
             const createProjectBtn = document.getElementById('create-project-btn');
             
-            // Show Create Project button for Team Leads and Admins
             if (state.currentUser && (state.currentUser.role === 'Team Lead' || state.currentUser.role === 'Admin')) {
                 createProjectBtn.style.display = 'block';
             } else {
@@ -3536,10 +3498,8 @@
 
             if (!projectsList) return;
 
-            // Show all projects from state.projects
             const projects = state.projects.filter(project => {
                 if (state.currentUser.role === 'QA Member') {
-                    // For QA members, show projects they created or are assigned to
                     return project.createdBy === state.currentUser.id || 
                            (state.projectOverview.find(p => p.projectId === project.id)?.qaId === state.currentUser.id);
                 }
@@ -3564,7 +3524,7 @@
                                 const creator = state.users.find(u => u.id === project.createdBy);
                                 return `
                                     <tr>
-                                        <td>${project.name}</td>
+                                        <td><a href="${project.link}" target="_blank" class="project-link">${project.name}</a></td>
                                         <td>${project.category}</td>
                                         <td>${project.subcategory}</td>
                                         <td>${creator ? creator.name : 'Unknown'}</td>
