@@ -524,23 +524,121 @@
         }
 
         .list-item {
-            background-color: var(--widget-background);
-            padding: 14px;
-            margin-bottom: 10px;
-            border-radius: var(--border-radius);
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 15px;
-            font-size: 14px;
-            border: 1px solid var(--secondary-color);
-            cursor: move;
-            transition: all 0.2s ease;
+            background-color: #2c3e50;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
         }
 
         .list-item:hover {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .list-item h3 {
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .list-item .project-info {
+            color: #a8b6c7;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .list-item .assignee-info {
+            color: #a8b6c7;
+            font-size: 13px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .kanban-column {
+            background-color: #1e2a38;
+            border-radius: 10px;
+            padding: 15px;
+            min-height: 400px;
+            margin: 0 10px;
+            flex: 1;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .kanban-column h2 {
+            color: #ffffff;
+            font-size: 18px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .list-item .task-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .list-item .task-buttons button {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background-color 0.2s;
+        }
+
+        .list-item .task-buttons .edit-btn {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .list-item .task-buttons .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .list-item .task-buttons button:hover {
+            opacity: 0.9;
+        }
+
+        .list-item .phase-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+
+        /* Column-specific styling */
+        .kanban-column.to-do {
+            border-left: 4px solid #f1c40f;
+        }
+
+        .kanban-column.in-progress {
+            border-left: 4px solid #3498db;
+        }
+
+        .kanban-column.done {
+            border-left: 4px solid #2ecc71;
+        }
+
+        /* Add this after your existing styles */
+        .scrum-board-container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            overflow-x: auto;
         }
 
         .list-item.dragging {
