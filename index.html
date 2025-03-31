@@ -1459,7 +1459,7 @@
             </div>
             <div id="project-management" class="tab-pane">
                 <h2>Projects</h2>
-                <button class="btn-primary" onclick="showProjectForm()" style="margin-bottom: 25px; display: none;" id="create-project-btn">Create Project</button>
+                <button class="btn-primary" onclick="showProjectForm()" style="margin-bottom: 25px;" id="create-project-btn">Create Project</button>
                 <div id="projects-list"></div>
             </div>
             <div id="project-overview" class="tab-pane">
@@ -2762,6 +2762,10 @@
         }
 
         function markApprovedForLive(projectId, isApproved) {
+            if (state.currentUser.role !== 'Team Lead') {
+                showNotification('Only Team Leads can approve projects for live', 3000, true);
+                return;
+            }
             const index = state.projectOverview.findIndex(p => p.projectId === projectId);
             if (index === -1) return;
 
@@ -3299,8 +3303,8 @@
         }
 
         function assignRole(projectId, qaId) {
-            if (state.currentUser.role !== 'Admin' && state.currentUser.role !== 'Team Lead') {
-                showNotification('Only Admins or Team Leads can assign roles', 3000, true);
+            if (state.currentUser.role !== 'Team Lead') {
+                showNotification('Only Team Leads can assign roles', 3000, true);
                 return;
             }
             const index = state.projectOverview.findIndex(p => p.projectId === projectId);
@@ -3354,6 +3358,15 @@
 
         function renderProjects() {
             const projectsContainer = document.getElementById('projects-container');
+            const createProjectBtn = document.getElementById('create-project-btn');
+            
+            // Show Create Project button for Team Leads and Admins
+            if (state.currentUser && (state.currentUser.role === 'Team Lead' || state.currentUser.role === 'Admin')) {
+                createProjectBtn.style.display = 'block';
+            } else {
+                createProjectBtn.style.display = 'none';
+            }
+
             if (!projectsContainer) return;
 
             const projects = state.projects.filter(project => {
@@ -3636,8 +3649,12 @@
 
             // Show/hide add project button based on role
             const addProjectBtn = document.getElementById('add-project-btn');
+            const createProjectBtn = document.getElementById('create-project-btn');
             if (addProjectBtn) {
-                addProjectBtn.style.display = state.currentUser.role !== 'QA Member' ? 'inline-block' : 'none';
+                addProjectBtn.style.display = (state.currentUser.role === 'Admin' || state.currentUser.role === 'Team Lead') ? 'inline-block' : 'none';
+            }
+            if (createProjectBtn) {
+                createProjectBtn.style.display = (state.currentUser.role === 'Admin' || state.currentUser.role === 'Team Lead') ? 'inline-block' : 'none';
             }
         }
 
