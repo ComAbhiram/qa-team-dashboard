@@ -449,12 +449,8 @@
             display: none;
         }
 
-        .sidebar-toggle {
-            font-size: 20px;
-            cursor: pointer;
-            margin-bottom: 20px;
-            color: var(--text-color);
-        }
+       
+        
 
         .main-content {
             flex: 1;
@@ -1426,8 +1422,7 @@
 <body>
     <div class="container" style="display: none;">
         <div class="sidebar">
-            <div class="sidebar-toggle">☰</div>
-            <div class="sidebar-logo">
+            <div class="sidebar-logo" onclick="toggleSidebar()">
                 <img src="images/logo.png" alt="QA Dashboard Logo" class="main-logo">
                 <img src="images/Minilogo.png" alt="QA Dashboard Mini Logo" class="mini-logo">
             </div>
