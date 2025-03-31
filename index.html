@@ -719,6 +719,7 @@
         .stats-number.active { color: #28a745; }
         .stats-number.pending { color: #ffc107; }
         .stats-number.completed { color: #17a2b8; }
+        .stats-number.rejected { color: #dc3545; }
         .stats-number.zero { color: #6c757d; }
 
         .stats-label {
@@ -3602,21 +3603,23 @@
 
         function calculateDashboardStats() {
             const stats = {
-                'Your Stats': { projects: 0, pendingApprovals: 0, completedProjects: 0 }
+                'Your Stats': { projects: 0, pendingApprovals: 0, completedProjects: 0, rejectedProjects: 0 }
             };
             if (state.currentUser.role === 'Admin' || state.currentUser.role === 'Team Lead') {
-                stats['Team Stats'] = { projects: 0, pendingApprovals: 0, completedProjects: 0 };
+                stats['Team Stats'] = { projects: 0, pendingApprovals: 0, completedProjects: 0, rejectedProjects: 0 };
             }
             state.projectOverview.forEach(project => {
                 if (project.qaId === state.currentUser.id || state.currentUser.role === 'Admin' || state.currentUser.role === 'Team Lead') {
                     stats['Your Stats'].projects++;
                     if (project.tlApproval === 'Awaiting Approval') stats['Your Stats'].pendingApprovals++;
                     if (project.status === 'Completed') stats['Your Stats'].completedProjects++;
+                    if (project.status === 'Rejected') stats['Your Stats'].rejectedProjects++;
                 }
                 if (stats['Team Stats']) {
                     stats['Team Stats'].projects++;
                     if (project.tlApproval === 'Awaiting Approval') stats['Team Stats'].pendingApprovals++;
                     if (project.status === 'Completed') stats['Team Stats'].completedProjects++;
+                    if (project.status === 'Rejected') stats['Team Stats'].rejectedProjects++;
                 }
             });
             state.approvedProjects.forEach(project => {
@@ -4116,10 +4119,10 @@
 
             // Calculate stats for filtered projects
             const stats = {
-                'Your Stats': { projects: 0, pendingApprovals: 0, completedProjects: 0 }
+                'Your Stats': { projects: 0, pendingApprovals: 0, completedProjects: 0, rejectedProjects: 0 }
             };
             if (state.currentUser.role === 'Admin' || state.currentUser.role === 'Team Lead') {
-                stats['Team Stats'] = { projects: 0, pendingApprovals: 0, completedProjects: 0 };
+                stats['Team Stats'] = { projects: 0, pendingApprovals: 0, completedProjects: 0, rejectedProjects: 0 };
             }
 
             filteredProjects.forEach(project => {
@@ -4127,11 +4130,13 @@
                     stats['Your Stats'].projects++;
                     if (project.tlApproval === 'Awaiting Approval') stats['Your Stats'].pendingApprovals++;
                     if (project.status === 'Completed') stats['Your Stats'].completedProjects++;
+                    if (project.status === 'Rejected') stats['Your Stats'].rejectedProjects++;
                 }
                 if (stats['Team Stats']) {
                     stats['Team Stats'].projects++;
                     if (project.tlApproval === 'Awaiting Approval') stats['Team Stats'].pendingApprovals++;
                     if (project.status === 'Completed') stats['Team Stats'].completedProjects++;
+                    if (project.status === 'Rejected') stats['Team Stats'].rejectedProjects++;
                 }
             });
 
@@ -4157,6 +4162,10 @@
                         <div>
                             <div class="stats-number ${data.completedProjects === 0 ? 'zero' : 'completed'}">${data.completedProjects}</div>
                             <div class="stats-label">Completed Projects</div>
+                        </div>
+                        <div>
+                            <div class="stats-number ${data.rejectedProjects === 0 ? 'zero' : 'rejected'}">${data.rejectedProjects}</div>
+                            <div class="stats-label">Rejected Projects</div>
                         </div>
                     </div>
                 `;
