@@ -339,12 +339,17 @@
             box-shadow: var(--shadow);
             min-height: 300px;
             min-width: 280px;
+            transition: background-color 0.2s ease;
+        }
+
+        .kanban-column.dragover {
+            background-color: rgba(0, 123, 255, 0.1);
+            border: 2px dashed var(--primary-color);
         }
 
         .kanban-column.todo { border-left: 4px solid #ffc107; }
         .kanban-column.in-progress { border-left: 4px solid #fd7e14; }
         .kanban-column.done { border-left: 4px solid #28a745; }
-        .kanban-column.dragover { background-color: #3b4d64; }
 
         .kanban-column h3 {
             font-size: 18px;
@@ -529,6 +534,30 @@
             gap: 15px;
             font-size: 14px;
             border: 1px solid var(--secondary-color);
+            cursor: move;
+            transition: all 0.2s ease;
+        }
+
+        .list-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .list-item.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        .list-item strong {
+            color: var(--text-color);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .list-item small {
+            color: var(--secondary-color);
+            display: block;
+            margin-bottom: 2px;
         }
 
         .list-item > span {
@@ -809,6 +838,146 @@
             margin-top: 15px;
             display: flex;
             gap: 10px;
+        }
+
+        /* Add these styles to your existing CSS */
+        .bug-count-section {
+            margin-bottom: 20px;
+        }
+
+        .bug-count-section h3 {
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .bug-inputs {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .bug-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bug-input-group label {
+            min-width: 80px;
+            color: var(--text-secondary);
+        }
+
+        .bug-input-group input {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--background-card);
+            color: var(--text-primary);
+        }
+
+        .bug-total {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: var(--background-hover);
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .bug-total label {
+            color: var(--text-secondary);
+        }
+
+        .bug-total span {
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        /* Add these table-specific styles */
+        .table-header {
+            padding: 20px;
+            background: var(--background-card);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .sort-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .sort-dropdown {
+            width: 100%;
+            padding: 10px;
+            background: var(--background-main);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .table-container {
+            background: var(--background-card);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .projects-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .projects-table th {
+            background: #0066ff;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .projects-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .projects-table tr:hover {
+            background: var(--background-hover);
+        }
+
+        .bug-count-input {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: white;
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        .status-completed {
+            color: #28a745;
+        }
+
+        .status-in-progress {
+            color: #ffc107;
+        }
+
+        .reject-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .reject-btn:hover {
+            background: #c82333;
         }
     </style>
 </head>
@@ -1185,9 +1354,73 @@
     </div>
     <div id="bug-count-modal" class="modal">
         <div class="modal-content">
-            <span class="modal-close" onclick="closeBugCountModal()">×</span>
-            <h2>Update Bug Count</h2>
-            <div id="bug-count-form"></div>
+            <div class="modal-header">
+                <h2>Bug Count Details</h2>
+                <span class="close" onclick="closeBugCountModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="bug-count-section">
+                    <h3>HTML Bugs</h3>
+                    <div class="bug-inputs">
+                        <div class="bug-input-group">
+                            <label>P0 Bugs:</label>
+                            <input type="number" id="html-p0" min="0" value="0">
+                        </div>
+                        <div class="bug-input-group">
+                            <label>P1 Bugs:</label>
+                            <input type="number" id="html-p1" min="0" value="0">
+                        </div>
+                        <div class="bug-input-group">
+                            <label>P2 Bugs:</label>
+                            <input type="number" id="html-p2" min="0" value="0">
+                        </div>
+                        <div class="bug-input-group">
+                            <label>P3 Bugs:</label>
+                            <input type="number" id="html-p3" min="0" value="0">
+                        </div>
+                        <div class="bug-input-group">
+                            <label>P4 Bugs:</label>
+                            <input type="number" id="html-p4" min="0" value="0">
+                        </div>
+                    </div>
+                    <div class="bug-total">
+                        <label>Total HTML Bugs:</label>
+                        <span id="html-total">0</span>
+                    </div>
+                </div>
+                <div class="bug-count-section">
+                    <h3>Functional Bugs</h3>
+                    <div class="bug-inputs">
+                        <div class="bug-input-group">
+                            <label>P0 Bugs:</label>
+                            <input type="number" id="func-p0" min="0" value="0">
+                        </div>
+                        <div class="bug-input-group">
+                            <label>P1 Bugs:</label>
+                            <input type="number" id="func-p1" min="0" value="0">
+                        </div>
+                        <div class="bug-input-group">
+                            <label>P2 Bugs:</label>
+                            <input type="number" id="func-p2" min="0" value="0">
+                        </div>
+                        <div class="bug-input-group">
+                            <label>P3 Bugs:</label>
+                            <input type="number" id="func-p3" min="0" value="0">
+                        </div>
+                        <div class="bug-input-group">
+                            <label>P4 Bugs:</label>
+                            <input type="number" id="func-p4" min="0" value="0">
+                        </div>
+                    </div>
+                    <div class="bug-total">
+                        <label>Total Functional Bugs:</label>
+                        <span id="func-total">0</span>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-primary" onclick="saveBugCounts()">Done</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1458,14 +1691,32 @@
             const done = document.getElementById('done-tasks');
             if (!toDo || !inProgress || !done) return;
             toDo.innerHTML = inProgress.innerHTML = done.innerHTML = '';
+            
             state.tasks.forEach(task => {
+                // Filter tasks based on user role and assignment
                 if (state.currentUser.role === 'QA Member' && task.assignee !== state.currentUser.id) return;
+                
                 const taskElement = document.createElement('div');
                 taskElement.className = 'list-item';
                 taskElement.draggable = true;
                 taskElement.ondragstart = (e) => drag(e, task.id);
+                taskElement.ondragend = (e) => {
+                    e.target.classList.remove('dragging');
+                };
+                
+                const project = state.projects.find(p => p.id === task.projectId);
+                const assignee = state.users.find(u => u.id === task.assignee);
+                
                 taskElement.innerHTML = `
-                    <span>${task.title} (${state.users.find(u => u.id === task.assignee)?.name || 'Unassigned'})</span>
+                    <span>
+                        <strong>${task.title}</strong>
+                        <br>
+                        <small>Project: ${project ? project.name : 'Unknown'}</small>
+                        <br>
+                        <small>Phase: ${task.phase}</small>
+                        <br>
+                        <small>Assigned to: ${assignee ? assignee.name : 'Unassigned'}</small>
+                    </span>
                     <div>
                         ${(state.currentUser.role === 'Admin' || state.currentUser.role === 'Team Lead') ? `
                             <button class="btn-primary" onclick="showTaskForm('${task.id}')">Edit</button>
@@ -1473,6 +1724,7 @@
                         ` : ''}
                     </div>
                 `;
+                
                 if (task.status === 'To Do') toDo.appendChild(taskElement);
                 else if (task.status === 'In Progress') inProgress.appendChild(taskElement);
                 else if (task.status === 'Done') done.appendChild(taskElement);
@@ -1481,23 +1733,30 @@
 
         function drag(e, taskId) {
             e.dataTransfer.setData('text/plain', taskId);
+            e.target.classList.add('dragging');
         }
 
         function allowDrop(e) {
             e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
         }
 
         function dragEnter(e) {
-            e.target.classList.add('dragover');
+            e.preventDefault();
+            e.target.closest('.kanban-column')?.classList.add('dragover');
         }
 
         function dragLeave(e) {
-            e.target.classList.remove('dragover');
+            e.preventDefault();
+            e.target.closest('.kanban-column')?.classList.remove('dragover');
         }
 
         function drop(e, status) {
             e.preventDefault();
-            e.target.classList.remove('dragover');
+            const column = e.target.closest('.kanban-column');
+            if (!column) return;
+            column.classList.remove('dragover');
+            
             const taskId = e.dataTransfer.getData('text/plain');
             const task = state.tasks.find(t => t.id === taskId);
             if (!task) return;
@@ -2010,9 +2269,161 @@
                             }
                         })()}
                     </td>
+                    <td>
+                        ${(() => {
+                            if (state.currentUser.role === 'QA Member' && project.qaId === state.currentUser.id && !project.rejectionRequested) {
+                                return `<button class="btn-danger" onclick="requestProjectRejection('${project.projectId}')">Reject Project</button>`;
+                            } else if (project.rejectionRequested) {
+                                if (state.currentUser.role === 'Team Lead') {
+                                    return `
+                                        <select onchange="handleRejectionApproval('${project.projectId}', this.value)">
+                                            <option value="">Approve Rejection</option>
+                                            <option value="approve">Approve</option>
+                                            <option value="reject">Reject</option>
+                                        </select>
+                                    `;
+                                } else {
+                                    return 'Rejection Pending TL Approval';
+                                }
+                            }
+                            return '';
+                        })()}
+                    </td>
                 `;
                 tbody.appendChild(row);
             });
+        }
+
+        function requestProjectRejection(projectId) {
+            const index = state.projectOverview.findIndex(p => p.projectId === projectId);
+            if (index === -1) return;
+
+            const project = state.projectOverview[index];
+            const reason = prompt('Please provide a reason for rejecting the project:');
+            if (!reason) {
+                showNotification('Rejection reason is required', 3000, true);
+                return;
+            }
+
+            // Update project status
+            state.projectOverview[index] = {
+                ...project,
+                rejectionRequested: true,
+                rejectionReason: reason,
+                rejectionRequestedBy: state.currentUser.name,
+                rejectionRequestedAt: new Date().toISOString()
+            };
+
+            // Add notification for Team Leads
+            state.users.forEach(user => {
+                if (user.role === 'Team Lead') {
+                    if (!user.notifications) user.notifications = [];
+                    user.notifications.push({
+                        id: Date.now().toString(),
+                        type: 'rejection_request',
+                        projectId: projectId,
+                        projectName: project.projectName,
+                        qaName: state.currentUser.name,
+                        reason: reason,
+                        timestamp: Date.now(),
+                        read: false
+                    });
+                }
+            });
+
+            logActivity(`Requested rejection for project "${project.projectName}"`);
+            saveState('projectOverview', state.projectOverview);
+            saveState('users', state.users);
+            showNotification('Project rejection requested');
+            filterProjects();
+        }
+
+        function handleRejectionApproval(projectId, action) {
+            const index = state.projectOverview.findIndex(p => p.projectId === projectId);
+            if (index === -1) return;
+
+            const project = state.projectOverview[index];
+            const currentDate = new Date().toISOString().split('T')[0];
+
+            if (action === 'approve') {
+                // Move all project tasks to Done
+                state.tasks.forEach(task => {
+                    if (task.projectId === projectId) {
+                        task.status = 'Done';
+                    }
+                });
+                saveState('tasks', state.tasks);
+
+                // Add to rejected projects
+                state.rejectedProjects.push({
+                    ...project,
+                    approvedForLive: 'Rejected',
+                    rejectionDate: currentDate,
+                    rejectionReason: project.rejectionReason,
+                    rejectedBy: state.currentUser.name
+                });
+
+                // Update project in overview
+                state.projectOverview[index] = {
+                    ...project,
+                    approvedForLive: 'Rejected',
+                    rejectionDate: currentDate,
+                    rejectionReason: project.rejectionReason,
+                    rejectedBy: state.currentUser.name,
+                    status: 'Completed'
+                };
+
+                // Add notification for QA member
+                const qaMember = state.users.find(u => u.id === project.qaId);
+                if (qaMember) {
+                    const notification = {
+                        id: Date.now().toString(),
+                        type: 'rejection_approved',
+                        projectId: projectId,
+                        projectName: project.projectName,
+                        reason: project.rejectionReason,
+                        timestamp: Date.now(),
+                        read: false
+                    };
+                    if (!qaMember.notifications) qaMember.notifications = [];
+                    qaMember.notifications.push(notification);
+                }
+
+                logActivity(`Approved rejection for project "${project.projectName}"`);
+                saveState('rejectedProjects', state.rejectedProjects);
+            } else if (action === 'reject') {
+                // Reset rejection request
+                state.projectOverview[index] = {
+                    ...project,
+                    rejectionRequested: false,
+                    rejectionReason: null,
+                    rejectionRequestedBy: null,
+                    rejectionRequestedAt: null
+                };
+
+                // Add notification for QA member
+                const qaMember = state.users.find(u => u.id === project.qaId);
+                if (qaMember) {
+                    const notification = {
+                        id: Date.now().toString(),
+                        type: 'rejection_rejected',
+                        projectId: projectId,
+                        projectName: project.projectName,
+                        timestamp: Date.now(),
+                        read: false
+                    };
+                    if (!qaMember.notifications) qaMember.notifications = [];
+                    qaMember.notifications.push(notification);
+                }
+
+                logActivity(`Rejected project rejection request for "${project.projectName}"`);
+            }
+
+            saveState('projectOverview', state.projectOverview);
+            saveState('users', state.users);
+            filterProjects();
+            renderRejectedProjects();
+            showNotification(action === 'approve' ? 'Project rejection approved' : 'Project rejection request rejected');
         }
 
         function markApprovedForLive(projectId, isApproved) {
@@ -2607,35 +3018,97 @@
         }
 
         function renderProjects() {
-            const list = document.getElementById('projects-list');
-            const createProjectBtn = document.getElementById('create-project-btn');
-            
-            if (!list) return;
-            
-            // Update create project button visibility
-            if (createProjectBtn) {
-                createProjectBtn.style.display = 
-                    (state.currentUser.role === 'Admin' || state.currentUser.role === 'Team Lead') 
-                    ? 'inline-block' 
-                    : 'none';
-            }
+            const projectsContainer = document.getElementById('projects-container');
+            if (!projectsContainer) return;
 
-            let filteredProjects = state.projects;
-            if (state.currentUser.role === 'QA Member') {
-                filteredProjects = filteredProjects.filter(p => state.projectOverview.some(po => po.projectId === p.id && po.qaId === state.currentUser.id));
-            }
-            
-            list.innerHTML = filteredProjects.map(project => `
-                <div class="list-item">
-                    <span>${project.name} (${project.category} - ${project.subcategory}) <a href="${project.link}" target="_blank">Link</a></span>
-                    ${(state.currentUser.role === 'Admin' || state.currentUser.role === 'Team Lead') ? `
-                        <div>
-                            <button class="btn-primary" onclick="showProjectForm('${project.id}')">Edit</button>
-                            <button class="btn-danger" onclick="deleteProject('${project.id}')">Delete</button>
-                        </div>
-                    ` : ''}
+            const projects = state.projects.filter(project => {
+                if (state.currentUser.role === 'QA Member') {
+                    return project.qaAssigned === state.currentUser.name;
+                }
+                return true;
+            });
+
+            projectsContainer.innerHTML = `
+                <div class="table-header">
+                    <div class="sort-controls">
+                        <select class="sort-dropdown" onchange="sortProjects('html', this.value)">
+                            <option value="">Sort HTML Bugs</option>
+                            <option value="asc">Lowest to Highest</option>
+                            <option value="desc">Highest to Lowest</option>
+                        </select>
+                        <select class="sort-dropdown" onchange="sortProjects('functional', this.value)">
+                            <option value="">Sort Functional Bugs</option>
+                            <option value="asc">Lowest to Highest</option>
+                            <option value="desc">Highest to Lowest</option>
+                        </select>
+                    </div>
                 </div>
-            `).join('');
+                <div class="table-container">
+                    <table class="projects-table">
+                        <thead>
+                            <tr>
+                                <th>PROJECT NAME</th>
+                                <th>PHASE</th>
+                                <th>QA MEMBER</th>
+                                <th>START DATE</th>
+                                <th>END DATE</th>
+                                <th>STATUS</th>
+                                <th>HTML BUGS</th>
+                                <th>FUNCTIONAL BUGS</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${projects.map(project => `
+                                <tr>
+                                    <td>${project.name}</td>
+                                    <td>${project.currentPhase}</td>
+                                    <td>${project.qaAssigned}</td>
+                                    <td>${new Date(project.startDate).toLocaleDateString()}</td>
+                                    <td>${project.endDate ? new Date(project.endDate).toLocaleDateString() : 'In Progress'}</td>
+                                    <td class="${project.status === 'Completed' ? 'status-completed' : 'status-in-progress'}">${project.status}</td>
+                                    <td>
+                                        <input type="number" class="bug-count-input" 
+                                               value="${(project.bugCounts?.html?.total || 0)}"
+                                               onclick="openBugCountModal('${project.id}')"
+                                               readonly>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="bug-count-input"
+                                               value="${(project.bugCounts?.func?.total || 0)}"
+                                               onclick="openBugCountModal('${project.id}')"
+                                               readonly>
+                                    </td>
+                                    <td>
+                                        ${project.status !== 'Rejected' && state.currentUser.role === 'QA Member' ? `
+                                            <button class="reject-btn" onclick="requestProjectRejection('${project.id}')">
+                                                Reject Project
+                                            </button>
+                                        ` : project.status === 'Rejected' ? 'Rejected' : ''}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function sortProjects(type, direction) {
+            if (!direction) return;
+            
+            state.projects.sort((a, b) => {
+                const aCount = type === 'html' ? 
+                    (a.bugCounts?.html?.total || 0) : 
+                    (a.bugCounts?.func?.total || 0);
+                const bCount = type === 'html' ? 
+                    (b.bugCounts?.html?.total || 0) : 
+                    (b.bugCounts?.func?.total || 0);
+                
+                return direction === 'asc' ? aCount - bCount : bCount - aCount;
+            });
+            
+            renderProjects();
         }
 
         function calculateDashboardStats() {
@@ -2911,6 +3384,20 @@
                             <div class="content">Project "${notification.projectName}" has been ${notification.status}</div>
                             ${notification.reason ? `<div class="content">Reason: ${notification.reason}</div>` : ''}
                             <div class="timestamp">${new Date(notification.timestamp).toLocaleString()}</div>
+                        ` : notification.type === 'rejection_request' ? `
+                            <div class="title">Project Rejection Request</div>
+                            <div class="content">Project "${notification.projectName}" has been requested for rejection by ${notification.qaName}</div>
+                            <div class="content">Reason: ${notification.reason}</div>
+                            <div class="timestamp">${new Date(notification.timestamp).toLocaleString()}</div>
+                        ` : notification.type === 'rejection_approved' ? `
+                            <div class="title">Project Rejection Approved</div>
+                            <div class="content">Your rejection request for project "${notification.projectName}" has been approved</div>
+                            <div class="content">Reason: ${notification.reason}</div>
+                            <div class="timestamp">${new Date(notification.timestamp).toLocaleString()}</div>
+                        ` : notification.type === 'rejection_rejected' ? `
+                            <div class="title">Project Rejection Rejected</div>
+                            <div class="content">Your rejection request for project "${notification.projectName}" has been rejected</div>
+                            <div class="timestamp">${new Date(notification.timestamp).toLocaleString()}</div>
                         ` : ''}
                     </div>
                 `).join('') : '<div class="notification-item">No notifications</div>';
@@ -2923,6 +3410,14 @@
 
             // Mark notification as read
             notification.read = true;
+            
+            // Update the users array with the current user's updated notifications
+            const userIndex = state.users.findIndex(u => u.id === state.currentUser.id);
+            if (userIndex !== -1) {
+                state.users[userIndex].notifications = state.currentUser.notifications;
+            }
+            
+            // Save to localStorage and update display
             saveState('users', state.users);
             displayNotifications();
 
@@ -2946,6 +3441,32 @@
                         <p><strong>Project:</strong> ${notification.projectName}</p>
                         <p><strong>Status:</strong> ${notification.status.charAt(0).toUpperCase() + notification.status.slice(1)}</p>
                         ${notification.reason ? `<p><strong>Reason:</strong> ${notification.reason}</p>` : ''}
+                    </div>
+                `;
+            } else if (notification.type === 'rejection_request') {
+                content = `
+                    <div class="header">Project Rejection Request</div>
+                    <div class="content">
+                        <p><strong>Project:</strong> ${notification.projectName}</p>
+                        <p><strong>Requested by:</strong> ${notification.qaName}</p>
+                        <p><strong>Reason:</strong> ${notification.reason}</p>
+                    </div>
+                `;
+            } else if (notification.type === 'rejection_approved') {
+                content = `
+                    <div class="header">Project Rejection Approved</div>
+                    <div class="content">
+                        <p><strong>Project:</strong> ${notification.projectName}</p>
+                        <p><strong>Status:</strong> Rejection Approved</p>
+                        <p><strong>Reason:</strong> ${notification.reason}</p>
+                    </div>
+                `;
+            } else if (notification.type === 'rejection_rejected') {
+                content = `
+                    <div class="header">Project Rejection Rejected</div>
+                    <div class="content">
+                        <p><strong>Project:</strong> ${notification.projectName}</p>
+                        <p><strong>Status:</strong> Rejection Request Rejected</p>
                     </div>
                 `;
             }
@@ -2985,10 +3506,134 @@
 
         function toggleNotifications() {
             const dropdown = document.getElementById('notification-dropdown');
+            const notificationBadge = document.getElementById('notification-badge');
             if (dropdown) {
                 dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+                
+                // When opening the dropdown, mark all notifications as read
+                if (dropdown.style.display === 'block') {
+                    // Mark all notifications as read
+                    if (state.currentUser.notifications) {
+                        state.currentUser.notifications.forEach(notification => {
+                            notification.read = true;
+                        });
+                        
+                        // Update the users array with the current user's updated notifications
+                        const userIndex = state.users.findIndex(u => u.id === state.currentUser.id);
+                        if (userIndex !== -1) {
+                            state.users[userIndex].notifications = state.currentUser.notifications;
+                        }
+                        
+                        // Save to localStorage
+                        saveState('users', state.users);
+                        
+                        // Hide the notification badge
+                        if (notificationBadge) {
+                            notificationBadge.style.display = 'none';
+                        }
+                        
+                        // Re-render notifications
+                        displayNotifications();
+                    }
+                }
             }
         }
+
+        let currentProjectId = null;
+
+        function openBugCountModal(projectId) {
+            currentProjectId = projectId;
+            const project = state.projects.find(p => p.id === projectId);
+            
+            // Initialize bug counts if they don't exist
+            if (!project.bugCounts) {
+                project.bugCounts = {
+                    html: { p0: 0, p1: 0, p2: 0, p3: 0, p4: 0, total: 0 },
+                    func: { p0: 0, p1: 0, p2: 0, p3: 0, p4: 0, total: 0 }
+                };
+            }
+
+            // Set values in the modal
+            ['html', 'func'].forEach(type => {
+                ['p0', 'p1', 'p2', 'p3', 'p4'].forEach(priority => {
+                    const input = document.getElementById(`${type}-${priority}`);
+                    if (input) {
+                        input.value = project.bugCounts[type][priority] || 0;
+                    }
+                });
+            });
+
+            updateBugTotals();
+            document.getElementById('bug-count-modal').style.display = 'flex';
+        }
+
+        function closeBugCountModal() {
+            document.getElementById('bug-count-modal').style.display = 'none';
+            currentProjectId = null;
+        }
+
+        function updateBugTotals() {
+            ['html', 'func'].forEach(type => {
+                let total = 0;
+                ['p0', 'p1', 'p2', 'p3', 'p4'].forEach(priority => {
+                    const value = parseInt(document.getElementById(`${type}-${priority}`).value) || 0;
+                    total += value;
+                });
+                document.getElementById(`${type}-total`).textContent = total;
+            });
+        }
+
+        function saveBugCounts() {
+            if (!currentProjectId) return;
+
+            const project = state.projects.find(p => p.id === currentProjectId);
+            if (!project) return;
+
+            // Save bug counts
+            project.bugCounts = {
+                html: {
+                    p0: parseInt(document.getElementById('html-p0').value) || 0,
+                    p1: parseInt(document.getElementById('html-p1').value) || 0,
+                    p2: parseInt(document.getElementById('html-p2').value) || 0,
+                    p3: parseInt(document.getElementById('html-p3').value) || 0,
+                    p4: parseInt(document.getElementById('html-p4').value) || 0
+                },
+                func: {
+                    p0: parseInt(document.getElementById('func-p0').value) || 0,
+                    p1: parseInt(document.getElementById('func-p1').value) || 0,
+                    p2: parseInt(document.getElementById('func-p2').value) || 0,
+                    p3: parseInt(document.getElementById('func-p3').value) || 0,
+                    p4: parseInt(document.getElementById('func-p4').value) || 0
+                }
+            };
+
+            // Calculate totals
+            project.bugCounts.html.total = Object.values(project.bugCounts.html)
+                .reduce((sum, count) => sum + (count || 0), 0);
+            project.bugCounts.func.total = Object.values(project.bugCounts.func)
+                .reduce((sum, count) => sum + (count || 0), 0);
+
+            // Update total bugs
+            project.totalBugs = project.bugCounts.html.total + project.bugCounts.func.total;
+
+            // Save to state and update display
+            saveState('projects', state.projects);
+            renderProjects();
+            document.getElementById('bug-count-modal').style.display = 'none';
+            currentProjectId = null;
+        }
+
+        // Add event listeners for input changes
+        document.addEventListener('DOMContentLoaded', function() {
+            ['html', 'func'].forEach(type => {
+                ['p0', 'p1', 'p2', 'p3', 'p4'].forEach(priority => {
+                    const input = document.getElementById(`${type}-${priority}`);
+                    if (input) {
+                        input.addEventListener('input', updateBugTotals);
+                    }
+                });
+            });
+        });
     </script>
 </body>
 </html>
