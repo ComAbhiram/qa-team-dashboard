@@ -2375,8 +2375,12 @@
                     state.projects[index] = { ...project, name, category, subcategory, link };
                     logActivity(`Updated project: ${name}`);
                 } else {
+                    const newProjectId = Date.now().toString();
+                    const currentDate = new Date().toISOString().split('T')[0];
+                    
+                    // Add to state.projects
                     state.projects.push({
-                        id: Date.now().toString(),
+                        id: newProjectId,
                         name,
                         category,
                         subcategory,
@@ -2384,13 +2388,34 @@
                         createdBy: state.currentUser.id,
                         createdAt: Date.now()
                     });
+
+                    // Add to state.projectOverview
+                    state.projectOverview.push({
+                        projectId: newProjectId,
+                        projectName: name,
+                        projectType: category,
+                        qaId: '',
+                        currentPhase: 'Not Started',
+                        ktReceived: 'No',
+                        startDate: currentDate,
+                        endDate: '',
+                        status: 'Not Started',
+                        totalBugs: 0,
+                        htmlBugs: 0,
+                        functionalBugs: 0,
+                        approvedForLive: 'No',
+                        tlApproval: ''
+                    });
+                    
                     logActivity(`Created project: ${name}`);
                 }
 
                 saveState('projects', state.projects);
+                saveState('projectOverview', state.projectOverview);
                 closeModal();
                 showNotification('Project saved successfully');
                 renderProjects();
+                filterProjects();
             };
         }
 
@@ -3499,7 +3524,7 @@
         }
 
         function renderProjects() {
-            const projectsContainer = document.getElementById('projects-container');
+            const projectsList = document.getElementById('projects-list');
             const createProjectBtn = document.getElementById('create-project-btn');
             
             // Show Create Project button for Team Leads and Admins
@@ -3509,75 +3534,52 @@
                 createProjectBtn.style.display = 'none';
             }
 
-            if (!projectsContainer) return;
+            if (!projectsList) return;
 
+            // Show all projects from state.projects
             const projects = state.projects.filter(project => {
                 if (state.currentUser.role === 'QA Member') {
-                    return project.qaAssigned === state.currentUser.name;
+                    // For QA members, show projects they created or are assigned to
+                    return project.createdBy === state.currentUser.id || 
+                           (state.projectOverview.find(p => p.projectId === project.id)?.qaId === state.currentUser.id);
                 }
                 return true;
             });
 
-            projectsContainer.innerHTML = `
-                <div class="table-header">
-                    <div class="sort-controls">
-                        <select class="sort-dropdown" onchange="sortProjects('html', this.value)">
-                            <option value="">Sort HTML Bugs</option>
-                            <option value="asc">Lowest to Highest</option>
-                            <option value="desc">Highest to Lowest</option>
-                        </select>
-                        <select class="sort-dropdown" onchange="sortProjects('functional', this.value)">
-                            <option value="">Sort Functional Bugs</option>
-                            <option value="asc">Lowest to Highest</option>
-                            <option value="desc">Highest to Lowest</option>
-                        </select>
-                    </div>
-                </div>
+            projectsList.innerHTML = `
                 <div class="table-container">
                     <table class="projects-table">
                         <thead>
                             <tr>
                                 <th>PROJECT NAME</th>
-                                <th>PHASE</th>
-                                <th>QA MEMBER</th>
-                                <th>START DATE</th>
-                                <th>END DATE</th>
-                                <th>STATUS</th>
-                                <th>HTML BUGS</th>
-                                <th>FUNCTIONAL BUGS</th>
+                                <th>CATEGORY</th>
+                                <th>SUBCATEGORY</th>
+                                <th>CREATED BY</th>
+                                <th>CREATED AT</th>
                                 <th>ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${projects.map(project => `
-                                <tr>
-                                    <td>${project.name}</td>
-                                    <td>${project.currentPhase}</td>
-                                    <td>${project.qaAssigned}</td>
-                                    <td>${new Date(project.startDate).toLocaleDateString()}</td>
-                                    <td>${project.endDate ? new Date(project.endDate).toLocaleDateString() : 'In Progress'}</td>
-                                    <td class="${project.status === 'Completed' ? 'status-completed' : 'status-in-progress'}">${project.status}</td>
-                                    <td>
-                                        <input type="number" class="bug-count-input" 
-                                               value="${(project.bugCounts?.html?.total || 0)}"
-                                               onclick="openBugCountModal('${project.id}')"
-                                               readonly>
-                                    </td>
-                                    <td>
-                                        <input type="number" class="bug-count-input"
-                                               value="${(project.bugCounts?.func?.total || 0)}"
-                                               onclick="openBugCountModal('${project.id}')"
-                                               readonly>
-                                    </td>
-                                    <td>
-                                        ${project.status !== 'Rejected' && state.currentUser.role === 'QA Member' ? `
-                                            <button class="reject-btn" onclick="requestProjectRejection('${project.id}')">
-                                                Reject Project
-                                            </button>
-                                        ` : project.status === 'Rejected' ? 'Rejected' : ''}
-                                    </td>
-                                </tr>
-                            `).join('')}
+                            ${projects.map(project => {
+                                const creator = state.users.find(u => u.id === project.createdBy);
+                                return `
+                                    <tr>
+                                        <td>${project.name}</td>
+                                        <td>${project.category}</td>
+                                        <td>${project.subcategory}</td>
+                                        <td>${creator ? creator.name : 'Unknown'}</td>
+                                        <td>${new Date(project.createdAt).toLocaleDateString()}</td>
+                                        <td>
+                                            ${state.currentUser.role === 'Admin' ? `
+                                                <button class="btn-danger" onclick="deleteProject('${project.id}')">Delete</button>
+                                            ` : ''}
+                                            ${state.currentUser.role === 'Team Lead' || state.currentUser.role === 'Admin' ? `
+                                                <button class="btn-primary" onclick="showProjectForm('${project.id}')">Edit</button>
+                                            ` : ''}
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
                         </tbody>
                     </table>
                 </div>
