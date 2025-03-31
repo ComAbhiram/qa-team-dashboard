@@ -43,13 +43,99 @@
         }
 
         .kanban-column {
-            background-color: var(--widget-background);
-            border-radius: var(--border-radius);
-            padding: 20px;
-            min-height: 400px;
-            margin: 0 10px;
+            background: #2e3f52;
+            border-radius: 8px;
+            padding: 16px;
+            min-width: 300px;
             flex: 1;
-            border: 1px solid var(--border-color);
+        }
+
+        .kanban-column h3 {
+            color: #ffffff;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .task-card {
+            background: #3a4d63;
+            border-radius: 6px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            min-height: 200px; /* Ensure minimum height for consistent spacing */
+        }
+
+        .task-header {
+            margin-bottom: 16px;
+        }
+
+        .task-content {
+            flex-grow: 1;
+            margin-bottom: 48px; /* Significantly increased spacing before buttons */
+        }
+
+        .task-info {
+            color: #a8b6c7;
+        }
+
+        .task-info p {
+            margin: 12px 0;
+            line-height: 1.6;
+        }
+
+        .task-info p:last-child {
+            margin-bottom: 24px; /* Extra space after last info item */
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 12px;
+            padding-top: 20px;
+            margin-top: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .task-actions button {
+            padding: 8px 24px;
+        }
+
+        .task-actions button.edit-btn {
+            color: #007bff;
+            border: 1px solid #007bff;
+        }
+
+        .task-actions button.edit-btn:hover {
+            background: #007bff;
+            color: #ffffff;
+        }
+
+        .task-actions button.delete-btn {
+            color: #dc3545;
+            border: 1px solid #dc3545;
+        }
+
+        .task-actions button.delete-btn:hover {
+            background: #dc3545;
+            color: #ffffff;
+        }
+
+        /* Add spacing between sections */
+        .task-header {
+            margin-bottom: 12px;
+        }
+
+        .task-content {
+            margin-bottom: 12px;
+        }
+
+        .task-metadata {
+            margin-bottom: 12px;
+            padding: 8px 0;
+            border-top: 1px solid #e9ecef;
+            border-bottom: 1px solid #e9ecef;
         }
 
         .kanban-column h2 {
@@ -62,32 +148,61 @@
         }
 
         .list-item {
-            background-color: var(--widget-background);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            padding: 16px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            background: #3a4d63;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 16px;
         }
 
-        .list-item:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-            border-color: rgba(255, 255, 255, 0.25);
+        .list-item span {
+            display: block;
+            margin-bottom: 40px; /* Add significant space before buttons */
+        }
+
+        .list-item strong {
+            font-size: 18px;
+            color: #ffffff;
+            display: block;
+            margin-bottom: 16px;
+        }
+
+        .list-item small {
+            display: block;
+            color: #a8b6c7;
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .task-actions {
+            margin-top: 40px; /* Add extra space above buttons */
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 8px;
+        }
+
+        .task-actions button {
+            padding: 8px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: #ffffff;
+            border: none;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: #ffffff;
+            border: none;
         }
 
         .list-item.dragging {
             opacity: 0.5;
             transform: scale(0.95);
-        }
-
-        .list-item strong {
-            color: var(--text-color);
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            display: block;
         }
 
         .list-item [class^="Project:"],
@@ -1106,6 +1221,37 @@
         .reject-btn:hover {
             background: #c82333;
         }
+
+        /* Add these button styles */
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 14px;
+        }
+
+        .btn-outline-primary {
+            color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-outline-primary:hover {
+            color: #fff;
+            background-color: #007bff;
+        }
+
+        .btn-outline-danger {
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .btn-outline-danger:hover {
+            color: #fff;
+            background-color: #dc3545;
+        }
+
+        /* Add extra spacing after the last task info item */
+        .task-info p:last-child {
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
@@ -1550,6 +1696,26 @@
         </div>
     </div>
 
+    <!-- Find and replace the task template -->
+    <template id="task-template">
+        <div class="task-card" draggable="true">
+            <div class="task-header">
+                <h4 class="task-title"></h4>
+            </div>
+            <div class="task-content">
+                <div class="task-info">
+                    <p><strong>Project:</strong> <span class="task-project"></span></p>
+                    <p><strong>Phase:</strong> <span class="task-phase"></span></p>
+                    <p><strong>Assigned to:</strong> <span class="task-assigned"></span></p>
+                </div>
+            </div>
+            <div class="task-actions">
+                <button onclick="editTask(this)" class="btn btn-primary">Edit</button>
+                <button onclick="deleteTask(this)" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+    </template>
+
     <script>
         let state = {
             currentUser: null,
@@ -1842,12 +2008,11 @@
                         <small>Phase: ${task.phase}</small>
                         <br>
                         <small>Assigned to: ${assignee ? assignee.name : 'Unassigned'}</small>
+                        <br><br> <!-- Add extra line breaks for spacing -->
                     </span>
-                    <div>
-                        ${(state.currentUser.role === 'Admin' || state.currentUser.role === 'Team Lead') ? `
-                            <button class="btn-primary" onclick="showTaskForm('${task.id}')">Edit</button>
-                            <button class="btn-danger" onclick="deleteTask('${task.id}')">Delete</button>
-                        ` : ''}
+                    <div class="task-actions">
+                        <button onclick="editTask(this)" class="btn btn-primary">Edit</button>
+                        <button onclick="deleteTask(this)" class="btn btn-danger">Delete</button>
                     </div>
                 `;
                 
